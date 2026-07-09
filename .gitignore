@@ -1,5 +1,8 @@
 .DS_Store
 ~$*.docx
+平台代码/tools/
+**/node_modules/
+*.zip
 node_modules/
 .env
 .env.*
