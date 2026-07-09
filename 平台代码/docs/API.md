@@ -235,6 +235,74 @@ Authorization: Bearer dev-token-1
 
 说明：只有饭局参与者可以评价。
 
+## 12. 餐厅列表
+
+```http
+GET /api/restaurants
+```
+
+可选查询参数：
+
+| 参数 | 说明 | 示例 |
+| --- | --- | --- |
+| `campus` | 校区筛选 | `主校区` |
+| `foodType` | 菜系/类型 | `麻辣香锅` |
+| `keyword` | 搜索名称、类型、位置、描述 | `面` |
+
+示例：
+
+```http
+GET /api/restaurants?foodType=麻辣香锅
+GET /api/restaurants?keyword=面
+```
+
+返回按评分降序排列。
+
+## 13. 餐厅详情
+
+```http
+GET /api/restaurants/:id
+```
+
+示例：
+
+```http
+GET /api/restaurants/1
+```
+
+## 14. 新增餐厅
+
+```http
+POST /api/restaurants
+Authorization: Bearer dev-token-1
+```
+
+请求：
+
+```json
+{
+  "name": "西区食堂黄焖鸡",
+  "foodType": "黄焖鸡",
+  "campus": "西校区",
+  "location": "西区食堂二楼",
+  "avgPrice": 2200,
+  "rating": 4.1,
+  "tags": ["快餐", "单人", "下饭"],
+  "description": "黄焖鸡米饭，汤汁拌饭一绝。"
+}
+```
+
+| 字段 | 是否必填 | 说明 |
+| --- | --- | --- |
+| `name` | 是 | 餐厅/窗口名称 |
+| `foodType` | 否 | 菜系/类型 |
+| `campus` | 否 | 所在校区，默认 `主校区` |
+| `location` | 否 | 具体位置 |
+| `avgPrice` | 否 | 人均价格（单位：分，2200 = 22元） |
+| `rating` | 否 | 综合评分 1-5 |
+| `tags` | 否 | 标签数组 |
+| `description` | 否 | 简介 |
+
 ## 前端联调建议
 
 1. 启动后端：在 `平台代码/backend` 下执行 `npm run dev`
