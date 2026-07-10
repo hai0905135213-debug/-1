@@ -1,14 +1,6 @@
 <template>
   <view class="page-flush profile-page">
     <view class="profile-hero">
-      <view class="profile-tools">
-        <text @tap="goLogin">⚙</text>
-        <view>
-          <text>♡</text>
-          <text class="tool-gap">↗</text>
-        </view>
-      </view>
-
       <view class="stats-row">
         <view>
           <view class="stat-num">3</view>
@@ -26,8 +18,7 @@
       </view>
 
       <view class="profile-say">{{ currentUser ? `${currentUser.nickname}，今天吃什么？` : '说点什么吧...' }}</view>
-      <view class="taste-chip" @tap="editTasteTags">{{ tasteLabel }}</view>
-      <view class="profile-mascot">饭</view>
+      <button class="taste-chip" @tap="editTasteTags">{{ tasteLabel }}</button>
     </view>
 
     <view class="profile-panel">
@@ -35,7 +26,7 @@
       <view class="empty-block">
         <view class="empty-illustration">🍽</view>
         <view class="empty-title">还没有发起饭局，快去创建一个吧</view>
-        <button class="button-primary mini-btn" @tap="goCreate">新建饭局</button>
+        <button class="button-primary full-btn" @tap="goCreate">新建饭局</button>
       </view>
 
       <view class="profile-tabs">
@@ -47,16 +38,13 @@
         >{{ tab }}</view>
       </view>
 
-      <view class="sort-row">
-        <text></text>
-        <text>☰ 最新评价</text>
-      </view>
-
       <view class="profile-empty">
         <view class="empty-illustration small">☕</view>
-        <view>哪次饭局让你印象深刻</view>
-        <button class="button-primary mini-btn" @tap="publishReview">发布评价</button>
+        <view class="empty-text">哪次饭局让你印象深刻</view>
+        <button class="button-primary full-btn" @tap="publishReview">发布评价</button>
       </view>
+
+      <button v-if="!currentUser" class="button-secondary full-btn" @tap="goLogin">登录账号</button>
     </view>
   </view>
 </template>
@@ -109,26 +97,12 @@ export default {
   background: #18849a;
   color: #ffffff;
   box-sizing: border-box;
-  overflow: hidden;
-}
-
-.profile-tools {
-  display: flex;
-  justify-content: space-between;
-  font-size: 44rpx;
-  margin-bottom: 34rpx;
-}
-
-.tool-gap {
-  margin-left: 34rpx;
 }
 
 .stats-row {
   display: flex;
   align-items: flex-start;
   gap: 46rpx;
-  position: relative;
-  z-index: 2;
 }
 
 .stat-num {
@@ -168,28 +142,16 @@ export default {
 .taste-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   margin-top: 28rpx;
   height: 60rpx;
   padding: 0 24rpx;
   border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.15);
+  background: #f7f7f887;
+  color: #ffffff;
   font-size: 26rpx;
-}
-
-.profile-mascot {
-  position: absolute;
-  right: 56rpx;
-  bottom: -10rpx;
-  width: 132rpx;
-  height: 132rpx;
-  border-radius: 66rpx;
-  background: #fff4a8;
-  color: #08091f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 42rpx;
-  font-weight: 900;
+  font-weight: 800;
+  border: 0;
 }
 
 .profile-panel {
@@ -200,6 +162,12 @@ export default {
   background: #ffffff;
 }
 
+.section-title {
+  font-size: 40rpx;
+  font-weight: 900;
+  margin-bottom: 28rpx;
+}
+
 .empty-block,
 .profile-empty {
   text-align: center;
@@ -207,25 +175,44 @@ export default {
 }
 
 .empty-illustration {
-  font-size: 96rpx;
+  font-size: 112rpx;
   margin-bottom: 20rpx;
 }
 
 .empty-illustration.small {
-  font-size: 78rpx;
+  font-size: 96rpx;
 }
 
-.empty-title {
+.empty-title,
+.empty-text {
   font-size: 30rpx;
   margin-bottom: 22rpx;
+  color: #08091f;
 }
 
-.mini-btn {
-  display: inline-block;
-  width: 210rpx;
-  height: 72rpx;
-  line-height: 72rpx;
-  font-size: 28rpx;
+.full-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 88rpx;
+  border-radius: 48rpx;
+  font-weight: 900;
+  font-size: 32rpx;
+}
+
+.button-primary {
+  background: #ffe733;
+  color: #08091f;
+  box-shadow: 0 12rpx 28rpx rgba(255, 231, 51, 0.28);
+  border: 0;
+}
+
+.button-secondary {
+  border: 2rpx solid #08091f;
+  background: #fff;
+  color: #08091f;
+  margin-top: 24rpx;
 }
 
 .profile-tabs {
@@ -245,13 +232,6 @@ export default {
 .profile-tab.active {
   color: #08091f;
   border-bottom: 6rpx solid #08091f;
-}
-
-.sort-row {
-  display: flex;
-  justify-content: space-between;
-  color: #64656d;
-  font-size: 28rpx;
 }
 
 .profile-empty {

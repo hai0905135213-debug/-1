@@ -37,6 +37,12 @@
       }
     },
     {
+      "path": "pages/find-detail/index",
+      "style": {
+        "navigationBarTitleText": "帖子详情"
+      }
+    },
+    {
       "path": "pages/feed/index",
       "style": {
         "navigationBarTitleText": "动态"

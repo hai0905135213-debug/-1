@@ -1,7 +1,7 @@
 <template>
   <view class="page home-page">
     <view class="home-header">
-      <view class="mascot">饭</view>
+      <view class="mascot">{{ userInitial }}</view>
       <view class="search-box">
         <text class="city">本校⌄</text>
         <view class="divider"></view>
@@ -90,6 +90,7 @@ export default {
       ],
       filters: ['全校⌄', '品类⌄', '时间⌄', '筛选⌄'],
       activeFilter: '全校⌄',
+      currentUser: null,
       wantedMealIds: [2],
       meals: [
         {
@@ -118,6 +119,15 @@ export default {
         }
       ]
     }
+  },
+  computed: {
+    userInitial() {
+      const nickname = this.currentUser?.nickname?.trim()
+      return nickname ? Array.from(nickname)[0] : '饭'
+    }
+  },
+  onShow() {
+    this.currentUser = uni.getStorageSync('currentUser') || null
   },
   methods: {
     goDetail(id) {

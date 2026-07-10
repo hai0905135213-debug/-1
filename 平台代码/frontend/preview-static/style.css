@@ -354,7 +354,7 @@ button:disabled {
   height: 34px;
   padding: 0 14px;
   border-radius: 18px;
-  background: #f7f7f8;
+  background: #f7f7f887;
   font-weight: 800;
 }
 
@@ -538,4 +538,590 @@ button:disabled {
 .toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* ===== 找人页（帖子流）===== */
+
+.find-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.find-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 16px;
+  margin-bottom: 20px;
+  background: #f5f5f7;
+  border-radius: 21px;
+  font-size: 14px;
+}
+
+/* PostCard */
+.post-card {
+  padding: 20px 0;
+  border-bottom: 1px solid #f0f0f3;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.post-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f1f1f3;
+  flex-shrink: 0;
+}
+
+.post-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.post-username {
+  font-size: 15px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-level {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: #f0f0f3;
+  color: #73747d;
+  flex-shrink: 0;
+}
+
+.post-role {
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.post-time {
+  font-size: 12px;
+  color: #8e8f98;
+}
+
+/* Body */
+.post-body {
+  margin-bottom: 14px;
+}
+
+.post-category {
+  display: inline-block;
+  padding: 3px 10px;
+  border: 2px solid;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.post-content {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #08091f;
+  margin: 0;
+}
+
+/* Footer */
+.post-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-waiting {
+  font-size: 13px;
+  color: #8e8f98;
+  font-weight: 700;
+}
+
+.post-avatars {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.post-joined-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  object-fit: cover;
+  background: #f1f1f3;
+  margin-left: -10px;
+}
+
+.post-joined-avatar:first-child {
+  margin-left: 0;
+}
+
+.post-spacer {
+  flex: 1;
+}
+
+.post-join {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #eeeef2;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: #08091f;
+  box-shadow: 0 3px 10px rgba(8, 9, 31, 0.06);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.post-join.joined {
+  background: #fff7bd;
+  border-color: #ffe733;
+  font-size: 11px;
+  color: #a66b00;
+}
+
+/* FAB */
+.fab-wrapper {
+  position: sticky;
+  bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -56px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #ffe733;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 300;
+  color: #08091f;
+  box-shadow: 0 8px 22px rgba(255, 231, 51, 0.42);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+}
+
+.empty-icon {
+  font-size: 56px;
+}
+
+/* ===== 找人详情页 ===== */
+
+.find-detail-page {
+  padding: 32px 18px 100px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #8e8f98;
+  padding: 0;
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+
+/* 卡片容器 */
+.detail-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(8, 9, 31, 0.04);
+}
+
+/* 帖子头部 */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f1f1f3;
+  flex-shrink: 0;
+}
+
+.detail-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.detail-username {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.detail-level {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: #f0f0f3;
+  color: #73747d;
+  flex-shrink: 0;
+}
+
+.detail-role {
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.detail-time {
+  font-size: 12px;
+  color: #8e8f98;
+}
+
+/* 帖子正文 */
+.detail-category {
+  display: inline-block;
+  padding: 3px 10px;
+  border: 2px solid;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.detail-content {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #08091f;
+  margin: 0 0 14px;
+}
+
+.detail-meta {
+  font-size: 13px;
+  color: #8e8f98;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.detail-mini-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  margin-left: -6px;
+  vertical-align: middle;
+}
+
+.detail-mini-avatar:first-child {
+  margin-left: 4px;
+}
+
+/* 发起人 */
+.author-profile {
+  margin-top: 14px;
+}
+
+.author-top {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.author-big-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f1f1f3;
+  flex-shrink: 0;
+}
+
+.author-summary {
+  flex: 1;
+  min-width: 0;
+}
+
+.author-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.author-name-row strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.author-level {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: #f0f0f3;
+  color: #73747d;
+}
+
+.author-role {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.author-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #5f6069;
+  margin: 0 0 16px;
+}
+
+/* 标签 */
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.detail-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.detail-tag.taste {
+  background: #fff6da;
+  color: #a66b00;
+}
+
+.detail-tag.personality {
+  background: #eef0ff;
+  color: #4d5ec1;
+}
+
+.detail-tag.rest {
+  background: #e8f8f2;
+  color: #2d7d5f;
+}
+
+/* 信用分 */
+.credit-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f3;
+}
+
+.credit-score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.credit-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #5f6069;
+}
+
+.credit-value {
+  font-size: 36px;
+  font-weight: 900;
+}
+
+.credit-value.high {
+  color: #2d7d5f;
+}
+
+.credit-sub {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: #e8f8f2;
+  color: #2d7d5f;
+}
+
+.credit-stats {
+  display: flex;
+  gap: 0;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 12px 0;
+}
+
+.credit-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.credit-stat-num {
+  display: block;
+  font-size: 22px;
+  font-weight: 900;
+  color: #08091f;
+}
+
+.credit-stat-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #8e8f98;
+}
+
+.credit-info-row {
+  display: flex;
+  gap: 24px;
+}
+
+.credit-item {
+  font-size: 13px;
+  color: #5f6069;
+}
+
+.credit-item strong {
+  color: #08091f;
+}
+
+/* 餐厅卡片 */
+.restaurant-card-detail {
+  margin-top: 14px;
+}
+
+.restaurant-hero-img {
+  width: 100%;
+  height: 160px;
+  border-radius: 10px;
+  object-fit: cover;
+  margin-bottom: 14px;
+}
+
+.restaurant-info-detail {
+  flex: 1;
+}
+
+.restaurant-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.restaurant-name-row strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.restaurant-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #5f6069;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.restaurant-desc {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #777984;
+  padding: 10px;
+  border-radius: 9px;
+  background: #fafafa;
+}
+
+/* 底部操作 */
+.detail-bottom-actions {
+  display: flex;
+  gap: 12px;
+  padding: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.detail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 44px;
+  border-radius: 24px;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.detail-btn.primary {
+  background: #ffe733;
+  color: #08091f;
+  border: 0;
+  box-shadow: 0 6px 14px rgba(255, 231, 51, 0.28);
+}
+
+.detail-btn.secondary {
+  border: 1px solid #08091f;
+  background: #fff;
+  color: #08091f;
+}
+
+.detail-btn:active {
+  transform: scale(0.98);
 }

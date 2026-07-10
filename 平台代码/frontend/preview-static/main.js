@@ -13,7 +13,7 @@ const pages = {
   home: `
     <div class="page">
       <div class="header">
-        <div class="mascot">饭</div>
+        <div class="mascot">${getUserInitial()}</div>
         <div class="search"><strong>本校⌄</strong><span class="muted">今天吃什么</span></div>
         <strong>⌖</strong>
       </div>
@@ -36,12 +36,31 @@ const pages = {
     </div>
   `,
   find: `
-    <div class="page">
-      <div><span class="title">找人</span> <span class="muted">本校值得一起吃的饭搭子</span></div>
-      <div class="rank-tabs" data-choice-group><div class="active">⚑<br>去过</div><div>♥<br>想去</div><div>●<br>好评</div></div>
-      <div class="pills" data-choice-group><button class="pill active">全部</button><button class="pill">食堂</button><button class="pill">夜宵</button><button class="pill">咖啡</button></div>
-      ${['米雪食记','不是在吃就是在吃的路上','清淡口同学','amor27 的饭路'].map((name, i) => `<div class="person"><div class="rank">${i + 1}</div><img src="${img.avatar}"><div class="grow"><strong>${name}</strong><div class="muted">校园约饭活跃用户</div></div><div class="score">${[36,28,21,18][i]}</div></div>`).join('')}
+    <div class="page find-page-content">
+      <div class="find-title-row">
+        <span class="title">找人</span>
+        <span class="muted">发现值得一起吃的饭搭子</span>
+      </div>
+      <div class="find-search">
+        <span>🔍</span>
+        <span class="muted">搜索饭搭子...</span>
+      </div>
+      <div class="pills" data-find-categories>
+        <button class="pill active" data-find-category="全部">全部</button>
+        <button class="pill" data-find-category="约饭">约饭</button>
+        <button class="pill" data-find-category="探店">探店</button>
+        <button class="pill" data-find-category="夜宵">夜宵</button>
+        <button class="pill" data-find-category="拼桌">拼桌</button>
+        <button class="pill" data-find-category="咖啡">咖啡</button>
+      </div>
+      <div class="post-list" id="find-post-list"></div>
+      <div class="fab-wrapper">
+        <button class="fab" data-fab-post>+</button>
+      </div>
     </div>
+  `,
+  'find-detail': `
+    <div class="page find-detail-page" id="find-detail-content"></div>
   `,
   publish: `
     <div class="page form">
@@ -67,7 +86,7 @@ const pages = {
   profile: `
     <div>
       <div class="profile-hero"><div class="stats"><div><strong>3</strong><br><span>关注</span></div><div><strong>2</strong><br><span>饭搭子</span></div><div><strong>8</strong><br><span>好评与想去</span></div><button class="edit" data-go-edit>编辑资料</button></div><h2>${authSession ? `${authSession.user.nickname}，今天吃什么？` : '说点什么吧...'}</h2><button class="quiet" data-go-edit>${getTasteLabel()}</button></div>
-      <div class="profile-panel"><div class="section-title">我的饭局</div><div class="empty"><div style="font-size:56px">🍽</div><p>还没有发起饭局，快去创建一个吧</p><button class="primary" data-go-publish>新建饭局</button></div><div class="pills" data-choice-group><button class="pill active">去过</button><button class="pill">想去</button><button class="pill">动态</button><button class="pill">收藏</button></div><div class="empty"><div style="font-size:48px">☕</div><p>哪次饭局让你印象深刻</p><button class="primary" data-go-review>发布评价</button></div><button class="secondary full-width" data-go-login>${authSession ? '切换账号' : '登录账号'}</button></div>
+      <div class="profile-panel"><div class="section-title">我的饭局</div><div class="empty"><div style="font-size:56px">🍽</div><p>还没有发起饭局，快去创建一个吧</p><button class="primary" data-go-publish>新建饭局</button></div><div class="pills" data-choice-group><button class="pill active">去过</button><button class="pill">想去</button><button class="pill">动态</button><button class="pill">收藏</button></div><div class="empty"><div style="font-size:48px">☕</div><p>哪次饭局让你印象深刻</p><button class="primary" data-go-review>发布评价</button></div>${authSession ? '' : '<button class="secondary full-width" data-go-login>登录账号</button>'}</div>
     </div>
   `,
   detail: `
@@ -120,12 +139,206 @@ const createdMeals = []
 let previousPage = 'home'
 let currentPage = 'home'
 let reviewRating = 5
+let activeFindCategory = '全部'
+
+const findPosts = [
+  {
+    id: 1,
+    author: {
+      name: '米雪食记',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80',
+      level: 6,
+      role: '大学',
+      roleColor: '#D88BB3',
+      campus: '主校区',
+      creditScore: 98,
+      mealCount: 36,
+      reviewCount: 22,
+      tasteTags: ['川菜', '火锅', '麻辣'],
+      personalityTags: ['健谈', '吃得快', '准时不鸽'],
+      budgetPreference: '20-40',
+      desc: '食堂窗口发现者，二食堂二楼老常客。每次约饭都会提前到，从不爽约。饭量大，节奏快，适合不想拖沓的饭友。'
+    },
+    time: '07-09 18:35',
+    category: { name: '约饭', color: '#FF9F43' },
+    content: '蹲蹲今晚一食堂吃麻辣香锅的uu，本人女生～最好是口味偏辣的！大概7点左右去。',
+    waitingCount: 2,
+    joinedAvatars: [
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80'
+    ],
+    joined: false,
+    restaurant: {
+      name: '二食堂麻辣香锅',
+      foodType: '川菜',
+      campus: '主校区',
+      location: '二食堂二楼靠窗区域',
+      avgPrice: 2200,
+      rating: 4.7,
+      tags: ['麻辣香锅', '出餐快', '分量足'],
+      description: '窗口出餐快，适合下课十分钟内集合。排队不算久，面汤稳定，第一次和饭搭子见面选这里比较稳。',
+      image: img.spicy
+    }
+  },
+  {
+    id: 2,
+    author: {
+      name: '怎么什么用户名都在',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
+      level: 6,
+      role: '大学',
+      roleColor: '#D88BB3',
+      campus: '主校区',
+      creditScore: 95,
+      mealCount: 28,
+      reviewCount: 16,
+      tasteTags: ['韩料', '日料', '探店'],
+      personalityTags: ['爱拍照', '慢节奏', 'AA记账'],
+      budgetPreference: '40-80',
+      desc: '校门口新店活地图，拍照修图一条龙。吃饭节奏偏慢，喜欢边吃边聊，特别适合想放松吃的饭友。'
+    },
+    time: '07-09 12:14',
+    category: { name: '探店', color: '#8FD4D2' },
+    content: '有没有uu想一起去校门口新开的韩料店探店！本人喜欢拍照，最好是也爱拍照的姐妹～',
+    waitingCount: 1,
+    joinedAvatars: [
+      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=240&q=80'
+    ],
+    joined: false,
+    restaurant: {
+      name: '东门新韩式料理',
+      foodType: '韩料',
+      campus: '主校区',
+      location: '东门外步行街南侧',
+      avgPrice: 4500,
+      rating: 4.4,
+      tags: ['新店', '部队锅', '拍照好看'],
+      description: '新开一个月，用餐环境干净明亮。部队锅分量大，建议凑 2-3 人一起吃。炸鸡出片率高。',
+      image: img.noodle
+    }
+  },
+  {
+    id: 3,
+    author: {
+      name: '小马吃吃吃',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=240&q=80',
+      level: 5,
+      role: '实习',
+      roleColor: '#D88BB3',
+      campus: '东校区',
+      creditScore: 92,
+      mealCount: 21,
+      reviewCount: 11,
+      tasteTags: ['烧烤', '夜宵', '啤酒'],
+      personalityTags: ['夜猫子', '随性', '不拘束'],
+      budgetPreference: '20-50',
+      desc: '晚课结束后必约夜宵，东门烧烤摊资深品鉴师。比较随性，不挑食不挑环境，主打一个吃得开心。'
+    },
+    time: '07-08 21:10',
+    category: { name: '夜宵', color: '#7C5CBF' },
+    content: '晚课结束后想吃夜宵，东门烧烤摊常驻选手，缺一个饭搭子！AA制，大概22点出发。',
+    waitingCount: 3,
+    joinedAvatars: [
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80'
+    ],
+    joined: false,
+    restaurant: {
+      name: '东门烧烤摊',
+      foodType: '烧烤',
+      campus: '主校区',
+      location: '东门小吃街最里面',
+      avgPrice: 3000,
+      rating: 4.5,
+      tags: ['露天', '深夜营业', '性价比高'],
+      description: '开到凌晨 1 点，四个人拼很舒服，预算能压到 25 左右。羊肉串和烤茄子口碑很好，人多能多点几样。',
+      image: img.spicy
+    }
+  },
+  {
+    id: 4,
+    author: {
+      name: '清淡口同学',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80',
+      level: 4,
+      role: '大学',
+      roleColor: '#D88BB3',
+      campus: '主校区',
+      creditScore: 99,
+      mealCount: 18,
+      reviewCount: 10,
+      tasteTags: ['轻食', '清淡', '沙拉'],
+      personalityTags: ['社恐友好', '安静吃饭', '准时'],
+      budgetPreference: '15-25',
+      desc: '长期驻扎三食堂轻食窗口，口味非常清淡。社恐友好型饭搭子——不尬聊、不勉强、准时到、吃完走。'
+    },
+    time: '07-08 15:42',
+    category: { name: '拼桌', color: '#54A0FF' },
+    content: '三食堂轻食窗口长期拼桌，本人吃得很清淡，偏好安静吃饭不尬聊的氛围～',
+    waitingCount: 1,
+    joinedAvatars: [],
+    joined: false,
+    restaurant: {
+      name: '三食堂轻食窗口',
+      foodType: '轻食',
+      campus: '主校区',
+      location: '三食堂一楼右侧',
+      avgPrice: 1500,
+      rating: 4.3,
+      tags: ['低脂', '高蛋白', '现做'],
+      description: '每周换菜单，食材新鲜。鸡胸肉沙拉和荞麦面是招牌，适合减脂期同学。座位充足，不用抢位。',
+      image: img.salad
+    }
+  },
+  {
+    id: 5,
+    author: {
+      name: 'amor27的饭路',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=240&q=80',
+      level: 7,
+      role: '大学',
+      roleColor: '#D88BB3',
+      campus: '主校区',
+      creditScore: 96,
+      mealCount: 42,
+      reviewCount: 30,
+      tasteTags: ['酸菜鱼', '火锅', '湘菜'],
+      personalityTags: ['组织能手', 'AA精确到分', '饭后逛街'],
+      budgetPreference: '40-100',
+      desc: '校园约饭天花板选手，人均 60 的酸菜鱼局能组织 6 人成行。AA 精确到分值得信赖，吃完总会安排饭后逛逛消食。'
+    },
+    time: '07-07 11:20',
+    category: { name: '约饭', color: '#FF9F43' },
+    content: '周末想去市区吃那家很火的酸菜鱼，有没有人一起！AA，大概人均60，吃完还可以逛逛。',
+    waitingCount: 2,
+    joinedAvatars: [
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
+      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=240&q=80'
+    ],
+    joined: false,
+    restaurant: {
+      name: '市区太二酸菜鱼',
+      foodType: '川菜',
+      campus: '市区',
+      location: '解放路步行街 3 楼',
+      avgPrice: 6000,
+      rating: 4.8,
+      tags: ['网红店', '酸菜鱼', '适合多人'],
+      description: '市区口碑很好的酸菜鱼店，人均 60 左右。建议 3-4 人成行，能点多几道菜。周末排队约 20 分钟，可提前取号。',
+      image: img.pizza
+    }
+  }
+]
 
 function render(page) {
-  screen.innerHTML = pages[page]
+  const pageKey = page.startsWith && page.startsWith('find-detail:') ? 'find-detail' : page
+  screen.innerHTML = pages[pageKey]
   currentPage = page
   screen.scrollTop = 0
   buttons.forEach((button) => button.classList.toggle('active', button.dataset.page === page))
+  if (page === 'find') renderFindPosts()
+  if (page.startsWith && page.startsWith('find-detail:')) renderFindDetail(page)
   renderCreatedMeals()
   bindPageActions()
 }
@@ -227,6 +440,63 @@ function bindPageActions() {
 
   const reviewSubmit = screen.querySelector('[data-submit-review]')
   if (reviewSubmit) reviewSubmit.addEventListener('click', submitReviewFromForm)
+
+  // --- find page interactions ---
+  screen.querySelectorAll('[data-find-category]').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      screen.querySelectorAll('[data-find-category]').forEach((p) => p.classList.remove('active'))
+      pill.classList.add('active')
+      activeFindCategory = pill.dataset.findCategory
+      renderFindPosts()
+    })
+  })
+
+  screen.querySelectorAll('[data-find-join]').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation()
+      const postId = Number(btn.dataset.findJoin)
+      const post = findPosts.find((p) => p.id === postId)
+      if (post) {
+        post.joined = !post.joined
+        renderFindPosts()
+        toast(post.joined ? '已发送约饭请求' : '已取消约饭请求')
+      }
+    })
+  })
+
+  const fabBtn = screen.querySelector('[data-fab-post]')
+  if (fabBtn) {
+    fabBtn.addEventListener('click', () => navigate('publish'))
+  }
+
+  // --- find-detail interactions ---
+  screen.querySelectorAll('[data-find-detail]').forEach((card) => {
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('[data-find-join]')) return
+      previousPage = 'find'
+      render(`find-detail:${card.dataset.findDetail}`)
+    })
+  })
+
+  screen.querySelectorAll('[data-find-detail-join]').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation()
+      const postId = Number(btn.dataset.findDetailJoin)
+      const post = findPosts.find((p) => p.id === postId)
+      if (post) {
+        post.joined = !post.joined
+        renderFindDetail(`find-detail:${postId}`)
+        toast(post.joined ? '已发送约饭请求' : '已取消约饭请求')
+      }
+    })
+  })
+
+  screen.querySelectorAll('[data-find-detail-review]').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation()
+      toast('评价功能即将上线')
+    })
+  })
 }
 
 function navigate(page) {
@@ -243,6 +513,126 @@ function requireLoginThen(page) {
   navigate(page)
 }
 
+function renderFindDetail(page) {
+  const postId = Number(page.split(':')[1])
+  const post = findPosts.find((p) => p.id === postId)
+  if (!post) return
+
+  const target = screen.querySelector('#find-detail-content')
+  if (!target) return
+
+  const author = post.author
+  const restaurant = post.restaurant
+
+  target.innerHTML = `
+    <button class="back-link" data-back>‹ 找人</button>
+
+    <!-- 帖子内容区域 -->
+    <div class="detail-card">
+      <div class="detail-header">
+        <img class="detail-avatar" src="${author.avatar}">
+        <div class="detail-user-info">
+          <div class="detail-user-row">
+            <span class="detail-username">${author.name}</span>
+            <span class="detail-level">Lv.${author.level}</span>
+            <span class="detail-role" style="color:${author.roleColor || '#D88BB3'}">${author.role}</span>
+          </div>
+          <span class="detail-time">${post.time} 发布</span>
+        </div>
+      </div>
+      <span class="detail-category" style="border-color:${post.category.color};color:${post.category.color}">${post.category.name}</span>
+      <p class="detail-content">${post.content}</p>
+      <div class="detail-meta">
+        <span>等 <strong>${post.waitingCount}</strong> 人</span>
+        ${post.joinedAvatars.length ? `<span style="margin-left:16px">已加入：${post.joinedAvatars.map(av => `<img class="detail-mini-avatar" src="${av}">`).join('')}</span>` : ''}
+      </div>
+    </div>
+
+    <!-- 发起人信息卡片 -->
+    <div class="detail-card">
+      <div class="section-title">发起人</div>
+      <div class="author-profile">
+        <div class="author-top">
+          <img class="author-big-avatar" src="${author.avatar}">
+          <div class="author-summary">
+            <div class="author-name-row">
+              <strong>${author.name}</strong>
+              <span class="author-level">Lv.${author.level}</span>
+              <span class="author-role" style="color:${author.roleColor || '#D88BB3'}">${author.role}</span>
+            </div>
+            <div class="detail-tags">
+              ${author.tasteTags.map(t => `<span class="detail-tag taste">${t}</span>`).join('')}
+              ${author.personalityTags.map(t => `<span class="detail-tag personality">${t}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+
+        <p class="author-desc">${author.desc}</p>
+
+        <div class="credit-section">
+          <div class="credit-score">
+            <span class="credit-label">信用分</span>
+            <span class="credit-value high">${author.creditScore}</span>
+            <span class="credit-sub">信用优秀</span>
+          </div>
+          <div class="credit-stats">
+            <div class="credit-stat">
+              <span class="credit-stat-num">${author.mealCount}</span>
+              <span class="credit-stat-label">历史约饭</span>
+            </div>
+            <div class="credit-stat">
+              <span class="credit-stat-num">${author.reviewCount}</span>
+              <span class="credit-stat-label">获得评价</span>
+            </div>
+            <div class="credit-stat">
+              <span class="credit-stat-num">0</span>
+              <span class="credit-stat-label">爽约次数</span>
+            </div>
+          </div>
+          <div class="credit-info-row">
+            <span class="credit-item"><strong>校区</strong> ${author.campus}</span>
+            <span class="credit-item"><strong>预算</strong> ¥${author.budgetPreference}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 餐厅信息卡片 -->
+    ${restaurant ? `
+    <div class="detail-card">
+      <div class="section-title">推荐餐厅</div>
+      <div class="restaurant-card-detail">
+        <img class="restaurant-hero-img" src="${restaurant.image || img.salad}">
+        <div class="restaurant-info-detail">
+          <div class="restaurant-name-row">
+            <strong>${restaurant.name}</strong>
+            <span class="detail-category" style="border-color:#FF9F43;color:#FF9F43">${restaurant.foodType}</span>
+          </div>
+          <div class="restaurant-meta">
+            <span>⭐ ${restaurant.rating}</span>
+            <span>📍 ${restaurant.location}</span>
+            <span>💰 ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</span>
+          </div>
+          <div class="detail-tags">
+            ${restaurant.tags.map(t => `<span class="detail-tag rest">${t}</span>`).join('')}
+          </div>
+          <p class="restaurant-desc">${restaurant.description}</p>
+        </div>
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- 底部操作 -->
+    <div class="detail-bottom-actions">
+      <button class="detail-btn secondary" data-find-detail-review="${post.id}">评价</button>
+      <button class="detail-btn primary" id="detail-join-btn" data-find-detail-join="${post.id}">${post.joined ? '已约' : '约 TA'}</button>
+    </div>
+
+    <!-- 分割间距 -->
+    <div style="height:24px"></div>
+  `
+}
+
 function renderCreatedMeals() {
   const target = screen.querySelector('#created-meals')
   if (!target || createdMeals.length === 0) return
@@ -255,6 +645,48 @@ function renderCreatedMeals() {
         <div class="muted">${meal.place} · ${meal.time} · ${meal.budget}</div>
         <span class="tag">${meal.people} 人局</span><span class="tag">新发布</span>
         <div class="quote">${meal.note || '还没有补充说明，等饭搭子来聊。'}</div>
+      </div>
+    </div>
+  `).join('')
+}
+
+function renderFindPosts() {
+  const target = screen.querySelector('#find-post-list')
+  if (!target) return
+
+  const filtered = activeFindCategory === '全部'
+    ? findPosts
+    : findPosts.filter(p => p.category.name === activeFindCategory)
+
+  if (filtered.length === 0) {
+    target.innerHTML = `<div class="empty-state"><div class="empty-icon">🍽</div><p class="muted">该分类下暂无找饭友帖</p></div>`
+    return
+  }
+
+  target.innerHTML = filtered.map(post => `
+    <div class="post-card" data-find-detail="${post.id}">
+      <div class="post-header">
+        <img class="post-avatar" src="${post.author.avatar}">
+        <div class="post-user-info">
+          <div class="post-user-row">
+            <span class="post-username">${post.author.name}</span>
+            <span class="post-level">Lv.${post.author.level}</span>
+            <span class="post-role" style="color:${post.author.roleColor || '#D88BB3'}">${post.author.role}</span>
+          </div>
+          <span class="post-time">${post.time}</span>
+        </div>
+      </div>
+      <div class="post-body">
+        <span class="post-category" style="border-color:${post.category.color};color:${post.category.color}">${post.category.name}</span>
+        <p class="post-content">${post.content}</p>
+      </div>
+      <div class="post-footer">
+        <span class="post-waiting">等${post.waitingCount}人</span>
+        <div class="post-avatars">
+          ${post.joinedAvatars.map(av => `<img class="post-joined-avatar" src="${av}">`).join('')}
+        </div>
+        <div class="post-spacer"></div>
+        <button class="post-join${post.joined ? ' joined' : ''}" data-find-join="${post.id}">${post.joined ? '已约' : '+'}</button>
       </div>
     </div>
   `).join('')
@@ -307,6 +739,11 @@ function toast(message) {
 function getTasteLabel() {
   const tags = authSession?.profile?.tasteTags || []
   return tags.length ? `${tags.join('、')} ＋` : '你的口味标签 ＋'
+}
+
+function getUserInitial() {
+  const nickname = authSession?.user?.nickname?.trim()
+  return nickname ? Array.from(nickname)[0] : '饭'
 }
 
 function splitTags(text) {
