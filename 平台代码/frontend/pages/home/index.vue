@@ -26,10 +26,12 @@
       <view class="section-title">今日饭局</view>
       <view class="muted section-desc">从校园真实约饭里挑出来，好吃和合拍都重要</view>
       <view class="pill-row filter-row">
-        <view class="pill active">全校⌄</view>
-        <view class="pill">品类⌄</view>
-        <view class="pill">时间⌄</view>
-        <view class="pill">筛选⌄</view>
+        <view
+          v-for="filter in filters"
+          :key="filter"
+          :class="activeFilter === filter ? 'pill active' : 'pill'"
+          @tap="activeFilter = filter"
+        >{{ filter }}</view>
       </view>
     </view>
 
@@ -39,7 +41,10 @@
         <view class="meal-content">
           <view class="meal-title-row">
             <view class="meal-title">{{ meal.title }}</view>
-            <view class="want-button">♡</view>
+            <view
+              :class="wantedMealIds.includes(meal.id) ? 'want-button active' : 'want-button'"
+              @tap.stop="toggleWant(meal.id)"
+            >♡</view>
           </view>
           <view class="meal-meta">{{ meal.location }} · {{ meal.distance }} · {{ meal.budget }}</view>
           <view class="tag-row">
@@ -83,6 +88,9 @@ export default {
           image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80'
         }
       ],
+      filters: ['全校⌄', '品类⌄', '时间⌄', '筛选⌄'],
+      activeFilter: '全校⌄',
+      wantedMealIds: [2],
       meals: [
         {
           id: 1,
@@ -114,6 +122,16 @@ export default {
   methods: {
     goDetail(id) {
       uni.navigateTo({ url: `/pages/meal-detail/index?id=${id}` })
+    },
+    toggleWant(id) {
+      if (this.wantedMealIds.includes(id)) {
+        this.wantedMealIds = this.wantedMealIds.filter((mealId) => mealId !== id)
+        uni.showToast({ title: '已取消想去', icon: 'none' })
+        return
+      }
+
+      this.wantedMealIds.push(id)
+      uni.showToast({ title: '已加入想去', icon: 'success' })
     }
   }
 }

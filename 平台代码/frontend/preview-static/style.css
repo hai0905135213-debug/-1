@@ -19,6 +19,11 @@ button:active {
   transform: scale(0.98);
 }
 
+button:disabled {
+  opacity: 0.68;
+  cursor: default;
+}
+
 .shell {
   min-height: 100vh;
   display: flex;
@@ -337,6 +342,11 @@ button:active {
   background: #fff;
 }
 
+.full-width {
+  width: 100%;
+  margin-top: 12px;
+}
+
 .quiet {
   display: inline-flex;
   align-items: center;
@@ -397,6 +407,36 @@ button:active {
   border: 1px solid #e7e7ec;
   border-radius: 12px;
   font-size: 15px;
+}
+
+.form label {
+  display: block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #5f6069;
+}
+
+.rating-line {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+
+.star {
+  width: 34px;
+  height: 34px;
+  border-radius: 17px;
+  background: #f7f7f8;
+  color: #c8c9d0;
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.star.active {
+  background: #fff7bd;
+  color: #08091f;
+  border: 1px solid #ffe733;
 }
 
 .profile-hero {
@@ -474,4 +514,28 @@ button:active {
 .tabbar button[data-page="publish"].active span {
   background: #ffe733;
   border-color: #ffe733;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 76px;
+  transform: translateX(-50%) translateY(12px);
+  max-width: 300px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  background: rgba(8, 9, 31, 0.9);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 1000;
+  box-shadow: 0 12px 30px rgba(8, 9, 31, 0.22);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }

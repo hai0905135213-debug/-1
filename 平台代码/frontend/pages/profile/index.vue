@@ -2,7 +2,7 @@
   <view class="page-flush profile-page">
     <view class="profile-hero">
       <view class="profile-tools">
-        <text>⚙</text>
+        <text @tap="goLogin">⚙</text>
         <view>
           <text>♡</text>
           <text class="tool-gap">↗</text>
@@ -22,11 +22,11 @@
           <view class="stat-num">8</view>
           <view class="stat-label">好评与想去</view>
         </view>
-        <button class="edit-btn">编辑资料</button>
+        <button class="edit-btn" @tap="editProfile">编辑资料</button>
       </view>
 
-      <view class="profile-say">说点什么吧...</view>
-      <view class="taste-chip">你的口味标签 ＋</view>
+      <view class="profile-say">{{ currentUser ? `${currentUser.nickname}，今天吃什么？` : '说点什么吧...' }}</view>
+      <view class="taste-chip" @tap="editTasteTags">{{ tasteLabel }}</view>
       <view class="profile-mascot">饭</view>
     </view>
 
@@ -39,10 +39,12 @@
       </view>
 
       <view class="profile-tabs">
-        <view class="profile-tab active">去过</view>
-        <view class="profile-tab">想去</view>
-        <view class="profile-tab">动态</view>
-        <view class="profile-tab">收藏</view>
+        <view
+          v-for="tab in tabs"
+          :key="tab"
+          :class="activeTab === tab ? 'profile-tab active' : 'profile-tab'"
+          @tap="activeTab = tab"
+        >{{ tab }}</view>
       </view>
 
       <view class="sort-row">
@@ -53,7 +55,7 @@
       <view class="profile-empty">
         <view class="empty-illustration small">☕</view>
         <view>哪次饭局让你印象深刻</view>
-        <button class="button-primary mini-btn">发布评价</button>
+        <button class="button-primary mini-btn" @tap="publishReview">发布评价</button>
       </view>
     </view>
   </view>
@@ -61,9 +63,39 @@
 
 <script>
 export default {
+  data() {
+    return {
+      tabs: ['去过', '想去', '动态', '收藏'],
+      activeTab: '去过',
+      currentUser: null,
+      currentProfile: null
+    }
+  },
+  onShow() {
+    this.currentUser = uni.getStorageSync('currentUser') || null
+    this.currentProfile = uni.getStorageSync('currentProfile') || null
+  },
+  computed: {
+    tasteLabel() {
+      const tags = this.currentProfile?.tasteTags || []
+      return tags.length ? `${tags.join('、')} ＋` : '你的口味标签 ＋'
+    }
+  },
   methods: {
+    goLogin() {
+      uni.navigateTo({ url: '/pages/login/index' })
+    },
     goCreate() {
       uni.switchTab({ url: '/pages/create-meal/index' })
+    },
+    editProfile() {
+      uni.navigateTo({ url: '/pages/edit-profile/index' })
+    },
+    editTasteTags() {
+      uni.navigateTo({ url: '/pages/edit-profile/index' })
+    },
+    publishReview() {
+      uni.navigateTo({ url: '/pages/create-review/index?mealId=1&targetUserId=1' })
     }
   }
 }

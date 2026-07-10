@@ -7,6 +7,24 @@
       }
     },
     {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/edit-profile/index",
+      "style": {
+        "navigationBarTitleText": "编辑资料"
+      }
+    },
+    {
+      "path": "pages/create-review/index",
+      "style": {
+        "navigationBarTitleText": "发布评价"
+      }
+    },
+    {
       "path": "pages/create-meal/index",
       "style": {
         "navigationBarTitleText": "发布饭局"

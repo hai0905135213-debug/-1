@@ -6,27 +6,24 @@
     </view>
 
     <view class="rank-tabs">
-      <view class="rank-tab active">
-        <view class="tab-icon blue">⚑</view>
-        <view>去过</view>
-      </view>
-      <view class="rank-tab">
-        <view class="tab-icon red">♥</view>
-        <view>想去</view>
-      </view>
-      <view class="rank-tab">
-        <view class="tab-icon yellow">●</view>
-        <view>好评</view>
+      <view
+        v-for="tab in rankTabs"
+        :key="tab.label"
+        :class="activeRankTab === tab.label ? 'rank-tab active' : 'rank-tab'"
+        @tap="activeRankTab = tab.label"
+      >
+        <view :class="'tab-icon ' + tab.color">{{ tab.icon }}</view>
+        <view>{{ tab.label }}</view>
       </view>
     </view>
 
     <view class="pill-row category-row">
-      <view class="pill active">全部</view>
-      <view class="pill">食堂</view>
-      <view class="pill">夜宵</view>
-      <view class="pill">咖啡</view>
-      <view class="pill">清淡</view>
-      <view class="pill">能聊</view>
+      <view
+        v-for="category in categories"
+        :key="category"
+        :class="activeCategory === category ? 'pill active' : 'pill'"
+        @tap="activeCategory = category"
+      >{{ category }}</view>
     </view>
 
     <view class="rank-list">
@@ -50,6 +47,14 @@
 export default {
   data() {
     return {
+      rankTabs: [
+        { label: '去过', icon: '⚑', color: 'blue' },
+        { label: '想去', icon: '♥', color: 'red' },
+        { label: '好评', icon: '●', color: 'yellow' }
+      ],
+      categories: ['全部', '食堂', '夜宵', '咖啡', '清淡', '能聊'],
+      activeRankTab: '去过',
+      activeCategory: '全部',
       people: [
         {
           id: 1,

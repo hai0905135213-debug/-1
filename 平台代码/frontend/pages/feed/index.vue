@@ -1,16 +1,23 @@
 <template>
   <view class="page feed-page">
     <view class="feed-tabs">
-      <view class="feed-tab muted">关注</view>
-      <view class="feed-tab active">推荐</view>
+      <view
+        :class="activeMainTab === '关注' ? 'feed-tab active' : 'feed-tab muted'"
+        @tap="activeMainTab = '关注'"
+      >关注</view>
+      <view
+        :class="activeMainTab === '推荐' ? 'feed-tab active' : 'feed-tab muted'"
+        @tap="activeMainTab = '推荐'"
+      >推荐</view>
     </view>
 
     <view class="pill-row scene-row">
-      <view class="pill active">全部</view>
-      <view class="pill">约饭</view>
-      <view class="pill">工作餐</view>
-      <view class="pill">团建</view>
-      <view class="pill">夜宵</view>
+      <view
+        v-for="scene in scenes"
+        :key="scene"
+        :class="activeScene === scene ? 'pill active' : 'pill'"
+        @tap="activeScene = scene"
+      >{{ scene }}</view>
     </view>
 
     <view class="feed-card" v-for="post in posts" :key="post.id">
@@ -30,7 +37,10 @@
           <view class="muted">{{ post.location }} · {{ post.distance }}</view>
         </view>
         <view class="want-box">
-          <view class="want-button">♡</view>
+          <view
+            :class="wantedPostIds.includes(post.id) ? 'want-button active' : 'want-button'"
+            @tap="toggleWant(post.id)"
+          >♡</view>
           <text>想去</text>
         </view>
       </view>
@@ -76,7 +86,23 @@ export default {
           avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
           image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=80'
         }
-      ]
+      ],
+      activeMainTab: '推荐',
+      scenes: ['全部', '约饭', '工作餐', '团建', '夜宵'],
+      activeScene: '全部',
+      wantedPostIds: []
+    }
+  },
+  methods: {
+    toggleWant(id) {
+      if (this.wantedPostIds.includes(id)) {
+        this.wantedPostIds = this.wantedPostIds.filter((postId) => postId !== id)
+        uni.showToast({ title: '已取消想去', icon: 'none' })
+        return
+      }
+
+      this.wantedPostIds.push(id)
+      uni.showToast({ title: '已加入想去', icon: 'success' })
     }
   }
 }

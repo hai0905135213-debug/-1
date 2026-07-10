@@ -4,7 +4,7 @@
       <image class="hero-image food-image" :src="meal.heroImage" mode="aspectFill" />
       <view class="hero-nav">
         <view class="icon-button dark" @tap="goBack">‹</view>
-        <view class="icon-button dark">↗</view>
+        <view class="icon-button dark" @tap="shareMeal">↗</view>
       </view>
       <view class="hero-quote">
         <image class="hero-avatar" :src="meal.hostAvatar" mode="aspectFill" />
@@ -37,8 +37,8 @@
           <view class="muted">距离你 {{ meal.distance }} 步行 {{ meal.walkTime }}</view>
         </view>
         <view class="quick-actions">
-          <view class="icon-button">⌖</view>
-          <view class="icon-button yellow">☎</view>
+          <view class="icon-button" @tap="openMap">⌖</view>
+          <view class="icon-button yellow" @tap="callHost">☎</view>
         </view>
       </view>
 
@@ -70,8 +70,8 @@
     </view>
 
     <view class="bottom-actions">
-      <button class="button-secondary action-btn">评价</button>
-      <button class="button-primary action-btn" @tap="joinMeal">想去/加入</button>
+      <button class="button-secondary action-btn" @tap="reviewMeal">评价</button>
+      <button class="button-primary action-btn" @tap="joinMeal">{{ joined ? '已加入' : '想去/加入' }}</button>
     </view>
   </view>
 </template>
@@ -99,6 +99,7 @@ export default {
         hostAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
         heroImage: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1000&q=80'
       },
+      joined: false,
       dishes: [
         {
           id: 1,
@@ -129,7 +130,20 @@ export default {
       uni.navigateBack()
     },
     joinMeal() {
+      this.joined = true
       uni.showToast({ title: '已加入饭局', icon: 'success' })
+    },
+    reviewMeal() {
+      uni.navigateTo({ url: `/pages/create-review/index?mealId=${this.meal.id || 1}&targetUserId=1` })
+    },
+    shareMeal() {
+      uni.showToast({ title: '已复制分享链接', icon: 'success' })
+    },
+    openMap() {
+      uni.showToast({ title: '地图导航下一步接入', icon: 'none' })
+    },
+    callHost() {
+      uni.showToast({ title: '联系发起人下一步接入', icon: 'none' })
     }
   }
 }
