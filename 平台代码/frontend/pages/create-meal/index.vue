@@ -12,7 +12,7 @@
       </view>
       <view class="field">
         <text class="label">时间</text>
-        <input class="input" v-model="form.mealTime" placeholder="例如：今天 18:30" />
+        <input class="input" v-model="form.mealTime" placeholder="例如：2026-07-10 18:30" />
       </view>
       <view class="field">
         <text class="label">地点</text>
@@ -30,15 +30,33 @@
         <text class="label">补充说明</text>
         <textarea class="textarea" v-model="form.note" placeholder="口味、忌口、聊天偏好等" />
       </view>
-      <button class="button-primary" @tap="submit">发布饭局</button>
+      <button class="button-primary" @tap="submit">{{ submitting ? '发布中...' : '发布饭局' }}</button>
     </view>
   </view>
 </template>
 
 <script>
+import { authApi, mealApi } from '../../services/api'
+
+function parseBudget(text) {
+  const numbers = String(text || '').match(/\d+/g) || []
+  return {
+    budgetMin: Number(numbers[0] || 0),
+    budgetMax: Number(numbers[1] || numbers[0] || 0)
+  }
+}
+
+function parseMealTime(text) {
+  const normalized = String(text || '').trim().replace(' ', 'T')
+  const date = new Date(normalized)
+  if (!Number.isNaN(date.getTime())) return date.toISOString()
+  return ''
+}
+
 export default {
   data() {
     return {
+      submitting: false,
       form: {
         title: '',
         mealTime: '',
@@ -50,8 +68,42 @@ export default {
     }
   },
   methods: {
-    submit() {
-      uni.showToast({ title: '饭局已创建', icon: 'success' })
+    async submit() {
+      if (!authApi.token()) {
+        uni.navigateTo({ url: '/pages/login/index' })
+        return
+      }
+
+      const mealTime = parseMealTime(this.form.mealTime)
+      if (!this.form.title.trim() || !mealTime || !this.form.location.trim() || !this.form.maxPeople) {
+        uni.showToast({ title: '标题、时间、地点、人数要填好', icon: 'none' })
+        return
+      }
+
+      this.submitting = true
+      try {
+        const budget = parseBudget(this.form.budget)
+        const result = await mealApi.create({
+          title: this.form.title.trim(),
+          foodType: this.form.title.trim(),
+          mealTime,
+          place: this.form.location.trim(),
+          campus: '主校区',
+          maxPeople: Number(this.form.maxPeople),
+          ...budget,
+          chatMode: 'balanced',
+          description: this.form.note.trim()
+        })
+
+        uni.showToast({ title: '饭局已创建', icon: 'success' })
+        setTimeout(() => {
+          uni.navigateTo({ url: `/pages/meal-detail/index?id=${result.meal.id}` })
+        }, 400)
+      } catch (error) {
+        uni.showToast({ title: error.message || '发布失败', icon: 'none' })
+      } finally {
+        this.submitting = false
+      }
     }
   }
 }

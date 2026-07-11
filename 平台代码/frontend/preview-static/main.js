@@ -30,9 +30,7 @@ const pages = {
         <p class="muted">从校园真实约饭里挑出来，好吃和合拍都重要</p>
         <div class="pills" data-choice-group><button class="pill active">全校⌄</button><button class="pill">品类⌄</button><button class="pill">时间⌄</button><button class="pill">筛选⌄</button></div>
       </section>
-      <div id="created-meals"></div>
-      <div class="meal" data-detail><img src="${img.noodle}"><div><h3>今晚一食堂吃面，缺 2 人 <button class="want-btn" data-want>♡</button></h3><div class="muted">一食堂二楼 · 300m · ¥20/人</div><span class="tag">3 人想去</span><span class="tag">米粉面馆</span><div class="quote">同学A：想找吃饭节奏差不多的，轻松聊天就行。</div></div></div>
-      <div class="meal"><img src="${img.spicy}"><div><h3>校门口麻辣烫拼桌 <button class="want-btn active" data-want>♡</button></h3><div class="muted">东门小吃街 · 800m · ¥30/人</div><span class="tag">5 人推荐</span><span class="tag">麻辣烫</span><div class="quote">下课以后去，最好能凑到 3 到 4 个人。</div></div></div>
+      <div id="meal-list"><div class="empty"><p>饭局加载中...</p></div></div>
     </div>
   `,
   find: `
@@ -86,14 +84,25 @@ const pages = {
   profile: `
     <div>
       <div class="profile-hero"><div class="stats"><div><strong>3</strong><br><span>关注</span></div><div><strong>2</strong><br><span>饭搭子</span></div><div><strong>8</strong><br><span>好评与想去</span></div><button class="edit" data-go-edit>编辑资料</button></div><h2>${authSession ? `${authSession.user.nickname}，今天吃什么？` : '说点什么吧...'}</h2><button class="quiet" data-go-edit>${getTasteLabel()}</button></div>
-      <div class="profile-panel"><div class="section-title">我的饭局</div><div class="empty"><div style="font-size:56px">🍽</div><p>还没有发起饭局，快去创建一个吧</p><button class="primary" data-go-publish>新建饭局</button></div><div class="pills" data-choice-group><button class="pill active">去过</button><button class="pill">想去</button><button class="pill">动态</button><button class="pill">收藏</button></div><div class="empty"><div style="font-size:48px">☕</div><p>哪次饭局让你印象深刻</p><button class="primary" data-go-review>发布评价</button></div>${authSession ? '' : '<button class="secondary full-width" data-go-login>登录账号</button>'}</div>
+      <div class="profile-panel"><div class="section-title">我的饭局</div><div class="empty"><div style="font-size:56px">🍽</div><p>查看你发起和加入的饭局</p><button class="primary" data-go-my-meals>我的饭局</button><button class="secondary full-width" data-go-publish>新建饭局</button></div><div class="pills" data-choice-group><button class="pill active">去过</button><button class="pill">想去</button><button class="pill">动态</button><button class="pill">收藏</button></div><div class="empty"><div style="font-size:48px">☕</div><p>哪次饭局让你印象深刻</p><button class="primary" data-go-review>发布评价</button></div>${authSession ? '' : '<button class="secondary full-width" data-go-login>登录账号</button>'}</div>
     </div>
   `,
   detail: `
     <div>
-      <div style="position:relative"><img class="hero" src="${img.noodle}"><button class="icon-btn dark" data-back style="position:absolute;left:16px;top:18px">‹</button><button class="icon-btn dark" data-toast="已复制分享链接" style="position:absolute;right:16px;top:18px">↗</button></div>
-      <div class="detail-panel"><div class="detail-title">一食堂牛肉面饭局</div><span class="tag">值得一起去吃</span><span class="tag">第 2 校园饭局</span><p>米粉面馆 ｜ 一食堂二楼 ｜ ¥20/人</p><hr><p><strong>可加入 今天 18:20</strong><br><span class="muted">今晚饭点 · 2/4 人</span></p><p><strong>一食堂二楼靠窗区域 ›</strong><br><span class="muted">距离你 300m 步行 4 分钟</span></p><div class="section-title">推荐吃法</div><div class="dishes"><div class="dish"><img src="${img.noodle}">番茄牛肉面</div><div class="dish"><img src="${img.spicy}">炸猪排</div><div class="dish"><img src="${img.pizza}">辣肉臊子</div></div><div class="section-title">饭搭子评价</div><div class="quote">面汤稳定，排队不算久。第一次和饭搭子见面选这里比较稳。</div></div>
+      <div id="detail-content"><div class="empty"><p>饭局详情加载中...</p></div></div>
       <div class="bottom-actions"><button class="secondary" data-go-review>评价</button><button class="primary" data-join>想去/加入</button></div>
+    </div>
+  `,
+  myMeals: `
+    <div class="page">
+      <button class="back-link" data-back>‹ 我的</button>
+      <div class="title">我的饭局</div>
+      <p class="muted">这里会从后端读取你发起和加入的饭局。</p>
+      <div class="pills">
+        <button class="pill active" data-my-meal-tab="created">我发起的</button>
+        <button class="pill" data-my-meal-tab="joined">我加入的</button>
+      </div>
+      <div id="my-meal-list"><div class="empty"><p>饭局加载中...</p></div></div>
     </div>
   `,
   login: `
@@ -135,11 +144,14 @@ const pages = {
 
 const screen = document.querySelector('#screen')
 const buttons = document.querySelectorAll('.tabbar button')
-const createdMeals = []
 let previousPage = 'home'
 let currentPage = 'home'
 let reviewRating = 5
 let activeFindCategory = '全部'
+let activeMealId = 1
+let mealsCache = []
+let myMealsCache = { created: [], joined: [] }
+let myMealsTab = 'created'
 
 const findPosts = [
   {
@@ -337,9 +349,15 @@ function render(page) {
   currentPage = page
   screen.scrollTop = 0
   buttons.forEach((button) => button.classList.toggle('active', button.dataset.page === page))
+  if (page === 'home') loadPreviewMeals()
+  if (page === 'detail') loadPreviewMealDetail(activeMealId)
+  if (page === 'myMeals') loadPreviewMyMeals()
+  if (page === 'review') {
+    const reviewMealInput = screen.querySelector('#review-meal')
+    if (reviewMealInput) reviewMealInput.value = activeMealId || 1
+  }
   if (page === 'find') renderFindPosts()
   if (page.startsWith && page.startsWith('find-detail:')) renderFindDetail(page)
-  renderCreatedMeals()
   bindPageActions()
 }
 
@@ -377,6 +395,14 @@ function bindPageActions() {
     })
   }
 
+  screen.querySelectorAll('[data-meal-detail]').forEach((card) => {
+    card.addEventListener('click', () => {
+      activeMealId = Number(card.dataset.mealDetail)
+      previousPage = currentPage
+      render('detail')
+    })
+  })
+
   const backButton = screen.querySelector('[data-back]')
   if (backButton) {
     backButton.addEventListener('click', () => render(previousPage || 'home'))
@@ -394,11 +420,7 @@ function bindPageActions() {
 
   const joinButton = screen.querySelector('[data-join]')
   if (joinButton) {
-    joinButton.addEventListener('click', () => {
-      joinButton.textContent = '已加入'
-      joinButton.disabled = true
-      toast('已加入饭局')
-    })
+    joinButton.addEventListener('click', joinActiveMeal)
   }
 
   const loginButton = screen.querySelector('[data-go-login]')
@@ -409,6 +431,17 @@ function bindPageActions() {
 
   const reviewButton = screen.querySelector('[data-go-review]')
   if (reviewButton) reviewButton.addEventListener('click', () => requireLoginThen('review'))
+
+  const myMealsButton = screen.querySelector('[data-go-my-meals]')
+  if (myMealsButton) myMealsButton.addEventListener('click', () => requireLoginThen('myMeals'))
+
+  screen.querySelectorAll('[data-my-meal-tab]').forEach((button) => {
+    button.addEventListener('click', () => {
+      myMealsTab = button.dataset.myMealTab
+      screen.querySelectorAll('[data-my-meal-tab]').forEach((item) => item.classList.toggle('active', item === button))
+      renderMyMeals()
+    })
+  })
 
   const loginSubmit = screen.querySelector('[data-login]')
   if (loginSubmit) loginSubmit.addEventListener('click', loginFromForm)
@@ -633,21 +666,99 @@ function renderFindDetail(page) {
   `
 }
 
-function renderCreatedMeals() {
-  const target = screen.querySelector('#created-meals')
-  if (!target || createdMeals.length === 0) return
+async function loadPreviewMeals() {
+  const target = screen.querySelector('#meal-list')
+  if (!target) return
 
-  target.innerHTML = createdMeals.map((meal) => `
-    <div class="meal">
-      <img src="${img.salad}">
+  try {
+    const data = await apiRequest('/meals?onlyAvailable=true')
+    mealsCache = data.items || []
+    if (mealsCache.length && !activeMealId) activeMealId = mealsCache[0].id
+    target.innerHTML = mealsCache.length
+      ? mealsCache.map(renderMealCard).join('')
+      : `<div class="empty"><div style="font-size:48px">🍽</div><p>现在还没有可加入的饭局</p><button class="primary" data-go-publish>发布第一场</button></div>`
+    bindPageActions()
+  } catch (error) {
+    target.innerHTML = `<div class="empty"><p>${error.message}</p><button class="secondary full-width" data-go-publish>去发布饭局</button></div>`
+    bindPageActions()
+  }
+}
+
+function renderMealCard(meal) {
+  return `
+    <div class="meal" data-meal-detail="${meal.id}">
+      <img src="${getMealImage(meal.foodType)}">
       <div>
-        <h3>${meal.title} <button class="want-btn active" data-want>♡</button></h3>
-        <div class="muted">${meal.place} · ${meal.time} · ${meal.budget}</div>
-        <span class="tag">${meal.people} 人局</span><span class="tag">新发布</span>
-        <div class="quote">${meal.note || '还没有补充说明，等饭搭子来聊。'}</div>
+        <h3>${meal.title} <button class="want-btn" data-want>♡</button></h3>
+        <div class="muted">${meal.place} · ${formatMealTime(meal.mealTime)} · ${formatBudget(meal)}</div>
+        <span class="tag">${meal.currentPeople || 1}/${meal.maxPeople} 人</span><span class="tag">${meal.foodType || '约饭'}</span>
+        <div class="quote">${meal.description || `${meal.creator?.nickname || '同学'} 发起了这场饭局。`}</div>
       </div>
     </div>
-  `).join('')
+  `
+}
+
+async function loadPreviewMealDetail(id) {
+  const target = screen.querySelector('#detail-content')
+  if (!target) return
+
+  try {
+    const data = await apiRequest(`/meals/${id || activeMealId}`)
+    const meal = data.meal
+    activeMealId = meal.id
+    target.innerHTML = renderMealDetail(meal)
+
+    const joinButton = screen.querySelector('[data-join]')
+    if (joinButton) {
+      const joined = Boolean(meal.participants?.some((item) => item.id === authSession?.user?.id))
+      joinButton.textContent = joined ? '已加入' : '想去/加入'
+      joinButton.disabled = joined
+    }
+  } catch (error) {
+    target.innerHTML = `<div class="empty"><p>${error.message}</p></div>`
+  }
+}
+
+function renderMealDetail(meal) {
+  return `
+    <div style="position:relative"><img class="hero" src="${getMealImage(meal.foodType)}"><button class="icon-btn dark" data-back style="position:absolute;left:16px;top:18px">‹</button><button class="icon-btn dark" data-toast="已复制分享链接" style="position:absolute;right:16px;top:18px">↗</button></div>
+    <div class="detail-panel">
+      <div class="detail-title">${meal.title}</div>
+      <span class="tag">值得一起去吃</span><span class="tag">${meal.foodType || '校园饭局'}</span>
+      <p>${meal.foodType || '约饭'} ｜ ${meal.place} ｜ ${formatBudget(meal)}</p>
+      <hr>
+      <p><strong>${meal.status === 'open' ? '可加入' : '已结束'} ${formatMealTime(meal.mealTime)}</strong><br><span class="muted">${meal.currentPeople || 1}/${meal.maxPeople} 人 · ${meal.chatMode || 'balanced'}</span></p>
+      <p><strong>${meal.place} ›</strong><br><span class="muted">${meal.campus || '主校区'} · 发起人 ${meal.creator?.nickname || '同学'}</span></p>
+      <div class="section-title">推荐吃法</div>
+      <div class="dishes"><div class="dish"><img src="${getMealImage(meal.foodType)}">${meal.foodType || '随便吃点'}</div><div class="dish"><img src="${img.noodle}">招牌主食</div><div class="dish"><img src="${img.salad}">饭后散步</div></div>
+      <div class="section-title">饭搭子评价</div>
+      <div class="quote">${meal.reviews?.[0]?.content || meal.description || '还没有评价，加入后可以回来补一条真实体验。'}</div>
+    </div>
+  `
+}
+
+async function loadPreviewMyMeals() {
+  const target = screen.querySelector('#my-meal-list')
+  if (!target) return
+
+  try {
+    const data = await apiRequest('/meals/mine')
+    myMealsCache = { created: data.created || [], joined: data.joined || [] }
+    renderMyMeals()
+  } catch (error) {
+    target.innerHTML = `<div class="empty"><p>${error.message}</p></div>`
+  }
+}
+
+function renderMyMeals() {
+  const target = screen.querySelector('#my-meal-list')
+  if (!target) return
+
+  const meals = myMealsCache[myMealsTab] || []
+  target.innerHTML = meals.length
+    ? meals.map(renderMealCard).join('')
+    : `<div class="empty"><div style="font-size:48px">🍽</div><p>${myMealsTab === 'created' ? '你还没发起饭局' : '你还没加入饭局'}</p><button class="primary" data-go-publish>去发布</button></div>`
+  bindPageActions()
 }
 
 function renderFindPosts() {
@@ -692,7 +803,13 @@ function renderFindPosts() {
   `).join('')
 }
 
-function createMealFromForm() {
+async function createMealFromForm() {
+  if (!authSession?.token) {
+    toast('请先登录再发布饭局')
+    navigate('login')
+    return
+  }
+
   const title = document.querySelector('#meal-title').value.trim()
   const time = document.querySelector('#meal-time').value.trim()
   const place = document.querySelector('#meal-place').value.trim()
@@ -705,16 +822,55 @@ function createMealFromForm() {
     return
   }
 
-  createdMeals.unshift({
-    title,
-    time,
-    place,
-    people,
-    budget: budget || '预算待定',
-    note
-  })
-  toast('饭局已发布')
-  render('home')
+  try {
+    const parsedBudget = parseBudgetRange(budget)
+    const data = await apiRequest('/meals', {
+      method: 'POST',
+      data: {
+        title,
+        foodType: '校园约饭',
+        mealTime: parseMealTime(time),
+        place,
+        campus: authSession?.profile?.campus || '主校区',
+        maxPeople: Number(people) || 4,
+        budgetMin: parsedBudget.min,
+        budgetMax: parsedBudget.max,
+        chatMode: 'balanced',
+        description: note || '一起轻松吃个饭。'
+      }
+    })
+    activeMealId = data.meal.id
+    toast('饭局已发布')
+    render('detail')
+  } catch (error) {
+    toast(error.message)
+  }
+}
+
+async function joinActiveMeal() {
+  if (!authSession?.token) {
+    toast('请先登录再加入饭局')
+    navigate('login')
+    return
+  }
+
+  const joinButton = screen.querySelector('[data-join]')
+  if (joinButton) {
+    joinButton.disabled = true
+    joinButton.textContent = '加入中...'
+  }
+
+  try {
+    await apiRequest(`/meals/${activeMealId}/join`, { method: 'POST' })
+    toast('已加入饭局')
+    loadPreviewMealDetail(activeMealId)
+  } catch (error) {
+    toast(error.message)
+    if (joinButton) {
+      joinButton.disabled = false
+      joinButton.textContent = '想去/加入'
+    }
+  }
 }
 
 function toast(message) {
@@ -751,6 +907,47 @@ function splitTags(text) {
     .split(/[，,\s、]+/)
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function parseBudgetRange(text) {
+  const numbers = (text.match(/\d+/g) || []).map(Number)
+  if (numbers.length >= 2) return { min: numbers[0] * 100, max: numbers[1] * 100 }
+  if (numbers.length === 1) return { min: numbers[0] * 100, max: numbers[0] * 100 }
+  return { min: 2000, max: 4000 }
+}
+
+function parseMealTime(text) {
+  const match = text.match(/(\d{1,2})[:：](\d{2})/)
+  const date = new Date()
+  if (text.includes('明天')) date.setDate(date.getDate() + 1)
+  if (match) {
+    date.setHours(Number(match[1]), Number(match[2]), 0, 0)
+  } else {
+    date.setHours(18, 30, 0, 0)
+  }
+  return date.toISOString()
+}
+
+function formatBudget(meal) {
+  const min = Math.round((meal.budgetMin || 0) / 100)
+  const max = Math.round((meal.budgetMax || 0) / 100)
+  if (min && max && min !== max) return `¥${min}-${max}/人`
+  if (max) return `¥${max}/人`
+  return '预算待定'
+}
+
+function formatMealTime(value) {
+  if (!value) return '时间待定'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+function getMealImage(foodType = '') {
+  if (/辣|川|火锅|麻辣/.test(foodType)) return img.spicy
+  if (/轻|沙拉|咖啡/.test(foodType)) return img.salad
+  if (/披萨|西|烤/.test(foodType)) return img.pizza
+  return img.noodle
 }
 
 async function apiRequest(path, options = {}) {

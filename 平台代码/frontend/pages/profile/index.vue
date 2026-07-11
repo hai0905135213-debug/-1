@@ -25,8 +25,9 @@
       <view class="section-title">我的饭局</view>
       <view class="empty-block">
         <view class="empty-illustration">🍽</view>
-        <view class="empty-title">还没有发起饭局，快去创建一个吧</view>
-        <button class="button-primary full-btn" @tap="goCreate">新建饭局</button>
+        <view class="empty-title">查看你发起和加入的饭局</view>
+        <button class="button-primary full-btn" @tap="goMyMeals">我的饭局</button>
+        <button class="button-secondary full-btn" @tap="goCreate">新建饭局</button>
       </view>
 
       <view class="profile-tabs">
@@ -75,6 +76,13 @@ export default {
     },
     goCreate() {
       uni.switchTab({ url: '/pages/create-meal/index' })
+    },
+    goMyMeals() {
+      if (!this.currentUser) {
+        uni.navigateTo({ url: '/pages/login/index' })
+        return
+      }
+      uni.navigateTo({ url: '/pages/my-meals/index' })
     },
     editProfile() {
       uni.navigateTo({ url: '/pages/edit-profile/index' })

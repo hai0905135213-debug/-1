@@ -65,6 +65,7 @@ export const mealApi = {
     return request(`/meals${query ? `?${query}` : ''}`)
   },
   detail: (id) => request(`/meals/${id}`),
+  mine: () => request('/meals/mine'),
   create: (data) => request('/meals', { method: 'POST', data }),
   join: (id) => request(`/meals/${id}/join`, { method: 'POST' }),
   leave: (id) => request(`/meals/${id}/leave`, { method: 'POST' }),

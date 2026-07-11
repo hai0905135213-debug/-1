@@ -77,6 +77,20 @@
 </template>
 
 <script>
+import { authApi, mealApi } from '../../services/api'
+
+function formatBudget(meal) {
+  if (meal.budgetMin && meal.budgetMax) return `¥${meal.budgetMin}-${meal.budgetMax}/人`
+  if (meal.budgetMax) return `¥${meal.budgetMax}/人`
+  return '预算随意'
+}
+
+function formatTime(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '时间待定'
+  return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
 export default {
   data() {
     return {
@@ -124,14 +138,55 @@ export default {
   },
   onLoad(query) {
     this.meal.id = query.id || ''
+    this.loadMeal()
   },
   methods: {
+    async loadMeal() {
+      try {
+        const result = await mealApi.detail(this.meal.id || 1)
+        const meal = result.meal
+        const currentUser = uni.getStorageSync('currentUser') || null
+        this.joined = (meal.participants || []).some((item) => item.userId === currentUser?.id)
+        this.meal = {
+          ...this.meal,
+          id: meal.id,
+          title: meal.title,
+          category: meal.foodType || '饭局',
+          location: meal.place,
+          budget: formatBudget(meal),
+          statusText: meal.status === 'open' ? '可加入' : '已成局',
+          time: formatTime(meal.mealTime),
+          people: `${meal.joinedCount}/${meal.maxPeople} 人`,
+          address: meal.place,
+          hostName: meal.creator?.nickname || '同学',
+          hostQuote: meal.description || '等一个合适饭搭子一起吃。',
+          review: meal.reviews?.[0]?.content || '暂时还没有评价，吃完这顿可以来写第一条。'
+        }
+      } catch (error) {
+        uni.showToast({ title: error.message || '详情加载失败', icon: 'none' })
+      }
+    },
     goBack() {
       uni.navigateBack()
     },
-    joinMeal() {
-      this.joined = true
-      uni.showToast({ title: '已加入饭局', icon: 'success' })
+    async joinMeal() {
+      if (!authApi.token()) {
+        uni.navigateTo({ url: '/pages/login/index' })
+        return
+      }
+
+      if (this.joined) {
+        uni.showToast({ title: '你已经加入啦', icon: 'none' })
+        return
+      }
+
+      try {
+        await mealApi.join(this.meal.id)
+        await this.loadMeal()
+        uni.showToast({ title: '已加入饭局', icon: 'success' })
+      } catch (error) {
+        uni.showToast({ title: error.message || '加入失败', icon: 'none' })
+      }
     },
     reviewMeal() {
       uni.navigateTo({ url: `/pages/create-review/index?mealId=${this.meal.id || 1}&targetUserId=1` })

@@ -211,11 +211,7 @@ export default {
       uni.navigateTo({ url: `/pages/find-detail/index?id=${post.id}` })
     },
     tapFab() {
-      uni.showToast({
-        title: '发帖功能即将上线',
-        icon: 'none',
-        duration: 1500
-      })
+      uni.switchTab({ url: '/pages/create-meal/index' })
     }
   }
 }

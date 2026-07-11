@@ -36,6 +36,8 @@
     </view>
 
     <view class="meal-list">
+      <view v-if="loading" class="muted loading-text">饭局加载中...</view>
+      <view v-else-if="meals.length === 0" class="empty-state">今天还没有可加入饭局</view>
       <view class="meal-item" v-for="meal in meals" :key="meal.id" @tap="goDetail(meal.id)">
         <image class="meal-image food-image" :src="meal.image" mode="aspectFill" />
         <view class="meal-content">
@@ -62,6 +64,26 @@
 </template>
 
 <script>
+import { mealApi } from '../../services/api'
+
+const foodImages = [
+  'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'
+]
+
+function formatBudget(meal) {
+  if (meal.budgetMin && meal.budgetMax) return `¥${meal.budgetMin}-${meal.budgetMax}/人`
+  if (meal.budgetMax) return `¥${meal.budgetMax}/人`
+  return '预算随意'
+}
+
+function formatTime(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '时间待定'
+  return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
 export default {
   data() {
     return {
@@ -91,33 +113,9 @@ export default {
       filters: ['全校⌄', '品类⌄', '时间⌄', '筛选⌄'],
       activeFilter: '全校⌄',
       currentUser: null,
+      loading: false,
       wantedMealIds: [2],
-      meals: [
-        {
-          id: 1,
-          title: '今晚一食堂吃面，缺 2 人',
-          location: '一食堂二楼',
-          distance: '300m',
-          budget: '¥20/人',
-          recommend: '3 人想去',
-          category: '米粉面馆',
-          user: '同学A',
-          comment: '想找吃饭节奏差不多的，轻松聊天就行。',
-          image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80'
-        },
-        {
-          id: 2,
-          title: '校门口麻辣烫拼桌',
-          location: '东门小吃街',
-          distance: '800m',
-          budget: '¥30/人',
-          recommend: '5 人推荐',
-          category: '麻辣烫',
-          user: '米雪食记',
-          comment: '下课以后去，最好能凑到 3 到 4 个人。',
-          image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80'
-        }
-      ]
+      meals: []
     }
   },
   computed: {
@@ -128,8 +126,31 @@ export default {
   },
   onShow() {
     this.currentUser = uni.getStorageSync('currentUser') || null
+    this.loadMeals()
   },
   methods: {
+    async loadMeals() {
+      this.loading = true
+      try {
+        const result = await mealApi.list({ onlyAvailable: true })
+        this.meals = (result.items || []).map((meal, index) => ({
+          id: meal.id,
+          title: meal.title,
+          location: meal.place,
+          distance: formatTime(meal.mealTime),
+          budget: formatBudget(meal),
+          recommend: `${meal.joinedCount || 0}/${meal.maxPeople} 人`,
+          category: meal.foodType || '饭局',
+          user: meal.creator?.nickname || '同学',
+          comment: meal.description || '等一个合适饭搭子一起吃。',
+          image: foodImages[index % foodImages.length]
+        }))
+      } catch (error) {
+        uni.showToast({ title: error.message || '饭局加载失败', icon: 'none' })
+      } finally {
+        this.loading = false
+      }
+    },
     goDetail(id) {
       uni.navigateTo({ url: `/pages/meal-detail/index?id=${id}` })
     },
@@ -318,5 +339,16 @@ export default {
   color: #7f8088;
   font-size: 25rpx;
   line-height: 1.45;
+}
+
+.loading-text,
+.empty-state {
+  padding: 48rpx 0;
+  text-align: center;
+}
+
+.empty-state {
+  color: #94959f;
+  font-size: 28rpx;
 }
 </style>
