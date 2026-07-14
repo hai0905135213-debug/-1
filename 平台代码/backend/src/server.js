@@ -20,6 +20,7 @@ import {
   refreshMealStatus,
   getReviews,
   createReview,
+  createReport,
   hasUserInMeal,
   getUserJoinedMealIds,
   getRestaurant,
@@ -96,6 +97,21 @@ const server = http.createServer(async (req, res) => {
     const reviewMatch = path.match(/^\/api\/meals\/([^/]+)\/reviews$/);
     if (method === "POST" && reviewMatch) {
       return handleCreateReview(req, res, reviewMatch[1]);
+    }
+
+    const cancelMatch = path.match(/^\/api\/meals\/([^/]+)\/cancel$/);
+    if (method === "POST" && cancelMatch) {
+      return handleCancelMeal(req, res, cancelMatch[1]);
+    }
+
+    const finishMatch = path.match(/^\/api\/meals\/([^/]+)\/finish$/);
+    if (method === "POST" && finishMatch) {
+      return handleFinishMeal(req, res, finishMatch[1]);
+    }
+
+    const reportMatch = path.match(/^\/api\/meals\/([^/]+)\/reports$/);
+    if (method === "POST" && reportMatch) {
+      return handleCreateReport(req, res, reportMatch[1]);
     }
 
     if (method === "GET" && path === "/api/restaurants") {
@@ -327,6 +343,90 @@ async function handleCreateReview(req, res, mealId) {
   });
 
   return sendJson(res, 201, { review });
+}
+
+// 功能：取消饭局。仅发起人可取消，必须处于 open 或 matched 状态。
+function handleCancelMeal(req, res, mealId) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const meal = getMeal(mealId);
+  if (!meal) return sendError(res, 404, "MEAL_NOT_FOUND", "饭局不存在");
+  if (meal.creatorId !== user.id) {
+    return sendError(res, 403, "NOT_CREATOR", "只有发起人可以取消该饭局");
+  }
+  if (meal.status !== "open" && meal.status !== "matched") {
+    return sendError(res, 409, "INVALID_STATUS", "当前状态的饭局无法取消");
+  }
+
+  const updatedMeal = updateMeal(mealId, {
+    status: "cancelled",
+    updated_at: new Date().toISOString()
+  });
+
+  return sendJson(res, 200, { meal: toMealDetail(updatedMeal) });
+}
+
+// 功能：完成饭局。仅发起人可将饭局标为完成，必须处于 matched 状态。
+function handleFinishMeal(req, res, mealId) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const meal = getMeal(mealId);
+  if (!meal) return sendError(res, 404, "MEAL_NOT_FOUND", "饭局不存在");
+  if (meal.creatorId !== user.id) {
+    return sendError(res, 403, "NOT_CREATOR", "只有发起人可以标记该饭局为完成");
+  }
+  if (meal.status !== "matched") {
+    return sendError(res, 409, "INVALID_STATUS", "只有已匹配的饭局才可以标记完成");
+  }
+
+  const updatedMeal = updateMeal(mealId, {
+    status: "finished",
+    updated_at: new Date().toISOString()
+  });
+
+  return sendJson(res, 200, { meal: toMealDetail(updatedMeal) });
+}
+
+// 功能：举报或爽约记录。只有同局参与者可以举报他人，且不能举报自己。
+async function handleCreateReport(req, res, mealId) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const meal = getMeal(mealId);
+  if (!meal) return sendError(res, 404, "MEAL_NOT_FOUND", "饭局不存在");
+  if (!hasUserInMeal(mealId, user.id)) {
+    return sendError(res, 403, "NOT_MEAL_MEMBER", "只有饭局参与者可以发起举报");
+  }
+
+  const body = await readBody(req);
+  const targetUserId = Number(body.targetUserId);
+  const reason = String(body.reason || "").trim();
+  const detail = String(body.detail || "").trim();
+
+  if (targetUserId === user.id) {
+    return sendError(res, 400, "CANNOT_REPORT_SELF", "不能举报自己");
+  }
+  if (!getUser(targetUserId)) {
+    return sendError(res, 404, "TARGET_USER_NOT_FOUND", "被举报人不存在");
+  }
+  if (!hasUserInMeal(mealId, targetUserId)) {
+    return sendError(res, 400, "TARGET_NOT_MEAL_MEMBER", "被举报人不是该饭局的参与者");
+  }
+  if (!reason) {
+    return sendError(res, 400, "REASON_REQUIRED", "举报原因不能为空");
+  }
+
+  const report = createReport({
+    mealId: Number(mealId),
+    reporterUserId: user.id,
+    targetUserId,
+    reason,
+    detail
+  });
+
+  return sendJson(res, 201, { report });
 }
 
 // 功能：餐厅列表。支持 campus / foodType / keyword 筛选，前端发布饭局时选地点用。

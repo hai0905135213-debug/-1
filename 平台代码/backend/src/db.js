@@ -92,6 +92,17 @@ function initTables() {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      meal_id INTEGER NOT NULL REFERENCES meals(id),
+      reporter_user_id INTEGER NOT NULL REFERENCES users(id),
+      target_user_id INTEGER NOT NULL REFERENCES users(id),
+      reason TEXT NOT NULL,
+      detail TEXT DEFAULT '',
+      status TEXT DEFAULT 'pending',
+      created_at TEXT NOT NULL
+    );
   `);
 }
 
@@ -187,6 +198,20 @@ function normalizeRestaurant(row) {
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+function normalizeReport(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    mealId: row.meal_id,
+    reporterUserId: row.reporter_user_id,
+    targetUserId: row.target_user_id,
+    reason: row.reason,
+    detail: row.detail,
+    status: row.status,
+    createdAt: row.created_at
   };
 }
 
@@ -504,6 +529,43 @@ export function updateRestaurant(id, fields) {
   params.push(Number(id));
   db.prepare(`UPDATE restaurants SET ${sets.join(", ")} WHERE id = ?`).run(...params);
   return getRestaurant(id);
+}
+
+// ========== 举报 ==========
+
+// 功能：按 ID 查举报记录
+export function getReport(id) {
+  const row = db.prepare("SELECT * FROM reports WHERE id = ?").get(Number(id));
+  return normalizeReport(row);
+}
+
+// 功能：创建举报记录
+export function createReport({ mealId, reporterUserId, targetUserId, reason, detail }) {
+  const now = new Date().toISOString();
+  const result = db.prepare(`
+    INSERT INTO reports (meal_id, reporter_user_id, target_user_id, reason, detail, status, created_at)
+    VALUES (?, ?, ?, ?, ?, 'pending', ?)
+  `).run(Number(mealId), Number(reporterUserId), Number(targetUserId), reason, detail || "", now);
+
+  return getReport(result.lastInsertRowid);
+}
+
+// 功能：举报列表，支持按饭局、被举报人筛选
+export function listReports({ mealId, targetUserId } = {}) {
+  let sql = "SELECT * FROM reports WHERE 1=1";
+  const params = [];
+
+  if (mealId) {
+    sql += " AND meal_id = ?";
+    params.push(Number(mealId));
+  }
+  if (targetUserId) {
+    sql += " AND target_user_id = ?";
+    params.push(Number(targetUserId));
+  }
+
+  sql += " ORDER BY created_at DESC";
+  return db.prepare(sql).all(...params).map(normalizeReport);
 }
 
 // ========== 辅助 ==========
