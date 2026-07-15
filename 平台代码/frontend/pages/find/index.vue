@@ -84,6 +84,8 @@
 </template>
 
 <script>
+import { postApi } from '../../services/api'
+
 export default {
   data() {
     return {
@@ -96,116 +98,98 @@ export default {
         { name: '拼桌' },
         { name: '咖啡' }
       ],
-      posts: [
-        {
-          id: 1,
-          author: {
-            name: '米雪食记',
-            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80',
-            level: 6,
-            role: '大学',
-            roleColor: '#D88BB3'
-          },
-          time: '07-09 18:35',
-          category: { name: '约饭', color: '#FF9F43' },
-          content: '蹲蹲今晚一食堂吃麻辣香锅的uu，本人女生～最好是口味偏辣的！大概7点左右去。',
-          waitingCount: 2,
-          joinedAvatars: [
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80'
-          ],
-          joined: false
-        },
-        {
-          id: 2,
-          author: {
-            name: '怎么什么用户名都在',
-            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
-            level: 6,
-            role: '大学',
-            roleColor: '#D88BB3'
-          },
-          time: '07-09 12:14',
-          category: { name: '探店', color: '#8FD4D2' },
-          content: '有没有uu想一起去校门口新开的韩料店探店！本人喜欢拍照，最好是也爱拍照的姐妹～',
-          waitingCount: 1,
-          joinedAvatars: [
-            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=240&q=80'
-          ],
-          joined: false
-        },
-        {
-          id: 3,
-          author: {
-            name: '小马吃吃吃',
-            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=240&q=80',
-            level: 5,
-            role: '实习',
-            roleColor: '#D88BB3'
-          },
-          time: '07-08 21:10',
-          category: { name: '夜宵', color: '#7C5CBF' },
-          content: '晚课结束后想吃夜宵，东门烧烤摊常驻选手，缺一个饭搭子！AA制，大概22点出发。',
-          waitingCount: 3,
-          joinedAvatars: [
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80',
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80'
-          ],
-          joined: false
-        },
-        {
-          id: 4,
-          author: {
-            name: '清淡口同学',
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80',
-            level: 4,
-            role: '大学',
-            roleColor: '#D88BB3'
-          },
-          time: '07-08 15:42',
-          category: { name: '拼桌', color: '#54A0FF' },
-          content: '三食堂轻食窗口长期拼桌，本人吃得很清淡，偏好安静吃饭不尬聊的氛围～',
-          waitingCount: 1,
-          joinedAvatars: [],
-          joined: false
-        },
-        {
-          id: 5,
-          author: {
-            name: 'amor27的饭路',
-            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=240&q=80',
-            level: 7,
-            role: '大学',
-            roleColor: '#D88BB3'
-          },
-          time: '07-07 11:20',
-          category: { name: '约饭', color: '#FF9F43' },
-          content: '周末想去市区吃那家很火的酸菜鱼，有没有人一起！AA，大概人均60，吃完还可以逛逛。',
-          waitingCount: 2,
-          joinedAvatars: [
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
-            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=240&q=80'
-          ],
-          joined: false
-        }
-      ]
+      loading: false,
+      posts: []
     }
   },
   computed: {
     filteredPosts() {
-      if (this.activeCategory === '全部') return this.posts
-      return this.posts.filter(p => p.category.name === this.activeCategory)
+      return this.posts
+    }
+  },
+  onShow() {
+    this.loadPosts()
+  },
+  watch: {
+    activeCategory() {
+      this.loadPosts()
     }
   },
   methods: {
-    toggleJoin(post) {
-      post.joined = !post.joined
-      uni.showToast({
-        title: post.joined ? '已发送约饭请求' : '已取消约饭请求',
-        icon: 'none',
-        duration: 1500
-      })
+    async loadPosts() {
+      this.loading = true
+      try {
+        const params = {}
+        if (this.activeCategory && this.activeCategory !== '全部') {
+          params.category = this.activeCategory
+        }
+        const result = await postApi.list(params)
+        this.posts = (result.items || []).map(post => {
+          return {
+            id: post.id,
+            author: {
+              name: post.author?.nickname || '同学',
+              avatar: post.author?.profile?.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80',
+              level: 5,
+              role: '大学',
+              roleColor: '#D88BB3',
+              campus: post.author?.profile?.campus || '主校区',
+              creditScore: post.author?.creditScore || 95,
+              mealCount: 10,
+              reviewCount: 5,
+              tasteTags: post.author?.profile?.tasteTags || [],
+              personalityTags: post.author?.profile?.personalityTags || [],
+              budgetPreference: post.author?.profile?.budgetPreference || '20-40',
+              desc: post.author?.profile?.description || '这家伙很懒，什么都没写。'
+            },
+            time: post.createdAt ? this.formatPostTime(post.createdAt) : '刚刚',
+            category: { name: post.category, color: this.getCategoryColor(post.category) },
+            content: post.content,
+            waitingCount: post.waitingCount || 0,
+            joinedAvatars: post.joinedAvatars || [],
+            joined: post.joined || false,
+            restaurant: post.restaurant
+          }
+        })
+      } catch (error) {
+        uni.showToast({ title: error.message || '加载找人贴失败', icon: 'none' })
+      } finally {
+        this.loading = false
+      }
+    },
+    formatPostTime(value) {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return '刚刚'
+      return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+    },
+    getCategoryColor(category) {
+      const colors = {
+        '约饭': '#FF9F43',
+        '探店': '#8FD4D2',
+        '夜宵': '#7C5CBF',
+        '拼桌': '#54A0FF',
+        '咖啡': '#D88BB3'
+      }
+      return colors[category] || '#FF9F43'
+    },
+    async toggleJoin(post) {
+      if (!uni.getStorageSync('authToken')) {
+        uni.navigateTo({ url: '/pages/login/index' })
+        return
+      }
+
+      try {
+        if (post.joined) {
+          await postApi.leave(post.id)
+          uni.showToast({ title: '已取消约饭请求', icon: 'none' })
+        } else {
+          await postApi.join(post.id)
+          uni.showToast({ title: '已发送约饭请求', icon: 'none' })
+        }
+        await this.loadPosts()
+      } catch (error) {
+        uni.showToast({ title: error.message || '操作失败', icon: 'none' })
+      }
     },
     goDetail(post) {
       uni.navigateTo({ url: `/pages/find-detail/index?id=${post.id}` })

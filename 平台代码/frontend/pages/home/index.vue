@@ -26,12 +26,9 @@
       <view class="section-title">今日饭局</view>
       <view class="muted section-desc">从校园真实约饭里挑出来，好吃和合拍都重要</view>
       <view class="pill-row filter-row">
-        <view
-          v-for="filter in filters"
-          :key="filter"
-          :class="activeFilter === filter ? 'pill active' : 'pill'"
-          @tap="activeFilter = filter"
-        >{{ filter }}</view>
+        <view :class="campusIndex > 0 ? 'pill active' : 'pill'" @tap="cycleCampus">{{ campusOptions[campusIndex] }} ⌄</view>
+        <view :class="foodTypeIndex > 0 ? 'pill active' : 'pill'" @tap="cycleFoodType">{{ foodTypeOptions[foodTypeIndex] }} ⌄</view>
+        <view :class="timeIndex > 0 ? 'pill active' : 'pill'" @tap="cycleTime">{{ timeOptions[timeIndex] }} ⌄</view>
       </view>
     </view>
 
@@ -110,8 +107,12 @@ export default {
           image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80'
         }
       ],
-      filters: ['全校⌄', '品类⌄', '时间⌄', '筛选⌄'],
-      activeFilter: '全校⌄',
+      campusOptions: ['全校', '主校区', '西校区'],
+      campusIndex: 0,
+      foodTypeOptions: ['全部品类', '麻辣香锅', '米线', '轻食', '火锅'],
+      foodTypeIndex: 0,
+      timeOptions: ['全部时间', '今日', '可加入'],
+      timeIndex: 0,
       currentUser: null,
       loading: false,
       wantedMealIds: [2],
@@ -132,7 +133,17 @@ export default {
     async loadMeals() {
       this.loading = true
       try {
-        const result = await mealApi.list({ onlyAvailable: true })
+        const params = {}
+        if (this.campusIndex > 0) {
+          params.campus = this.campusOptions[this.campusIndex]
+        }
+        if (this.foodTypeIndex > 0) {
+          params.keyword = this.foodTypeOptions[this.foodTypeIndex]
+        }
+        if (this.timeIndex === 2) {
+          params.onlyAvailable = 'true'
+        }
+        const result = await mealApi.list(params)
         this.meals = (result.items || []).map((meal, index) => ({
           id: meal.id,
           title: meal.title,
@@ -150,6 +161,18 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    cycleCampus() {
+      this.campusIndex = (this.campusIndex + 1) % this.campusOptions.length
+      this.loadMeals()
+    },
+    cycleFoodType() {
+      this.foodTypeIndex = (this.foodTypeIndex + 1) % this.foodTypeOptions.length
+      this.loadMeals()
+    },
+    cycleTime() {
+      this.timeIndex = (this.timeIndex + 1) % this.timeOptions.length
+      this.loadMeals()
     },
     goDetail(id) {
       uni.navigateTo({ url: `/pages/meal-detail/index?id=${id}` })

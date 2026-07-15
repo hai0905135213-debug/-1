@@ -77,6 +77,20 @@ export const profileApi = {
   update: (data) => request('/profile', { method: 'PUT', data })
 }
 
+export const postApi = {
+  list: (params = {}) => {
+    const query = Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== '')
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&')
+    return request(`/posts${query ? `?${query}` : ''}`)
+  },
+  detail: (id) => request(`/posts/${id}`),
+  create: (data) => request('/posts', { method: 'POST', data }),
+  join: (id) => request(`/posts/${id}/join`, { method: 'POST' }),
+  leave: (id) => request(`/posts/${id}/leave`, { method: 'POST' })
+}
+
 export const restaurantApi = {
   list: (params = {}) => {
     const query = Object.entries(params)

@@ -103,6 +103,22 @@ function initTables() {
       status TEXT DEFAULT 'pending',
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      author_id INTEGER NOT NULL REFERENCES users(id),
+      category TEXT NOT NULL,
+      content TEXT NOT NULL,
+      restaurant_id INTEGER REFERENCES restaurants(id),
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS post_participants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER NOT NULL REFERENCES posts(id),
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      joined_at TEXT NOT NULL
+    );
   `);
 }
 
@@ -211,6 +227,18 @@ function normalizeReport(row) {
     reason: row.reason,
     detail: row.detail,
     status: row.status,
+    createdAt: row.created_at
+  };
+}
+
+function normalizePost(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    authorId: row.author_id,
+    category: row.category,
+    content: row.content,
+    restaurantId: row.restaurant_id,
     createdAt: row.created_at
   };
 }
@@ -568,6 +596,81 @@ export function listReports({ mealId, targetUserId } = {}) {
   return db.prepare(sql).all(...params).map(normalizeReport);
 }
 
+// ========== 找人帖 ==========
+
+// 功能：根据 ID 获取找人帖
+export function getPost(id) {
+  const row = db.prepare("SELECT * FROM posts WHERE id = ?").get(Number(id));
+  return normalizePost(row);
+}
+
+// 功能：获取找人帖列表，支持按 category 筛选
+export function listPosts({ category } = {}) {
+  let sql = "SELECT * FROM posts WHERE 1=1";
+  const params = [];
+
+  if (category && category !== "全部") {
+    sql += " AND category = ?";
+    params.push(category);
+  }
+
+  sql += " ORDER BY created_at DESC";
+  return db.prepare(sql).all(...params).map(normalizePost);
+}
+
+// 功能：创建找人帖
+export function createPost({ authorId, category, content, restaurantId }) {
+  const now = new Date().toISOString();
+  const result = db.prepare(`
+    INSERT INTO posts (author_id, category, content, restaurant_id, created_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(Number(authorId), category, content, restaurantId ? Number(restaurantId) : null, now);
+
+  return getPost(result.lastInsertRowid);
+}
+
+// 功能：获取帖子的参与者 ID 列表
+export function getPostParticipantUserIds(postId) {
+  const rows = db.prepare("SELECT user_id FROM post_participants WHERE post_id = ?").all(Number(postId));
+  return rows.map(r => r.user_id);
+}
+
+// 功能：获取帖子的参与者头像列表
+export function getPostParticipantAvatars(postId) {
+  const rows = db.prepare(`
+    SELECT p.avatar_url FROM post_participants pp
+    JOIN profiles p ON p.user_id = pp.user_id
+    WHERE pp.post_id = ?
+    ORDER BY pp.joined_at ASC
+  `).all(Number(postId));
+  return rows.map(r => r.avatar_url || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80");
+}
+
+// 功能：检查用户是否已加入某个帖子
+export function isUserJoinedPost(postId, userId) {
+  const row = db.prepare(
+    "SELECT 1 FROM post_participants WHERE post_id = ? AND user_id = ?"
+  ).get(Number(postId), Number(userId));
+  return !!row;
+}
+
+// 功能：加入帖子
+export function addPostParticipant(postId, userId) {
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO post_participants (post_id, user_id, joined_at)
+    VALUES (?, ?, ?)
+  `).run(Number(postId), Number(userId), now);
+}
+
+// 功能：退出加入帖子
+export function removePostParticipant(postId, userId) {
+  db.prepare(`
+    DELETE FROM post_participants
+    WHERE post_id = ? AND user_id = ?
+  `).run(Number(postId), Number(userId));
+}
+
 // ========== 辅助 ==========
 
 // 功能：获取用户参与的饭局 ID 列表（不含自己是创建者的）
@@ -591,21 +694,19 @@ export function seedIfEmpty() {
 
   db.prepare(`INSERT INTO users (id, nickname, student_no, school, credit_score, created_at) VALUES (1, '小林', '2026001', '示例大学', 98, ?)`).run(now);
   db.prepare(`INSERT INTO users (id, nickname, student_no, school, credit_score, created_at) VALUES (2, '阿晴', '2026002', '示例大学', 96, ?)`).run(now);
+  db.prepare(`INSERT INTO users (id, nickname, student_no, school, credit_score, created_at) VALUES (3, '米雪食记', '2026003', '示例大学', 98, ?)`).run(now);
+  db.prepare(`INSERT INTO users (id, nickname, student_no, school, credit_score, created_at) VALUES (4, '怎么什么用户名都在', '2026004', '示例大学', 95, ?)`).run(now);
+  db.prepare(`INSERT INTO users (id, nickname, student_no, school, credit_score, created_at) VALUES (5, '小马吃吃吃', '2026005', '示例大学', 92, ?)`).run(now);
+  db.prepare(`INSERT INTO users (id, nickname, student_no, school, credit_score, created_at) VALUES (6, '清淡口同学', '2026006', '示例大学', 99, ?)`).run(now);
+  db.prepare(`INSERT INTO users (id, nickname, student_no, school, credit_score, created_at) VALUES (7, 'amor27的饭路', '2026007', '示例大学', 96, ?)`).run(now);
 
-  db.prepare(`INSERT INTO profiles (user_id, taste_tags, personality_tags, budget_preference, updated_at) VALUES (1, '["川菜","不吃香菜"]', '["慢热","安静吃饭"]', '20-40', ?)`).run(now);
-  db.prepare(`INSERT INTO profiles (user_id, taste_tags, personality_tags, budget_preference, updated_at) VALUES (2, '["面食","甜品"]', '["外向","可聊天"]', '15-30', ?)`).run(now);
-
-  db.prepare(`INSERT INTO meals (id, title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, created_at, updated_at)
-    VALUES (1, '二食堂麻辣香锅拼一桌', '麻辣香锅', '2026-07-09T11:30:00.000Z', '二食堂一楼', '主校区', 4, 20, 35, 'talkative', '想找两三个人一起点，口味中辣。', 'open', 1, ?, ?)`).run(now, now);
-  db.prepare(`INSERT INTO meals (id, title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, created_at, updated_at)
-    VALUES (2, '下课后去校门口吃米线', '米线', '2026-07-09T10:45:00.000Z', '东门米线店', '主校区', 2, 15, 25, 'quiet', '简单吃饭，不尬聊也可以。', 'matched', 2, ?, ?)`).run(now, now);
-  db.prepare(`INSERT INTO meals (id, title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, created_at, updated_at)
-    VALUES (3, '晚饭想吃轻食', '轻食', '2026-07-09T17:30:00.000Z', '三食堂轻食窗口', '主校区', 3, 18, 30, 'balanced', '希望找作息健康一点的同学一起吃。', 'open', 1, ?, ?)`).run(now, now);
-
-  db.prepare(`INSERT INTO meal_participants (meal_id, user_id, role, status, joined_at) VALUES (1, 1, 'creator', 'joined', ?)`).run(now);
-  db.prepare(`INSERT INTO meal_participants (meal_id, user_id, role, status, joined_at) VALUES (2, 2, 'creator', 'joined', ?)`).run(now);
-  db.prepare(`INSERT INTO meal_participants (meal_id, user_id, role, status, joined_at) VALUES (2, 1, 'member', 'joined', ?)`).run(now);
-  db.prepare(`INSERT INTO meal_participants (meal_id, user_id, role, status, joined_at) VALUES (3, 1, 'creator', 'joined', ?)`).run(now);
+  db.prepare(`INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, updated_at) VALUES (1, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=240&q=80', 'male', '主校区', '["川菜","不吃香菜"]', '["慢热","安静吃饭"]', '20-40', ?)`).run(now);
+  db.prepare(`INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, updated_at) VALUES (2, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80', 'female', '主校区', '["面食","甜品"]', '["外向","可聊天"]', '15-30', ?)`).run(now);
+  db.prepare(`INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, updated_at) VALUES (3, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80', 'female', '主校区', '["川菜","火锅","麻辣"]', '["健谈","吃得快","准时不鸽"]', '20-40', ?)`).run(now);
+  db.prepare(`INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, updated_at) VALUES (4, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80', 'unknown', '主校区', '["韩料","日料","探店"]', '["爱拍照","慢节奏","AA记账"]', '40-80', ?)`).run(now);
+  db.prepare(`INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, updated_at) VALUES (5, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=240&q=80', 'male', '东校区', '["烧烤","夜宵","啤酒"]', '["夜猫子","随性","不拘束"]', '20-50', ?)`).run(now);
+  db.prepare(`INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, updated_at) VALUES (6, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80', 'unknown', '主校区', '["轻食","清淡","沙拉"]', '["社恐友好","安静吃饭","准时"]', '15-25', ?)`).run(now);
+  db.prepare(`INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, updated_at) VALUES (7, 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=240&q=80', 'unknown', '主校区', '["酸菜鱼","火锅","湘菜"]', '["组织能手","AA精确到分","饭后逛街"]', '40-100', ?)`).run(now);
 
   // 种子餐厅数据
   db.prepare(`INSERT INTO restaurants (id, name, food_type, campus, location, avg_price, rating, tags, description, status, created_at, updated_at)
@@ -620,6 +721,38 @@ export function seedIfEmpty() {
     VALUES (5, '教工食堂牛肉面', '面食', '主校区', '教工食堂一楼', 1500, 4.6, '["面食","排队王","性价比高"]', '手工拉面，牛肉给得多，饭点经常排队。', 'open', ?, ?)`).run(now, now);
   db.prepare(`INSERT INTO restaurants (id, name, food_type, campus, location, avg_price, rating, tags, description, status, created_at, updated_at)
     VALUES (6, '南门小吃街烧烤', '烧烤', '主校区', '南门外小吃街', 3500, 3.9, '["夜宵","露天","社交"]', '晚上才出摊，适合宵夜局。', 'open', ?, ?)`).run(now, now);
+
+  db.prepare(`INSERT INTO meals (id, title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, created_at, updated_at)
+    VALUES (1, '二食堂麻辣香锅拼一桌', '麻辣香锅', '2026-07-09T11:30:00.000Z', '二食堂一楼', '主校区', 4, 20, 35, 'talkative', '想找两三个人一起点，口味中辣。', 'open', 1, ?, ?)`).run(now, now);
+  db.prepare(`INSERT INTO meals (id, title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, created_at, updated_at)
+    VALUES (2, '下课后去校门口吃米线', '米线', '2026-07-09T10:45:00.000Z', '东门米线店', '主校区', 2, 15, 25, 'quiet', '简单吃饭，不尬聊也可以。', 'matched', 2, ?, ?)`).run(now, now);
+  db.prepare(`INSERT INTO meals (id, title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, created_at, updated_at)
+    VALUES (3, '晚饭想吃轻食', '轻食', '2026-07-09T17:30:00.000Z', '三食堂轻食窗口', '主校区', 3, 18, 30, 'balanced', '希望找作息健康一点的同学一起吃。', 'open', 1, ?, ?)`).run(now, now);
+
+  db.prepare(`INSERT INTO meal_participants (meal_id, user_id, role, status, joined_at) VALUES (1, 1, 'creator', 'joined', ?)`).run(now);
+  db.prepare(`INSERT INTO meal_participants (meal_id, user_id, role, status, joined_at) VALUES (2, 2, 'creator', 'joined', ?)`).run(now);
+  db.prepare(`INSERT INTO meal_participants (meal_id, user_id, role, status, joined_at) VALUES (2, 1, 'member', 'joined', ?)`).run(now);
+  db.prepare(`INSERT INTO meal_participants (meal_id, user_id, role, status, joined_at) VALUES (3, 1, 'creator', 'joined', ?)`).run(now);
+
+  db.prepare(`INSERT INTO posts (id, author_id, category, content, restaurant_id, created_at)
+    VALUES (1, 3, '约饭', '蹲蹲今晚一食堂吃麻辣香锅的uu，本人女生～最好是口味偏辣的！大概7点左右去。', 1, ?)`).run(now);
+  db.prepare(`INSERT INTO posts (id, author_id, category, content, restaurant_id, created_at)
+    VALUES (2, 4, '探店', '有没有uu想一起去校门口新开的韩料店探店！本人喜欢拍照，最好是也爱拍照的姐妹～', 2, ?)`).run(now);
+  db.prepare(`INSERT INTO posts (id, author_id, category, content, restaurant_id, created_at)
+    VALUES (3, 5, '夜宵', '晚课结束后想吃夜宵，东门烧烤摊常驻选手，缺一个饭搭子！AA制，大概22点出发。', 6, ?)`).run(now);
+  db.prepare(`INSERT INTO posts (id, author_id, category, content, restaurant_id, created_at)
+    VALUES (4, 6, '拼桌', '三食堂轻食窗口长期拼桌，本人吃得很清淡，偏好安静吃饭不尬聊的氛围～', 3, ?)`).run(now);
+  db.prepare(`INSERT INTO posts (id, author_id, category, content, restaurant_id, created_at)
+    VALUES (5, 7, '约饭', '周末想去市区吃那家很火的酸菜鱼，有没有人一起！AA，大概人均60，吃完还可以逛逛。', null, ?)`).run(now);
+
+  db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (1, 1, ?)`).run(now);
+  db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (1, 6, ?)`).run(now);
+  db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (2, 2, ?)`).run(now);
+  db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (3, 1, ?)`).run(now);
+  db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (3, 3, ?)`).run(now);
+  db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (3, 6, ?)`).run(now);
+  db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (5, 1, ?)`).run(now);
+  db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (5, 2, ?)`).run(now);
 
   console.log("[db] 已写入种子数据");
 }

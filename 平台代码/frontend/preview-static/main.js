@@ -356,8 +356,11 @@ function render(page) {
     const reviewMealInput = screen.querySelector('#review-meal')
     if (reviewMealInput) reviewMealInput.value = activeMealId || 1
   }
-  if (page === 'find') renderFindPosts()
-  if (page.startsWith && page.startsWith('find-detail:')) renderFindDetail(page)
+  if (page === 'find') loadPreviewFindPosts()
+  if (page.startsWith && page.startsWith('find-detail:')) {
+    const postId = Number(page.split(':')[1])
+    loadPreviewFindDetail(postId)
+  }
   bindPageActions()
 }
 
@@ -420,7 +423,31 @@ function bindPageActions() {
 
   const joinButton = screen.querySelector('[data-join]')
   if (joinButton) {
-    joinButton.addEventListener('click', joinActiveMeal)
+    const clone = joinButton.cloneNode(true)
+    joinButton.parentNode.replaceChild(clone, joinButton)
+    clone.addEventListener('click', handleJoinOrLeaveClick)
+  }
+
+  const homePillsContainer = screen.querySelector('.pills[data-choice-group]')
+  if (homePillsContainer && currentPage === 'home') {
+    const pills = homePillsContainer.querySelectorAll('.pill')
+    if (pills.length >= 3) {
+      pills.forEach((p, idx) => {
+        const clone = p.cloneNode(true)
+        p.parentNode.replaceChild(clone, p)
+        clone.addEventListener('click', (e) => {
+          e.stopPropagation()
+          if (idx === 0) {
+            campusFilterIndex = (campusFilterIndex + 1) % campusFilterOptions.length
+          } else if (idx === 1) {
+            foodFilterIndex = (foodFilterIndex + 1) % foodFilterOptions.length
+          } else if (idx === 2) {
+            timeFilterIndex = (timeFilterIndex + 1) % timeFilterOptions.length
+          }
+          loadPreviewMeals()
+        })
+      })
+    }
   }
 
   const loginButton = screen.querySelector('[data-go-login]')
@@ -480,19 +507,33 @@ function bindPageActions() {
       screen.querySelectorAll('[data-find-category]').forEach((p) => p.classList.remove('active'))
       pill.classList.add('active')
       activeFindCategory = pill.dataset.findCategory
-      renderFindPosts()
+      loadPreviewFindPosts()
     })
   })
 
   screen.querySelectorAll('[data-find-join]').forEach((btn) => {
-    btn.addEventListener('click', (event) => {
+    btn.addEventListener('click', async (event) => {
       event.stopPropagation()
+      if (!authSession?.token) {
+        toast('请先登录')
+        navigate('login')
+        return
+      }
       const postId = Number(btn.dataset.findJoin)
-      const post = findPosts.find((p) => p.id === postId)
-      if (post) {
-        post.joined = !post.joined
-        renderFindPosts()
-        toast(post.joined ? '已发送约饭请求' : '已取消约饭请求')
+      const isJoined = btn.classList.contains('joined')
+      btn.disabled = true
+      try {
+        if (isJoined) {
+          await apiRequest(`/posts/${postId}/leave`, { method: 'POST' })
+          toast('已取消约饭请求')
+        } else {
+          await apiRequest(`/posts/${postId}/join`, { method: 'POST' })
+          toast('已发送约饭请求')
+        }
+        loadPreviewFindPosts()
+      } catch (error) {
+        toast(error.message)
+        btn.disabled = false
       }
     })
   })
@@ -512,14 +553,28 @@ function bindPageActions() {
   })
 
   screen.querySelectorAll('[data-find-detail-join]').forEach((btn) => {
-    btn.addEventListener('click', (event) => {
+    btn.addEventListener('click', async (event) => {
       event.stopPropagation()
+      if (!authSession?.token) {
+        toast('请先登录')
+        navigate('login')
+        return
+      }
       const postId = Number(btn.dataset.findDetailJoin)
-      const post = findPosts.find((p) => p.id === postId)
-      if (post) {
-        post.joined = !post.joined
-        renderFindDetail(`find-detail:${postId}`)
-        toast(post.joined ? '已发送约饭请求' : '已取消约饭请求')
+      const isJoined = btn.classList.contains('joined')
+      btn.disabled = true
+      try {
+        if (isJoined) {
+          await apiRequest(`/posts/${postId}/leave`, { method: 'POST' })
+          toast('已取消约饭请求')
+        } else {
+          await apiRequest(`/posts/${postId}/join`, { method: 'POST' })
+          toast('已发送约饭请求')
+        }
+        loadPreviewFindDetail(postId)
+      } catch (error) {
+        toast(error.message)
+        btn.disabled = false
       }
     })
   })
@@ -671,12 +726,21 @@ async function loadPreviewMeals() {
   if (!target) return
 
   try {
-    const data = await apiRequest('/meals?onlyAvailable=true')
+    let query = '?onlyAvailable=true'
+    if (campusFilterIndex > 0) {
+      query += `&campus=${encodeURIComponent(campusFilterOptions[campusFilterIndex])}`
+    }
+    if (foodFilterIndex > 0) {
+      query += `&keyword=${encodeURIComponent(foodFilterOptions[foodFilterIndex])}`
+    }
+    const data = await apiRequest(`/meals${query}`)
     mealsCache = data.items || []
     if (mealsCache.length && !activeMealId) activeMealId = mealsCache[0].id
     target.innerHTML = mealsCache.length
       ? mealsCache.map(renderMealCard).join('')
       : `<div class="empty"><div style="font-size:48px">🍽</div><p>现在还没有可加入的饭局</p><button class="primary" data-go-publish>发布第一场</button></div>`
+    
+    updateHomeFilterPills()
     bindPageActions()
   } catch (error) {
     target.innerHTML = `<div class="empty"><p>${error.message}</p><button class="secondary full-width" data-go-publish>去发布饭局</button></div>`
@@ -1009,25 +1073,270 @@ async function saveProfileFromForm() {
   }
 }
 
-async function submitReviewFromForm() {
-  const mealId = document.querySelector('#review-meal').value.trim() || '1'
-  const targetUserId = Number(document.querySelector('#review-target').value || 1)
-  const content = document.querySelector('#review-content').value.trim()
-  if (!content) {
-    toast('先写一句评价')
+async function handleJoinOrLeaveClick() {
+  if (!authSession?.token) {
+    toast('请先登录再操作')
+    navigate('login')
     return
   }
 
+  const joinButton = screen.querySelector('[data-join]')
+  if (joinButton) {
+    joinButton.disabled = true
+    joinButton.textContent = '请稍候...'
+  }
+
   try {
-    await apiRequest(`/meals/${mealId}/reviews`, {
-      method: 'POST',
-      data: { targetUserId, rating: reviewRating, content }
-    })
-    toast('评价已发布')
-    render('profile')
+    const response = await apiRequest(`/meals/${activeMealId}`)
+    const meal = response.meal
+    const joined = Boolean(meal.participants?.some((item) => item.userId === authSession?.user?.id))
+
+    if (joined) {
+      await apiRequest(`/meals/${activeMealId}/leave`, { method: 'POST' })
+      toast('已退出饭局')
+    } else {
+      await apiRequest(`/meals/${activeMealId}/join`, { method: 'POST' })
+      toast('已加入饭局')
+    }
+    loadPreviewMealDetail(activeMealId)
   } catch (error) {
     toast(error.message)
+    loadPreviewMealDetail(activeMealId)
   }
+}
+
+function updateHomeFilterPills() {
+  const container = screen.querySelector('.pills[data-choice-group]')
+  if (!container) return
+  
+  const pills = container.querySelectorAll('.pill')
+  if (pills.length >= 3) {
+    pills[0].textContent = `${campusFilterOptions[campusFilterIndex]}⌄`
+    pills[0].classList.toggle('active', campusFilterIndex > 0)
+    
+    pills[1].textContent = `${foodFilterOptions[foodFilterIndex]}⌄`
+    pills[1].classList.toggle('active', foodFilterIndex > 0)
+    
+    pills[2].textContent = `${timeFilterOptions[timeFilterIndex]}⌄`
+    pills[2].classList.toggle('active', timeFilterIndex > 0)
+  }
+}
+
+async function loadPreviewFindPosts() {
+  const target = screen.querySelector('#find-post-list')
+  if (!target) return
+
+  try {
+    const category = activeFindCategory === '全部' ? '' : activeFindCategory
+    const data = await apiRequest(`/posts${category ? `?category=${encodeURIComponent(category)}` : ''}`)
+    
+    const posts = (data.items || []).map(post => ({
+      id: post.id,
+      author: {
+        name: post.author?.nickname || '同学',
+        avatar: post.author?.profile?.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80',
+        level: 5,
+        role: '大学',
+        roleColor: '#D88BB3'
+      },
+      time: post.createdAt ? formatFindPostTime(post.createdAt) : '刚刚',
+      category: { name: post.category, color: getFindPostCategoryColor(post.category) },
+      content: post.content,
+      waitingCount: post.waitingCount || 0,
+      joinedAvatars: post.joinedAvatars || [],
+      joined: post.joined || false
+    }))
+
+    if (posts.length === 0) {
+      target.innerHTML = `<div class="empty-state"><div class="empty-icon">🍽</div><p class="muted">该分类下暂无找饭友帖</p></div>`
+      return
+    }
+
+    target.innerHTML = posts.map(post => `
+      <div class="post-card" data-find-detail="${post.id}">
+        <div class="post-header">
+          <img class="post-avatar" src="${post.author.avatar}">
+          <div class="post-user-info">
+            <div class="post-user-row">
+              <span class="post-username">${post.author.name}</span>
+              <span class="post-level">Lv.${post.author.level}</span>
+              <span class="post-role" style="color:${post.author.roleColor || '#D88BB3'}">${post.author.role}</span>
+            </div>
+            <span class="post-time">${post.time}</span>
+          </div>
+        </div>
+        <div class="post-body">
+          <span class="post-category" style="border-color:${post.category.color};color:${post.category.color}">${post.category.name}</span>
+          <p class="post-content">${post.content}</p>
+        </div>
+        <div class="post-footer">
+          <span class="post-waiting">等${post.waitingCount}人</span>
+          <div class="post-avatars">
+            ${post.joinedAvatars.map(av => `<img class="post-joined-avatar" src="${av}">`).join('')}
+          </div>
+          <div class="post-spacer"></div>
+          <button class="post-join${post.joined ? ' joined' : ''}" data-find-join="${post.id}">${post.joined ? '已约' : '+'}</button>
+        </div>
+      </div>
+    `).join('')
+
+    bindPageActions()
+  } catch (error) {
+    target.innerHTML = `<div class="empty"><p>${error.message}</p></div>`
+  }
+}
+
+async function loadPreviewFindDetail(postId) {
+  const target = screen.querySelector('#find-detail-content')
+  if (!target) return
+
+  try {
+    const data = await apiRequest(`/posts/${postId}`)
+    const post = data.post
+    
+    const author = {
+      name: post.author?.nickname || '同学',
+      avatar: post.author?.profile?.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80',
+      level: 5,
+      role: '大学',
+      roleColor: '#D88BB3',
+      campus: post.author?.profile?.campus || '主校区',
+      creditScore: post.author?.creditScore || 95,
+      mealCount: 10,
+      reviewCount: 5,
+      tasteTags: post.author?.profile?.tasteTags || [],
+      personalityTags: post.author?.profile?.personalityTags || [],
+      budgetPreference: post.author?.profile?.budgetPreference || '20-40',
+      desc: post.author?.profile?.description || '这家伙很懒，什么都没写。'
+    }
+
+    const restaurant = post.restaurant
+
+    target.innerHTML = `
+      <button class="back-link" data-back>‹ 找人</button>
+
+      <!-- 帖子内容区域 -->
+      <div class="detail-card">
+        <div class="detail-header">
+          <img class="detail-avatar" src="${author.avatar}">
+          <div class="detail-user-info">
+            <div class="detail-user-row">
+              <span class="detail-username">${author.name}</span>
+              <span class="detail-level">Lv.${author.level}</span>
+              <span class="detail-role" style="color:${author.roleColor || '#D88BB3'}">${author.role}</span>
+            </div>
+            <span class="detail-time">${post.createdAt ? formatFindPostTime(post.createdAt) : '刚刚'} 发布</span>
+          </div>
+        </div>
+        <span class="detail-category" style="border-color:${getFindPostCategoryColor(post.category)};color:${getFindPostCategoryColor(post.category)}">${post.category}</span>
+        <p class="detail-content">${post.content}</p>
+        <div class="detail-meta">
+          <span>等 <strong>${post.waitingCount}</strong> 人</span>
+          ${post.joinedAvatars?.length ? `<span style="margin-left:16px">已加入：${post.joinedAvatars.map(av => `<img class="detail-mini-avatar" src="${av}">`).join('')}</span>` : ''}
+        </div>
+      </div>
+
+      <!-- 发起人信息卡片 -->
+      <div class="detail-card">
+        <div class="section-title">发起人</div>
+        <div class="author-profile">
+          <div class="author-top">
+            <img class="author-big-avatar" src="${author.avatar}">
+            <div class="author-summary">
+              <div class="author-name-row">
+                <span class="author-name-text">${author.name}</span>
+                <span class="author-level">Lv.${author.level}</span>
+                <span class="author-role" style="color:${author.roleColor}">${author.role}</span>
+              </div>
+              <div class="detail-tags">
+                ${author.tasteTags.map(t => `<span class="detail-tag taste">${t}</span>`).join('')}
+                ${author.personalityTags.map(t => `<span class="detail-tag personality">${t}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+          <p class="author-desc">${author.desc}</p>
+          <div class="credit-section">
+            <div class="credit-score">
+              <span class="credit-label">信用分</span>
+              <span class="credit-value high">${author.creditScore}</span>
+              <span class="credit-sub">信用优秀</span>
+            </div>
+            <div class="credit-stats">
+              <div class="credit-stat">
+                <span class="credit-stat-num">${author.mealCount}</span>
+                <span class="credit-stat-label">历史约饭</span>
+              </div>
+              <div class="credit-stat">
+                <span class="credit-stat-num">${author.reviewCount}</span>
+                <span class="credit-stat-label">获得评价</span>
+              </div>
+              <div class="credit-stat">
+                <span class="credit-stat-num">0</span>
+                <span class="credit-stat-label">爽约次数</span>
+              </div>
+            </div>
+            <div class="credit-info-row">
+              <span class="credit-item"><strong>校区</strong> ${author.campus}</span>
+              <span class="credit-item" style="margin-left:16px"><strong>预算</strong> ¥${author.budgetPreference}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 餐厅信息卡片 -->
+      ${restaurant ? `
+      <div class="detail-card">
+        <div class="section-title">推荐餐厅</div>
+        <div class="restaurant-card-detail">
+          <img class="restaurant-hero-img" src="${restaurant.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'}">
+          <div class="restaurant-info-detail">
+            <div class="restaurant-name-row">
+              <span class="restaurant-name-text">${restaurant.name}</span>
+              <span class="detail-category" style="border-color:#FF9F43;color:#FF9F43">${restaurant.foodType}</span>
+            </div>
+            <div class="restaurant-meta">
+              <span>⭐ ${restaurant.rating}</span>
+              <span style="margin-left:12px">📍 ${restaurant.location}</span>
+              <span style="margin-left:12px">💰 ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</span>
+            </div>
+            <div class="detail-tags" style="margin-top:12px">
+              ${(JSON.parse(restaurant.tags || '[]')).map(t => `<span class="detail-tag rest">${t}</span>`).join('')}
+            </div>
+            <p class="restaurant-desc">${restaurant.description}</p>
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- 底部操作 -->
+      <div class="detail-bottom-actions">
+        <button class="detail-btn secondary" data-find-detail-review>评价</button>
+        <button class="detail-btn primary${post.joined ? ' joined' : ''}" data-find-detail-join="${post.id}">${post.joined ? '已约' : '约 TA'}</button>
+      </div>
+      <div style="height:48px"></div>
+    `
+
+    bindPageActions()
+  } catch (error) {
+    target.innerHTML = `<div class="empty"><p>${error.message}</p></div>`
+  }
+}
+
+function formatFindPostTime(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '刚刚'
+  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+function getFindPostCategoryColor(category) {
+  const colors = {
+    '约饭': '#FF9F43',
+    '探店': '#8FD4D2',
+    '夜宵': '#7C5CBF',
+    '拼桌': '#54A0FF',
+    '咖啡': '#D88BB3'
+  }
+  return colors[category] || '#FF9F43'
 }
 
 buttons.forEach((button) => {

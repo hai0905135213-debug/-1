@@ -71,7 +71,7 @@
 
     <view class="bottom-actions">
       <button class="button-secondary action-btn" @tap="reviewMeal">评价</button>
-      <button class="button-primary action-btn" @tap="joinMeal">{{ joined ? '已加入' : '想去/加入' }}</button>
+      <button class="button-primary action-btn" :disabled="isActionBtnDisabled" @tap="handleJoinOrLeave">{{ getActionButtonText }}</button>
     </view>
   </view>
 </template>
@@ -114,6 +114,7 @@ export default {
         heroImage: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1000&q=80'
       },
       joined: false,
+      isCreator: false,
       dishes: [
         {
           id: 1,
@@ -136,6 +137,15 @@ export default {
       ]
     }
   },
+  computed: {
+    getActionButtonText() {
+      if (this.isCreator) return '我是发起人'
+      return this.joined ? '退出饭局' : '想去/加入'
+    },
+    isActionBtnDisabled() {
+      return this.isCreator
+    }
+  },
   onLoad(query) {
     this.meal.id = query.id || ''
     this.loadMeal()
@@ -147,6 +157,7 @@ export default {
         const meal = result.meal
         const currentUser = uni.getStorageSync('currentUser') || null
         this.joined = (meal.participants || []).some((item) => item.userId === currentUser?.id)
+        this.isCreator = meal.creatorId === currentUser?.id
         this.meal = {
           ...this.meal,
           id: meal.id,
@@ -169,23 +180,28 @@ export default {
     goBack() {
       uni.navigateBack()
     },
-    async joinMeal() {
+    async handleJoinOrLeave() {
       if (!authApi.token()) {
         uni.navigateTo({ url: '/pages/login/index' })
         return
       }
 
       if (this.joined) {
-        uni.showToast({ title: '你已经加入啦', icon: 'none' })
-        return
-      }
-
-      try {
-        await mealApi.join(this.meal.id)
-        await this.loadMeal()
-        uni.showToast({ title: '已加入饭局', icon: 'success' })
-      } catch (error) {
-        uni.showToast({ title: error.message || '加入失败', icon: 'none' })
+        try {
+          await mealApi.leave(this.meal.id)
+          await this.loadMeal()
+          uni.showToast({ title: '已退出饭局', icon: 'success' })
+        } catch (error) {
+          uni.showToast({ title: error.message || '退出失败', icon: 'none' })
+        }
+      } else {
+        try {
+          await mealApi.join(this.meal.id)
+          await this.loadMeal()
+          uni.showToast({ title: '已加入饭局', icon: 'success' })
+        } catch (error) {
+          uni.showToast({ title: error.message || '加入失败', icon: 'none' })
+        }
       }
     },
     reviewMeal() {

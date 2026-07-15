@@ -26,6 +26,14 @@ import {
   getRestaurant,
   listRestaurants,
   createRestaurant,
+  getPost,
+  listPosts,
+  createPost,
+  getPostParticipantUserIds,
+  getPostParticipantAvatars,
+  isUserJoinedPost,
+  addPostParticipant,
+  removePostParticipant,
   seedIfEmpty
 } from "./db.js";
 
@@ -125,6 +133,29 @@ const server = http.createServer(async (req, res) => {
 
     if (method === "POST" && path === "/api/restaurants") {
       return handleCreateRestaurant(req, res);
+    }
+
+    if (method === "GET" && path === "/api/posts") {
+      return handlePostList(req, requestUrl, res);
+    }
+
+    if (method === "POST" && path === "/api/posts") {
+      return handleCreatePost(req, res);
+    }
+
+    const postMatch = path.match(/^\/api\/posts\/([^/]+)$/);
+    if (method === "GET" && postMatch) {
+      return handlePostDetail(req, postMatch[1], res);
+    }
+
+    const postJoinMatch = path.match(/^\/api\/posts\/([^/]+)\/join$/);
+    if (method === "POST" && postJoinMatch) {
+      return handleJoinPost(req, res, postJoinMatch[1]);
+    }
+
+    const postLeaveMatch = path.match(/^\/api\/posts\/([^/]+)\/leave$/);
+    if (method === "POST" && postLeaveMatch) {
+      return handleLeavePost(req, res, postLeaveMatch[1]);
     }
 
     return sendError(res, 404, "NOT_FOUND", "接口不存在");
@@ -470,6 +501,149 @@ async function handleCreateRestaurant(req, res) {
   });
 
   return sendJson(res, 201, { restaurant });
+}
+
+// ========== 找人帖 ==========
+
+// 功能：找人帖列表。支持按 category 筛选，未登录用户可读。
+function handlePostList(req, requestUrl, res) {
+  const category = requestUrl.searchParams.get("category") || undefined;
+  const posts = listPosts({ category });
+
+  // 尝试读取当前用户 ID（若有携带 Token），但不强求 401 拦截，方便展示
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+  const tokenUserId = token?.replace(/^dev-token-/, "");
+  const userId = req.headers["x-user-id"] || tokenUserId;
+  const currentUser = userId ? getUser(userId) : null;
+
+  const items = posts.map((post) => {
+    const joinedAvatars = getPostParticipantAvatars(post.id);
+    const joined = currentUser ? isUserJoinedPost(post.id, currentUser.id) : false;
+    return {
+      ...post,
+      author: toPublicUser(getUser(post.authorId)),
+      restaurant: post.restaurantId ? getRestaurant(post.restaurantId) : null,
+      waitingCount: joinedAvatars.length,
+      joinedAvatars,
+      joined
+    };
+  });
+
+  return sendJson(res, 200, { items });
+}
+
+// 功能：找人帖详情。返回帖子内容、发起人公开信息与推荐餐厅。
+function handlePostDetail(req, postId, res) {
+  const post = getPost(postId);
+  if (!post) {
+    return sendError(res, 404, "POST_NOT_FOUND", "找人帖不存在");
+  }
+
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+  const tokenUserId = token?.replace(/^dev-token-/, "");
+  const userId = req.headers["x-user-id"] || tokenUserId;
+  const currentUser = userId ? getUser(userId) : null;
+
+  const joinedAvatars = getPostParticipantAvatars(post.id);
+  const joined = currentUser ? isUserJoinedPost(post.id, currentUser.id) : false;
+
+  return sendJson(res, 200, {
+    post: {
+      ...post,
+      author: toPublicUser(getUser(post.authorId)),
+      restaurant: post.restaurantId ? getRestaurant(post.restaurantId) : null,
+      waitingCount: joinedAvatars.length,
+      joinedAvatars,
+      joined
+    }
+  });
+}
+
+// 功能：发布找人帖。需登录。
+async function handleCreatePost(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const body = await readBody(req);
+  if (!body.category || !body.content) {
+    return sendError(res, 400, "FIELD_REQUIRED", "分类和正文不能为空");
+  }
+
+  const post = createPost({
+    authorId: user.id,
+    category: String(body.category).trim(),
+    content: String(body.content).trim(),
+    restaurantId: body.restaurantId ? Number(body.restaurantId) : null
+  });
+
+  return sendJson(res, 201, {
+    post: {
+      ...post,
+      author: toPublicUser(user),
+      restaurant: post.restaurantId ? getRestaurant(post.restaurantId) : null,
+      waitingCount: 0,
+      joinedAvatars: [],
+      joined: false
+    }
+  });
+}
+
+// 功能：响应（加入）找人帖。
+function handleJoinPost(req, res, postId) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const post = getPost(postId);
+  if (!post) {
+    return sendError(res, 404, "POST_NOT_FOUND", "找人帖不存在");
+  }
+
+  if (isUserJoinedPost(postId, user.id)) {
+    return sendError(res, 409, "ALREADY_JOINED", "你已经响应过该贴");
+  }
+
+  addPostParticipant(postId, user.id);
+  const joinedAvatars = getPostParticipantAvatars(postId);
+
+  return sendJson(res, 200, {
+    post: {
+      ...post,
+      author: toPublicUser(getUser(post.authorId)),
+      restaurant: post.restaurantId ? getRestaurant(post.restaurantId) : null,
+      waitingCount: joinedAvatars.length,
+      joinedAvatars,
+      joined: true
+    }
+  });
+}
+
+// 功能：取消响应（退出）找人帖。
+function handleLeavePost(req, res, postId) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const post = getPost(postId);
+  if (!post) {
+    return sendError(res, 404, "POST_NOT_FOUND", "找人帖不存在");
+  }
+
+  if (!isUserJoinedPost(postId, user.id)) {
+    return sendError(res, 409, "NOT_JOINED", "你还没有加入该贴");
+  }
+
+  removePostParticipant(postId, user.id);
+  const joinedAvatars = getPostParticipantAvatars(postId);
+
+  return sendJson(res, 200, {
+    post: {
+      ...post,
+      author: toPublicUser(getUser(post.authorId)),
+      restaurant: post.restaurantId ? getRestaurant(post.restaurantId) : null,
+      waitingCount: joinedAvatars.length,
+      joinedAvatars,
+      joined: false
+    }
+  });
 }
 
 // ========== 辅助函数 ==========
