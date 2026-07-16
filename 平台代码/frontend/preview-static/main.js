@@ -31,6 +31,59 @@ const pages = {
         <div class="pills" data-choice-group><button class="pill active">全校⌄</button><button class="pill">品类⌄</button><button class="pill">时间⌄</button><button class="pill">筛选⌄</button></div>
       </section>
       <div id="meal-list"><div class="empty"><p>饭局加载中...</p></div></div>
+
+      <!-- 筛选模态弹窗 -->
+      <div id="filter-modal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>高级筛选</h3>
+            <button class="close-btn" id="close-filter-modal">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="filter-group">
+              <label>预算区间</label>
+              <div class="filter-options" id="filter-budget-options">
+                <button class="option-btn active" data-value="all">全部</button>
+                <button class="option-btn" data-value="0-20">0-20 元</button>
+                <button class="option-btn" data-value="20-40">20-40 元</button>
+                <button class="option-btn" data-value="40-80">40-80 元</button>
+                <button class="option-btn" data-value="80+">80 元以上</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>就餐校区</label>
+              <div class="filter-options" id="filter-campus-options">
+                <button class="option-btn active" data-value="all">全部</button>
+                <button class="option-btn" data-value="主校区">主校区</button>
+                <button class="option-btn" data-value="西校区">西校区</button>
+                <button class="option-btn" data-value="东校区">东校区</button>
+                <button class="option-btn" data-value="市区">市区</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>人数限制</label>
+              <div class="filter-options" id="filter-people-options">
+                <button class="option-btn active" data-value="all">全部</button>
+                <button class="option-btn" data-value="2">仅限双人 (2人)</button>
+                <button class="option-btn" data-value="3-4">拼桌聚餐 (3-4人)</button>
+                <button class="option-btn" data-value="5+">多人成行 (5人以上)</button>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>排序方式</label>
+              <div class="filter-options" id="filter-sort-options">
+                <button class="option-btn active" data-value="default">默认时间排序</button>
+                <button class="option-btn" data-value="budget-asc">价格从低到高</button>
+                <button class="option-btn" data-value="people-desc">名额从多到少</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-reset" id="btn-filter-reset">重置</button>
+            <button class="btn-confirm" id="btn-filter-confirm">确定</button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   find: `
@@ -97,7 +150,38 @@ const pages = {
     <div class="page">
       <button class="back-link" data-back>‹ 我的</button>
       <div class="title">我的饭局</div>
-      <p class="muted">这里会从后端读取你发起和加入的饭局。</p>
+      
+      <!-- 我的饭局数据概览 Dashboard -->
+      <div class="meal-dashboard">
+        <div class="dashboard-stats">
+          <div class="stat-item">
+            <span class="stat-val" id="dashboard-created-count">0</span>
+            <span class="stat-lbl">发起饭局</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" id="dashboard-joined-count">0</span>
+            <span class="stat-lbl">参与饭局</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" id="dashboard-budget-sum">¥0</span>
+            <span class="stat-lbl">拼伙花费</span>
+          </div>
+        </div>
+        <div class="dashboard-chart">
+          <div class="chart-title">活跃打卡 (最近约饭热力)</div>
+          <div class="chart-grid">
+            <span class="grid-dot active" title="已完成"></span>
+            <span class="grid-dot active" title="已完成"></span>
+            <span class="grid-dot" title="无活动"></span>
+            <span class="grid-dot active" title="已完成"></span>
+            <span class="grid-dot" title="无活动"></span>
+            <span class="grid-dot active" title="已完成"></span>
+            <span class="grid-dot active" title="已完成"></span>
+          </div>
+          <span class="chart-summary-txt">本周与 <strong>6</strong> 位饭友愉快拼餐，信用优秀</span>
+        </div>
+      </div>
+
       <div class="pills">
         <button class="pill active" data-my-meal-tab="created">我发起的</button>
         <button class="pill" data-my-meal-tab="joined">我加入的</button>
@@ -152,6 +236,18 @@ let activeMealId = 1
 let mealsCache = []
 let myMealsCache = { created: [], joined: [] }
 let myMealsTab = 'created'
+
+let campusFilterOptions = ['全校', '主校区', '西校区']
+let campusFilterIndex = 0
+let foodFilterOptions = ['全部品类', '麻辣香锅', '米线', '轻食', '火锅']
+let foodFilterIndex = 0
+let timeFilterOptions = ['全部时间', '今日', '可加入']
+let timeFilterIndex = 0
+
+let selectedBudget = 'all'
+let selectedCampus = 'all'
+let selectedPeople = 'all'
+let selectedSort = 'default'
 
 const findPosts = [
   {
@@ -431,22 +527,83 @@ function bindPageActions() {
   const homePillsContainer = screen.querySelector('.pills[data-choice-group]')
   if (homePillsContainer && currentPage === 'home') {
     const pills = homePillsContainer.querySelectorAll('.pill')
-    if (pills.length >= 3) {
-      pills.forEach((p, idx) => {
-        const clone = p.cloneNode(true)
-        p.parentNode.replaceChild(clone, p)
-        clone.addEventListener('click', (e) => {
-          e.stopPropagation()
-          if (idx === 0) {
-            campusFilterIndex = (campusFilterIndex + 1) % campusFilterOptions.length
-          } else if (idx === 1) {
-            foodFilterIndex = (foodFilterIndex + 1) % foodFilterOptions.length
-          } else if (idx === 2) {
-            timeFilterIndex = (timeFilterIndex + 1) % timeFilterOptions.length
-          }
+    pills.forEach((p, idx) => {
+      const clone = p.cloneNode(true)
+      p.parentNode.replaceChild(clone, p)
+      clone.addEventListener('click', (e) => {
+        e.stopPropagation()
+        if (idx === 0) {
+          campusFilterIndex = (campusFilterIndex + 1) % campusFilterOptions.length
+          selectedCampus = campusFilterIndex === 0 ? 'all' : campusFilterOptions[campusFilterIndex]
           loadPreviewMeals()
-        })
+        } else if (idx === 1) {
+          foodFilterIndex = (foodFilterIndex + 1) % foodFilterOptions.length
+          loadPreviewMeals()
+        } else if (idx === 2) {
+          timeFilterIndex = (timeFilterIndex + 1) % timeFilterOptions.length
+          loadPreviewMeals()
+        } else if (idx === 3) {
+          openFilterModal()
+        }
       })
+    })
+  }
+
+  const modal = screen.querySelector('#filter-modal')
+  if (modal && currentPage === 'home') {
+    const closeBtn = modal.querySelector('#close-filter-modal')
+    if (closeBtn) {
+      closeBtn.onclick = () => closeFilterModal()
+    }
+    
+    modal.querySelectorAll('.option-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation()
+        const parent = btn.parentNode
+        parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+      }
+    })
+    
+    const resetBtn = modal.querySelector('#btn-filter-reset')
+    if (resetBtn) {
+      resetBtn.onclick = (e) => {
+        e.stopPropagation()
+        modal.querySelectorAll('.filter-options').forEach(group => {
+          group.querySelectorAll('.option-btn').forEach((btn, index) => {
+            btn.classList.toggle('active', index === 0)
+          })
+        })
+      }
+    }
+    
+    const confirmBtn = modal.querySelector('#btn-filter-confirm')
+    if (confirmBtn) {
+      confirmBtn.onclick = (e) => {
+        e.stopPropagation()
+        
+        const activeBudget = modal.querySelector('#filter-budget-options .option-btn.active')
+        selectedBudget = activeBudget ? activeBudget.dataset.value : 'all'
+        
+        const activeCampus = modal.querySelector('#filter-campus-options .option-btn.active')
+        selectedCampus = activeCampus ? activeCampus.dataset.value : 'all'
+        
+        const activePeople = modal.querySelector('#filter-people-options .option-btn.active')
+        selectedPeople = activePeople ? activePeople.dataset.value : 'all'
+        
+        const activeSort = modal.querySelector('#filter-sort-options .option-btn.active')
+        selectedSort = activeSort ? activeSort.dataset.value : 'default'
+        
+        if (selectedCampus === 'all') {
+          campusFilterIndex = 0
+        } else {
+          const idx = campusFilterOptions.indexOf(selectedCampus)
+          if (idx !== -1) campusFilterIndex = idx
+        }
+        
+        closeFilterModal()
+        loadPreviewMeals()
+      }
     }
   }
 
@@ -727,12 +884,36 @@ async function loadPreviewMeals() {
 
   try {
     let query = '?onlyAvailable=true'
-    if (campusFilterIndex > 0) {
+    
+    // 1. Campus Filter
+    if (selectedCampus !== 'all') {
+      query += `&campus=${encodeURIComponent(selectedCampus)}`
+    } else if (campusFilterIndex > 0) {
       query += `&campus=${encodeURIComponent(campusFilterOptions[campusFilterIndex])}`
     }
+    
+    // 2. Keyword/Category Filter
     if (foodFilterIndex > 0) {
       query += `&keyword=${encodeURIComponent(foodFilterOptions[foodFilterIndex])}`
     }
+    
+    // 3. Budget Filter
+    if (selectedBudget !== 'all') {
+      const [minB, maxB] = parseBudgetRange(selectedBudget)
+      query += `&minBudget=${minB}&maxBudget=${maxB}`
+    }
+    
+    // 4. People Limit Filter
+    if (selectedPeople !== 'all') {
+      const [minP, maxP] = parsePeopleRange(selectedPeople)
+      query += `&minPeople=${minP}&maxPeople=${maxP}`
+    }
+    
+    // 5. Sort By
+    if (selectedSort !== 'default') {
+      query += `&sortBy=${selectedSort}`
+    }
+
     const data = await apiRequest(`/meals${query}`)
     mealsCache = data.items || []
     if (mealsCache.length && !activeMealId) activeMealId = mealsCache[0].id
@@ -746,6 +927,45 @@ async function loadPreviewMeals() {
     target.innerHTML = `<div class="empty"><p>${error.message}</p><button class="secondary full-width" data-go-publish>去发布饭局</button></div>`
     bindPageActions()
   }
+}
+
+function parseBudgetRange(val) {
+  if (val === '0-20') return [0, 2000]
+  if (val === '20-40') return [2000, 4000]
+  if (val === '40-80') return [4000, 8000]
+  if (val === '80+') return [8000, 999999]
+  return [0, 0]
+}
+
+function parsePeopleRange(val) {
+  if (val === '2') return [2, 2]
+  if (val === '3-4') return [3, 4]
+  if (val === '5+') return [5, 99]
+  return [0, 0]
+}
+
+function openFilterModal() {
+  const modal = screen.querySelector('#filter-modal')
+  if (!modal) return
+  
+  const budgetOpts = modal.querySelectorAll('#filter-budget-options .option-btn')
+  budgetOpts.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedBudget))
+  
+  const campusOpts = modal.querySelectorAll('#filter-campus-options .option-btn')
+  campusOpts.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedCampus))
+  
+  const peopleOpts = modal.querySelectorAll('#filter-people-options .option-btn')
+  peopleOpts.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedPeople))
+  
+  const sortOpts = modal.querySelectorAll('#filter-sort-options .option-btn')
+  sortOpts.forEach(btn => btn.classList.toggle('active', btn.dataset.value === selectedSort))
+  
+  modal.classList.add('active')
+}
+
+function closeFilterModal() {
+  const modal = screen.querySelector('#filter-modal')
+  if (modal) modal.classList.remove('active')
 }
 
 function renderMealCard(meal) {
@@ -817,6 +1037,23 @@ async function loadPreviewMyMeals() {
 function renderMyMeals() {
   const target = screen.querySelector('#my-meal-list')
   if (!target) return
+
+  // Populate dashboard stats dynamically
+  const createdCount = myMealsCache.created.length
+  const joinedCount = myMealsCache.joined.length
+  
+  const createdEl = screen.querySelector('#dashboard-created-count')
+  if (createdEl) createdEl.textContent = createdCount
+  
+  const joinedEl = screen.querySelector('#dashboard-joined-count')
+  if (joinedEl) joinedEl.textContent = joinedCount
+  
+  // Calculate total budget spent
+  const createdBudget = myMealsCache.created.reduce((sum, meal) => sum + (meal.budgetMin || 0), 0)
+  const joinedBudget = myMealsCache.joined.reduce((sum, meal) => sum + (meal.budgetMin || 0), 0)
+  const totalBudget = createdBudget + joinedBudget
+  const budgetEl = screen.querySelector('#dashboard-budget-sum')
+  if (budgetEl) budgetEl.textContent = `¥${totalBudget}`
 
   const meals = myMealsCache[myMealsTab] || []
   target.innerHTML = meals.length
@@ -1110,7 +1347,7 @@ function updateHomeFilterPills() {
   if (!container) return
   
   const pills = container.querySelectorAll('.pill')
-  if (pills.length >= 3) {
+  if (pills.length >= 4) {
     pills[0].textContent = `${campusFilterOptions[campusFilterIndex]}⌄`
     pills[0].classList.toggle('active', campusFilterIndex > 0)
     
@@ -1119,6 +1356,10 @@ function updateHomeFilterPills() {
     
     pills[2].textContent = `${timeFilterOptions[timeFilterIndex]}⌄`
     pills[2].classList.toggle('active', timeFilterIndex > 0)
+    
+    const hasAdvancedFilter = selectedBudget !== 'all' || selectedPeople !== 'all' || selectedSort !== 'default'
+    pills[3].textContent = hasAdvancedFilter ? '已筛选⌄' : '筛选⌄'
+    pills[3].classList.toggle('active', hasAdvancedFilter)
   }
 }
 

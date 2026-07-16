@@ -18,6 +18,7 @@ db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 // 功能：建表（如果表不存在则创建），后续切 MySQL 时只需替换建表语句和驱动
+// 功能：建表（如果表不存在则创建），后续切 MySQL 时只需替换建表语句和驱动
 function initTables() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -37,6 +38,11 @@ function initTables() {
       taste_tags TEXT DEFAULT '[]',
       personality_tags TEXT DEFAULT '[]',
       budget_preference TEXT DEFAULT '20-40',
+      major TEXT DEFAULT '',
+      grade TEXT DEFAULT '',
+      hometown TEXT DEFAULT '',
+      constellation TEXT DEFAULT '',
+      description TEXT DEFAULT '',
       updated_at TEXT NOT NULL
     );
 
@@ -119,7 +125,101 @@ function initTables() {
       user_id INTEGER NOT NULL REFERENCES users(id),
       joined_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS visited_restaurants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      restaurant_id INTEGER REFERENCES restaurants(id),
+      restaurant_name TEXT DEFAULT '',
+      visited_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS wishlist_restaurants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      restaurant_id INTEGER REFERENCES restaurants(id),
+      restaurant_name TEXT DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS user_moments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      content TEXT NOT NULL,
+      image_url TEXT DEFAULT '',
+      likes_count INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS saved_meals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      meal_id INTEGER NOT NULL REFERENCES meals(id),
+      created_at TEXT NOT NULL
+    );
   `);
+
+  upgradeProfilesTable();
+  seedNewTablesIfEmpty();
+}
+
+function upgradeProfilesTable() {
+  const columns = db.pragma("table_info(profiles)").map(c => c.name);
+  if (!columns.includes("major")) {
+    db.exec("ALTER TABLE profiles ADD COLUMN major TEXT DEFAULT ''");
+  }
+  if (!columns.includes("grade")) {
+    db.exec("ALTER TABLE profiles ADD COLUMN grade TEXT DEFAULT ''");
+  }
+  if (!columns.includes("hometown")) {
+    db.exec("ALTER TABLE profiles ADD COLUMN hometown TEXT DEFAULT ''");
+  }
+  if (!columns.includes("constellation")) {
+    db.exec("ALTER TABLE profiles ADD COLUMN constellation TEXT DEFAULT ''");
+  }
+  if (!columns.includes("description")) {
+    db.exec("ALTER TABLE profiles ADD COLUMN description TEXT DEFAULT ''");
+  }
+}
+
+function seedNewTablesIfEmpty() {
+  const now = new Date().toISOString();
+  
+  const visitedCount = db.pragma("table_info(visited_restaurants)");
+  if (visitedCount.length > 0) {
+    const rowCount = db.prepare("SELECT COUNT(*) as cnt FROM visited_restaurants").get();
+    if (rowCount.cnt === 0) {
+      db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, 1, '', ?)`).run(now);
+      db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, 2, '', ?)`).run(now);
+    }
+  }
+  
+  const wishlistCount = db.pragma("table_info(wishlist_restaurants)");
+  if (wishlistCount.length > 0) {
+    const rowCount = db.prepare("SELECT COUNT(*) as cnt FROM wishlist_restaurants").get();
+    if (rowCount.cnt === 0) {
+      db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, 4, '', ?)`).run(now);
+      db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, 5, '', ?)`).run(now);
+    }
+  }
+
+  const momentsCount = db.pragma("table_info(user_moments)");
+  if (momentsCount.length > 0) {
+    const rowCount = db.prepare("SELECT COUNT(*) as cnt FROM user_moments").get();
+    if (rowCount.cnt === 0) {
+      db.prepare(`INSERT INTO user_moments (user_id, content, image_url, likes_count, created_at) VALUES (3, '今天在二食堂二楼发现了一家新的拉面，味道绝了！推荐大家去尝尝。🍔', 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80', 5, ?)`).run(now);
+      db.prepare(`INSERT INTO user_moments (user_id, content, image_url, likes_count, created_at) VALUES (1, '吃饱喝足，准备回图书馆搬砖了🎒', '', 2, ?)`).run(now);
+    }
+  }
+
+  const savedCount = db.pragma("table_info(saved_meals)");
+  if (savedCount.length > 0) {
+    const rowCount = db.prepare("SELECT COUNT(*) as cnt FROM saved_meals").get();
+    if (rowCount.cnt === 0) {
+      db.prepare(`INSERT INTO saved_meals (user_id, meal_id, created_at) VALUES (1, 1, ?)`).run(now);
+      db.prepare(`INSERT INTO saved_meals (user_id, meal_id, created_at) VALUES (1, 2, ?)`).run(now);
+    }
+  }
 }
 
 initTables();
@@ -296,6 +396,11 @@ export function getProfile(userId) {
     tasteTags: JSON.parse(row.taste_tags || "[]"),
     personalityTags: JSON.parse(row.personality_tags || "[]"),
     budgetPreference: row.budget_preference,
+    major: row.major || "",
+    grade: row.grade || "",
+    hometown: row.hometown || "",
+    constellation: row.constellation || "",
+    description: row.description || "",
     updatedAt: row.updated_at
   };
 }
@@ -311,10 +416,15 @@ export function upsertProfile(userId, data) {
   const tasteTags = JSON.stringify(Array.isArray(data.tasteTags) ? data.tasteTags : (existing?.tasteTags || []));
   const personalityTags = JSON.stringify(Array.isArray(data.personalityTags) ? data.personalityTags : (existing?.personalityTags || []));
   const budgetPreference = data.budgetPreference ?? existing?.budgetPreference ?? "20-40";
+  const major = data.major ?? existing?.major ?? "";
+  const grade = data.grade ?? existing?.grade ?? "";
+  const hometown = data.hometown ?? existing?.hometown ?? "";
+  const constellation = data.constellation ?? existing?.constellation ?? "";
+  const description = data.description ?? existing?.description ?? "";
 
   db.prepare(`
-    INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO profiles (user_id, avatar_url, gender, campus, taste_tags, personality_tags, budget_preference, major, grade, hometown, constellation, description, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(user_id) DO UPDATE SET
       avatar_url = excluded.avatar_url,
       gender = excluded.gender,
@@ -322,8 +432,13 @@ export function upsertProfile(userId, data) {
       taste_tags = excluded.taste_tags,
       personality_tags = excluded.personality_tags,
       budget_preference = excluded.budget_preference,
+      major = excluded.major,
+      grade = excluded.grade,
+      hometown = excluded.hometown,
+      constellation = excluded.constellation,
+      description = excluded.description,
       updated_at = excluded.updated_at
-  `).run(Number(userId), avatarUrl, gender, campus, tasteTags, personalityTags, budgetPreference, now);
+  `).run(Number(userId), avatarUrl, gender, campus, tasteTags, personalityTags, budgetPreference, major, grade, hometown, constellation, description, now);
 
   return getProfile(userId);
 }
@@ -359,8 +474,8 @@ export function createMeal(data) {
   return getMeal(mealId);
 }
 
-// 功能：饭局列表查询，支持状态、校区、关键词筛选
-export function listMeals({ status, campus, keyword } = {}) {
+// 功能：饭局列表查询，支持状态、校区、关键词筛选以及预算/人数/排序等高级筛选
+export function listMeals({ status, campus, keyword, minBudget, maxBudget, minPeople, maxPeople, sortBy } = {}) {
   let sql = "SELECT * FROM meals WHERE 1=1";
   const params = [];
 
@@ -377,8 +492,33 @@ export function listMeals({ status, campus, keyword } = {}) {
     const kw = `%${keyword}%`;
     params.push(kw, kw, kw, kw);
   }
+  
+  if (minBudget !== undefined && minBudget > 0) {
+    sql += " AND budget_min >= ?";
+    params.push(Number(minBudget));
+  }
+  if (maxBudget !== undefined && maxBudget > 0) {
+    sql += " AND budget_max <= ?";
+    params.push(Number(maxBudget));
+  }
+  
+  if (minPeople !== undefined && minPeople > 0) {
+    sql += " AND max_people >= ?";
+    params.push(Number(minPeople));
+  }
+  if (maxPeople !== undefined && maxPeople > 0) {
+    sql += " AND max_people <= ?";
+    params.push(Number(maxPeople));
+  }
 
-  sql += " ORDER BY meal_time ASC";
+  if (sortBy === 'budget-asc') {
+    sql += " ORDER BY budget_min ASC";
+  } else if (sortBy === 'people-desc') {
+    sql += " ORDER BY max_people DESC";
+  } else {
+    sql += " ORDER BY meal_time ASC";
+  }
+  
   return db.prepare(sql).all(...params).map(normalizeMeal);
 }
 
@@ -683,6 +823,136 @@ export function getUserJoinedMealIds(userId) {
   return rows.map(r => r.meal_id);
 }
 
+// 去过 (Visited Restaurants)
+export function listVisitedRestaurants(userId) {
+  return db.prepare(`
+    SELECT vr.*, r.name as name, r.food_type as food_type, r.avg_price as avg_price, r.rating as rating, r.tags as tags
+    FROM visited_restaurants vr
+    LEFT JOIN restaurants r ON vr.restaurant_id = r.id
+    WHERE vr.user_id = ?
+    ORDER BY vr.visited_at DESC
+  `).all(Number(userId)).map(row => ({
+    id: row.id,
+    userId: row.user_id,
+    restaurantId: row.restaurant_id,
+    restaurantName: row.restaurant_name || row.name || '未知餐厅',
+    foodType: row.food_type || '',
+    avgPrice: row.avg_price || 0,
+    rating: row.rating || 0,
+    tags: JSON.parse(row.tags || '[]'),
+    visitedAt: row.visited_at
+  }));
+}
+
+export function addVisitedRestaurant(userId, restaurantId, restaurantName) {
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at)
+    VALUES (?, ?, ?, ?)
+  `).run(Number(userId), restaurantId ? Number(restaurantId) : null, restaurantName || '', now);
+}
+
+// 想去 (Wishlist Restaurants)
+export function listWishlistRestaurants(userId) {
+  return db.prepare(`
+    SELECT wr.*, r.name as name, r.food_type as food_type, r.avg_price as avg_price, r.rating as rating, r.tags as tags
+    FROM wishlist_restaurants wr
+    LEFT JOIN restaurants r ON wr.restaurant_id = r.id
+    WHERE wr.user_id = ?
+    ORDER BY wr.created_at DESC
+  `).all(Number(userId)).map(row => ({
+    id: row.id,
+    userId: row.user_id,
+    restaurantId: row.restaurant_id,
+    restaurantName: row.restaurant_name || row.name || '未知餐厅',
+    foodType: row.food_type || '',
+    avgPrice: row.avg_price || 0,
+    rating: row.rating || 0,
+    tags: JSON.parse(row.tags || '[]'),
+    createdAt: row.created_at
+  }));
+}
+
+export function addWishlistRestaurant(userId, restaurantId, restaurantName) {
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at)
+    VALUES (?, ?, ?, ?)
+  `).run(Number(userId), restaurantId ? Number(restaurantId) : null, restaurantName || '', now);
+}
+
+// 动态 (Moments)
+export function listMoments(userId) {
+  const sql = userId 
+    ? "SELECT um.*, u.nickname as author_name, p.avatar_url as author_avatar FROM user_moments um LEFT JOIN users u ON um.user_id = u.id LEFT JOIN profiles p ON um.user_id = p.user_id WHERE um.user_id = ? ORDER BY um.created_at DESC"
+    : "SELECT um.*, u.nickname as author_name, p.avatar_url as author_avatar FROM user_moments um LEFT JOIN users u ON um.user_id = u.id LEFT JOIN profiles p ON um.user_id = p.user_id ORDER BY um.created_at DESC";
+  
+  const params = userId ? [Number(userId)] : [];
+  return db.prepare(sql).all(...params).map(row => ({
+    id: row.id,
+    userId: row.user_id,
+    authorName: row.author_name || '同学',
+    authorAvatar: row.author_avatar || '',
+    content: row.content,
+    imageUrl: row.image_url || '',
+    likesCount: row.likes_count || 0,
+    createdAt: row.created_at
+  }));
+}
+
+export function createMoment(userId, content, imageUrl) {
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO user_moments (user_id, content, image_url, likes_count, created_at)
+    VALUES (?, ?, ?, 0, ?)
+  `).run(Number(userId), content, imageUrl || '', now);
+}
+
+// 收藏 (Saved Meals)
+export function listSavedMeals(userId) {
+  return db.prepare(`
+    SELECT sm.*, m.*, u.nickname as creator_name
+    FROM saved_meals sm
+    JOIN meals m ON sm.meal_id = m.id
+    JOIN users u ON m.creator_id = u.id
+    WHERE sm.user_id = ?
+    ORDER BY sm.created_at DESC
+  `).all(Number(userId)).map(row => ({
+    id: row.id,
+    userId: row.user_id,
+    mealId: row.meal_id,
+    meal: {
+      id: row.meal_id,
+      title: row.title,
+      foodType: row.food_type,
+      mealTime: row.meal_time,
+      place: row.place,
+      campus: row.campus,
+      maxPeople: row.max_people,
+      budgetMin: row.budget_min,
+      budgetMax: row.budget_max,
+      chatMode: row.chat_mode,
+      description: row.description,
+      status: row.status,
+      creatorName: row.creator_name
+    },
+    createdAt: row.created_at
+  }));
+}
+
+export function toggleSaveMeal(userId, mealId) {
+  const existing = db.prepare("SELECT id FROM saved_meals WHERE user_id = ? AND meal_id = ?").get(Number(userId), Number(mealId));
+  if (existing) {
+    db.prepare("DELETE FROM saved_meals WHERE id = ?").run(existing.id);
+    return false; // un-saved
+  } else {
+    const now = new Date().toISOString();
+    db.prepare("INSERT INTO saved_meals (user_id, meal_id, created_at) VALUES (?, ?, ?)")
+      .run(Number(userId), Number(mealId), now);
+    return true; // saved
+  }
+}
+
 // ========== 种子数据 ==========
 
 // 功能：首次启动时写入示例数据，如果已有数据则跳过
@@ -753,6 +1023,22 @@ export function seedIfEmpty() {
   db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (3, 6, ?)`).run(now);
   db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (5, 1, ?)`).run(now);
   db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (5, 2, ?)`).run(now);
+
+  // 种子去过数据 (Visited)
+  db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, 1, '', ?)`).run(now);
+  db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, 2, '', ?)`).run(now);
+  
+  // 种子想去数据 (Wishlist)
+  db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, 4, '', ?)`).run(now);
+  db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, 5, '', ?)`).run(now);
+
+  // 种子动态数据 (Moments)
+  db.prepare(`INSERT INTO user_moments (user_id, content, image_url, likes_count, created_at) VALUES (3, '今天在二食堂二楼发现了一家新的拉面，味道绝了！推荐大家去尝尝。🍔', 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80', 5, ?)`).run(now);
+  db.prepare(`INSERT INTO user_moments (user_id, content, image_url, likes_count, created_at) VALUES (1, '吃饱喝足，准备回图书馆搬砖了🎒', '', 2, ?)`).run(now);
+
+  // 种子收藏数据 (Saved Meals)
+  db.prepare(`INSERT INTO saved_meals (user_id, meal_id, created_at) VALUES (1, 1, ?)`).run(now);
+  db.prepare(`INSERT INTO saved_meals (user_id, meal_id, created_at) VALUES (1, 2, ?)`).run(now);
 
   console.log("[db] 已写入种子数据");
 }

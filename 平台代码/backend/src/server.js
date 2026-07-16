@@ -34,6 +34,14 @@ import {
   isUserJoinedPost,
   addPostParticipant,
   removePostParticipant,
+  listVisitedRestaurants,
+  addVisitedRestaurant,
+  listWishlistRestaurants,
+  addWishlistRestaurant,
+  listMoments,
+  createMoment,
+  listSavedMeals,
+  toggleSaveMeal,
   seedIfEmpty
 } from "./db.js";
 
@@ -152,10 +160,36 @@ const server = http.createServer(async (req, res) => {
     if (method === "POST" && postJoinMatch) {
       return handleJoinPost(req, res, postJoinMatch[1]);
     }
-
     const postLeaveMatch = path.match(/^\/api\/posts\/([^/]+)\/leave$/);
     if (method === "POST" && postLeaveMatch) {
       return handleLeavePost(req, res, postLeaveMatch[1]);
+    }
+
+    // --- 新增四个模块相关路由 ---
+    if (method === "GET" && path === "/api/profile/visited") {
+      return handleListVisited(req, res);
+    }
+    if (method === "POST" && path === "/api/profile/visited") {
+      return handleAddVisited(req, res);
+    }
+    if (method === "GET" && path === "/api/profile/wishlist") {
+      return handleListWishlist(req, res);
+    }
+    if (method === "POST" && path === "/api/profile/wishlist") {
+      return handleAddWishlist(req, res);
+    }
+    if (method === "GET" && path === "/api/moments") {
+      return handleListMoments(req, requestUrl, res);
+    }
+    if (method === "POST" && path === "/api/moments") {
+      return handleCreateMoment(req, res);
+    }
+    if (method === "GET" && path === "/api/profile/saved") {
+      return handleListSaved(req, res);
+    }
+    const saveMatch = path.match(/^\/api\/meals\/([^/]+)\/save$/);
+    if (method === "POST" && saveMatch) {
+      return handleToggleSaveMeal(req, res, saveMatch[1]);
     }
 
     return sendError(res, 404, "NOT_FOUND", "接口不存在");
@@ -217,14 +251,29 @@ async function handleUpdateProfile(req, res) {
   return sendJson(res, 200, { user, profile });
 }
 
-// 功能：饭局列表。支持首页筛选、搜索，只返回前端展示所需摘要。
+// 功能：饭局列表。支持首页筛选、搜索，以及预算/人数/排序等高级筛选，只返回前端展示所需摘要。
 function handleMealList(requestUrl, res) {
   const keyword = String(requestUrl.searchParams.get("keyword") || "").trim();
   const status = requestUrl.searchParams.get("status");
   const campus = requestUrl.searchParams.get("campus");
   const onlyAvailable = requestUrl.searchParams.get("onlyAvailable") === "true";
 
-  let list = listMeals({ status, campus, keyword: keyword || undefined });
+  const minBudget = requestUrl.searchParams.get("minBudget");
+  const maxBudget = requestUrl.searchParams.get("maxBudget");
+  const minPeople = requestUrl.searchParams.get("minPeople");
+  const maxPeople = requestUrl.searchParams.get("maxPeople");
+  const sortBy = requestUrl.searchParams.get("sortBy");
+
+  let list = listMeals({
+    status,
+    campus,
+    keyword: keyword || undefined,
+    minBudget: minBudget ? Number(minBudget) : undefined,
+    maxBudget: maxBudget ? Number(maxBudget) : undefined,
+    minPeople: minPeople ? Number(minPeople) : undefined,
+    maxPeople: maxPeople ? Number(maxPeople) : undefined,
+    sortBy
+  });
 
   if (onlyAvailable) {
     list = list.filter((meal) => {
@@ -729,4 +778,82 @@ function toPublicUser(user) {
     creditScore: user.creditScore,
     profile: getProfile(user.id)
   };
+}
+
+// 功能：去过模块列表
+async function handleListVisited(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const list = listVisitedRestaurants(user.id);
+  return sendJson(res, 200, { items: list });
+}
+
+// 功能：添加去过餐厅
+async function handleAddVisited(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const body = await readBody(req);
+  const { restaurantId, restaurantName } = body;
+  if (!restaurantId && !restaurantName) {
+    return sendError(res, 400, "BAD_REQUEST", "参数不完整");
+  }
+  addVisitedRestaurant(user.id, restaurantId, restaurantName);
+  return sendJson(res, 200, { ok: true });
+}
+
+// 功能：想去模块列表
+async function handleListWishlist(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const list = listWishlistRestaurants(user.id);
+  return sendJson(res, 200, { items: list });
+}
+
+// 功能：添加想去餐厅
+async function handleAddWishlist(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const body = await readBody(req);
+  const { restaurantId, restaurantName } = body;
+  if (!restaurantId && !restaurantName) {
+    return sendError(res, 400, "BAD_REQUEST", "参数不完整");
+  }
+  addWishlistRestaurant(user.id, restaurantId, restaurantName);
+  return sendJson(res, 200, { ok: true });
+}
+
+// 功能：获取动态流
+async function handleListMoments(req, requestUrl, res) {
+  const userId = requestUrl.searchParams.get("userId") ? Number(requestUrl.searchParams.get("userId")) : null;
+  const list = listMoments(userId);
+  return sendJson(res, 200, { items: list });
+}
+
+// 功能：发布动态
+async function handleCreateMoment(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const body = await readBody(req);
+  const { content, imageUrl } = body;
+  if (!content) {
+    return sendError(res, 400, "BAD_REQUEST", "动态内容不能为空");
+  }
+  createMoment(user.id, content, imageUrl);
+  return sendJson(res, 200, { ok: true });
+}
+
+// 功能：获取收藏列表
+async function handleListSaved(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const list = listSavedMeals(user.id);
+  return sendJson(res, 200, { items: list });
+}
+
+// 功能：收藏/取消收藏饭局
+async function handleToggleSaveMeal(req, res, mealId) {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const saved = toggleSaveMeal(user.id, mealId);
+  return sendJson(res, 200, { saved });
 }
