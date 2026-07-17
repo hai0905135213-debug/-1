@@ -1,0 +1,754 @@
+{
+  "generatedAt": "2026-07-17T07:03:01.277Z",
+  "restaurants": [
+    {
+      "id": "M050",
+      "name": "紫泥",
+      "locationHint": "大同古城",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M049",
+      "name": "猪小犟",
+      "locationHint": "沙河附近；沙河店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 83
+    },
+    {
+      "id": "M048",
+      "name": "争鲜",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M047",
+      "name": "赵阗阗",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M045",
+      "name": "小广东猛火炒饭",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M044",
+      "name": "湘泽园",
+      "locationHint": "南路附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 5
+    },
+    {
+      "id": "M043",
+      "name": "湘彬萱",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M042",
+      "name": "鲜潭蒸汽石锅鱼",
+      "locationHint": "超级合生汇、悦荟广场、五道口均有店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M041",
+      "name": "文通冰室",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M039",
+      "name": "沙胆彪",
+      "locationHint": "超级合生汇",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M038",
+      "name": "嫩牛家",
+      "locationHint": "交大附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M037",
+      "name": "楠小罐云南罐罐米线（学院路店）",
+      "locationHint": "学院路",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 83
+    },
+    {
+      "id": "M036",
+      "name": "客拉客",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M035",
+      "name": "烤小呆",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M034",
+      "name": "凯鸽",
+      "locationHint": "大同古城",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M033",
+      "name": "聚恩园",
+      "locationHint": "雍和宫附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M032",
+      "name": "汉巴味德",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M030",
+      "name": "必胜客",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M029",
+      "name": "肖蘸",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M028",
+      "name": "腊罗巴",
+      "locationHint": "南路附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M027",
+      "name": "烤匠",
+      "locationHint": "超级合生汇",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M025",
+      "name": "鹤一",
+      "locationHint": "亚运村店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 83
+    },
+    {
+      "id": "M024",
+      "name": "赣掌佬",
+      "locationHint": "玖耀里（推测）",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M023",
+      "name": "大理石",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M022",
+      "name": "比格",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M021",
+      "name": "真功夫原盅现蒸",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 90
+    },
+    {
+      "id": "M020",
+      "name": "徐小黑",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M018",
+      "name": "江川佑",
+      "locationHint": "沙河",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 15
+    },
+    {
+      "id": "M017",
+      "name": "大宅门",
+      "locationHint": "昌平城里",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M016",
+      "name": "1733",
+      "locationHint": "大钟寺站附近 / 北航附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M015",
+      "name": "醉江边",
+      "locationHint": "南路，离学校近；沙河店；豆花烤鱼",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M013",
+      "name": "拉蒂娜",
+      "locationHint": "连锁；具体门店待确认",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M012",
+      "name": "凤临阁",
+      "locationHint": "大同古城",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M011",
+      "name": "方砖厂",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M010",
+      "name": "超意兴",
+      "locationHint": "九耀里附近（依据对话）",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M009",
+      "name": "郑阿公",
+      "locationHint": "昌平万达、五道口均提及",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M008",
+      "name": "小渝府",
+      "locationHint": "南路附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 73
+    },
+    {
+      "id": "M007",
+      "name": "匠熙小馆",
+      "locationHint": "南路东门外附近；市里亦有分店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M006",
+      "name": "作作烧肉",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M005",
+      "name": "宏宝莱",
+      "locationHint": "南路",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M001",
+      "name": "老张头东北菜",
+      "locationHint": "恒大城附近；老张头东北老菜馆（具体分店待确认）",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 5
+    },
+    {
+      "id": "M134",
+      "name": "张记焖窖·十五年专注焖烤",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M133",
+      "name": "粤食佳",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M132",
+      "name": "幸福砂锅居",
+      "locationHint": "白浮店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 83
+    },
+    {
+      "id": "M131",
+      "name": "湘北·臭鳜鱼·湘土菜（北街家园店）",
+      "locationHint": "北街家园店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M130",
+      "name": "蜗牛的家小酒馆",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M129",
+      "name": "随园食记",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M125",
+      "name": "三文鱼大王（减脂版）",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M124",
+      "name": "浅锅日式和牛火锅自助·寿喜烧",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M123",
+      "name": "南京大牌档",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M120",
+      "name": "聚首堂·特色小吃·肘子",
+      "locationHint": "什刹海附近（待确认）",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M119",
+      "name": "京馋猫山野鲜货火锅",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M118",
+      "name": "浩海火烧云傣家菜",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M116",
+      "name": "潮汕258·聚味牛杂煲火锅（昌平店）",
+      "locationHint": "昌平店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M115",
+      "name": "北平宴（中关村）",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M114",
+      "name": "紫燕百味鸡",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M112",
+      "name": "正兴蜀园",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 90
+    },
+    {
+      "id": "M111",
+      "name": "云野菜·和牛寿喜烧（新中关店）",
+      "locationHint": "新中关",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 15
+    },
+    {
+      "id": "M109",
+      "name": "宜宾招待所",
+      "locationHint": "南路附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M108",
+      "name": "宜宾燃面",
+      "locationHint": "学校东区二层附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M107",
+      "name": "阳坊涮肉",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M105",
+      "name": "雅佳神话",
+      "locationHint": "五道口",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 83
+    },
+    {
+      "id": "M104",
+      "name": "鸦儿李记",
+      "locationHint": "西直门旁、什刹海均有店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M103",
+      "name": "鑫隆四季涮肉",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M102",
+      "name": "小御府",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M101",
+      "name": "小木船",
+      "locationHint": "人大附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M099",
+      "name": "小街猪手",
+      "locationHint": "望京；疑似南路",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M098",
+      "name": "小江庐江西小炒",
+      "locationHint": "玖耀里",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 83
+    },
+    {
+      "id": "M097",
+      "name": "小菜园",
+      "locationHint": "超级合生汇附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M096",
+      "name": "鲜牛记",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M095",
+      "name": "玺源居",
+      "locationHint": "鼓楼",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M093",
+      "name": "王奋斗贵州酸汤火锅",
+      "locationHint": "沙河附近（推测）",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M092",
+      "name": "四海糖水铺",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M091",
+      "name": "顺峰",
+      "locationHint": "北京",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M089",
+      "name": "石器时代",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M088",
+      "name": "山葵村",
+      "locationHint": "沙河较远",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M087",
+      "name": "平安锅贴",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M085",
+      "name": "彭厨",
+      "locationHint": "昌平城里",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 90
+    },
+    {
+      "id": "M084",
+      "name": "胖妹小面",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M082",
+      "name": "芈重山",
+      "locationHint": "昌平地铁站附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 73
+    },
+    {
+      "id": "M081",
+      "name": "梅果",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M080",
+      "name": "曼玲",
+      "locationHint": "沙河",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 83
+    },
+    {
+      "id": "M078",
+      "name": "麦记牛奶",
+      "locationHint": "沙河",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M077",
+      "name": "利哥",
+      "locationHint": "匠熙小馆隔壁，南路东门外附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M076",
+      "name": "雷老哥土鲫鱼下饭菜",
+      "locationHint": "南路附近有分店（待确认）",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M075",
+      "name": "京晟铜锅涮肉（护国寺店）",
+      "locationHint": "护国寺",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 15
+    },
+    {
+      "id": "M074",
+      "name": "晋喜",
+      "locationHint": "大同古城",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M073",
+      "name": "锦炉",
+      "locationHint": "郊区多店",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M072",
+      "name": "记忆山城巷重庆鸡公煲（昌平南环路店）",
+      "locationHint": "昌平区城北街道南环东路21号物美超市1层",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M071",
+      "name": "煌朝排档（三里屯店）",
+      "locationHint": "三里屯",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 83
+    },
+    {
+      "id": "M070",
+      "name": "黄隐厨老妈蹄花",
+      "locationHint": "昌平地铁站旁、中国黄金楼上",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M069",
+      "name": "淮扬府",
+      "locationHint": "北京",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 100
+    },
+    {
+      "id": "M068",
+      "name": "蚝叔",
+      "locationHint": "距离较远",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M067",
+      "name": "海汕记",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M066",
+      "name": "桂满陇",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M065",
+      "name": "戈拿旺",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M064",
+      "name": "冯层层",
+      "locationHint": "南锣鼓巷附近（依据上下文）；南锣鼓巷附近（待确认）",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M063",
+      "name": "肥鸡烧烤",
+      "locationHint": "西直门附近",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 3
+    },
+    {
+      "id": "M062",
+      "name": "额尔敦",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M060",
+      "name": "东北原味烧烤",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M057",
+      "name": "达美乐",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M056",
+      "name": "创新火锅鸡（于辛庄店）",
+      "locationHint": "昌平区三号公寓",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M055",
+      "name": "船歌鱼水饺",
+      "locationHint": "青岛",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M054",
+      "name": "承京运·宫廷炸酱面",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    },
+    {
+      "id": "M053",
+      "name": "便宜坊",
+      "locationHint": "",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M052",
+      "name": "煲仔皇",
+      "locationHint": "超级合生汇",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 88
+    },
+    {
+      "id": "M051",
+      "name": "安又胖",
+      "locationHint": "超级合生汇",
+      "poiStatus": "人工确认",
+      "poiMatchScore": 71
+    }
+  ]
+}
