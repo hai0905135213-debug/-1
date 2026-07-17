@@ -11,11 +11,20 @@ if (!existsSync(DATA_DIR)) {
 }
 
 const DB_PATH = join(DATA_DIR, "fanfan.db");
+// 餐厅清洗库独立维护，不和用户、饭局等业务数据混在一起。
+// 后端只读它；聊天清洗和高德补全仍在项目根目录的 database/ 下完成。
+const RESTAURANT_WAREHOUSE_PATH = join(__dirname, "..", "..", "..", "database", "data", "restaurants.db");
 
 // 功能：初始化 SQLite 数据库连接，开启 WAL 模式提升并发读性能
 const db = new Database(DB_PATH);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
+
+// 第一次部署若尚未生成餐厅仓，旧的演示餐厅接口仍可正常工作。
+// 有仓库文件时，/api/restaurants 会优先读取这里的真实清洗数据。
+const restaurantWarehouse = existsSync(RESTAURANT_WAREHOUSE_PATH)
+  ? new Database(RESTAURANT_WAREHOUSE_PATH, { readonly: true, fileMustExist: true })
+  : null;
 
 // 功能：建表（如果表不存在则创建），后续切 MySQL 时只需替换建表语句和驱动
 // 功能：建表（如果表不存在则创建），后续切 MySQL 时只需替换建表语句和驱动
@@ -60,6 +69,7 @@ function initTables() {
       description TEXT DEFAULT '',
       status TEXT DEFAULT 'open',
       creator_id INTEGER NOT NULL REFERENCES users(id),
+      restaurant_id INTEGER REFERENCES restaurants(id),
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -160,6 +170,7 @@ function initTables() {
   `);
 
   upgradeProfilesTable();
+  upgradeMealsTable();
   seedNewTablesIfEmpty();
 }
 
@@ -180,6 +191,16 @@ function upgradeProfilesTable() {
   if (!columns.includes("description")) {
     db.exec("ALTER TABLE profiles ADD COLUMN description TEXT DEFAULT ''");
   }
+}
+
+function upgradeMealsTable() {
+  const columns = db.pragma("table_info(meals)").map(c => c.name);
+  if (!columns.includes("restaurant_id")) {
+    db.exec("ALTER TABLE meals ADD COLUMN restaurant_id INTEGER REFERENCES restaurants(id)");
+  }
+  db.exec("UPDATE meals SET restaurant_id = 1 WHERE (place LIKE '%二食堂一楼%' OR place LIKE '%麻辣香锅%') AND restaurant_id IS NULL");
+  db.exec("UPDATE meals SET restaurant_id = 2 WHERE place LIKE '%东门米线%' AND restaurant_id IS NULL");
+  db.exec("UPDATE meals SET restaurant_id = 3 WHERE place LIKE '%三食堂%' AND restaurant_id IS NULL");
 }
 
 function seedNewTablesIfEmpty() {
@@ -254,6 +275,7 @@ function normalizeMeal(row) {
     description: row.description,
     status: row.status,
     creatorId: row.creator_id,
+    restaurantId: row.restaurant_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -301,6 +323,17 @@ function normalizeReview(row) {
 
 function normalizeRestaurant(row) {
   if (!row) return null;
+  let parsedTags = [];
+  if (row.tags) {
+    try {
+      parsedTags = JSON.parse(row.tags);
+      if (!Array.isArray(parsedTags)) {
+        parsedTags = String(row.tags).split(',').map(t => t.trim()).filter(Boolean);
+      }
+    } catch (e) {
+      parsedTags = String(row.tags).split(',').map(t => t.trim()).filter(Boolean);
+    }
+  }
   return {
     id: row.id,
     name: row.name,
@@ -309,7 +342,7 @@ function normalizeRestaurant(row) {
     location: row.location,
     avgPrice: row.avg_price,
     rating: row.rating,
-    tags: JSON.parse(row.tags || "[]"),
+    tags: parsedTags,
     description: row.description,
     status: row.status,
     createdAt: row.created_at,
@@ -454,13 +487,20 @@ export function getMeal(id) {
 // 功能：创建饭局，自动加入创建者为参与者
 export function createMeal(data) {
   const now = new Date().toISOString();
+  
+  let restaurantId = data.restaurantId || null;
+  if (!restaurantId && data.place) {
+    const match = findRestaurantByName(data.place);
+    if (match) restaurantId = match.id;
+  }
+
   const result = db.prepare(`
-    INSERT INTO meals (title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)
+    INSERT INTO meals (title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, restaurant_id, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)
   `).run(
     data.title, data.foodType || "不限", data.mealTime, data.place,
     data.campus || "主校区", data.maxPeople, data.budgetMin || 0, data.budgetMax || 0,
-    data.chatMode || "quiet", data.description || "", data.creatorId, now, now
+    data.chatMode || "quiet", data.description || "", data.creatorId, restaurantId, now, now
   );
 
   const mealId = result.lastInsertRowid;
@@ -475,7 +515,7 @@ export function createMeal(data) {
 }
 
 // 功能：饭局列表查询，支持状态、校区、关键词筛选以及预算/人数/排序等高级筛选
-export function listMeals({ status, campus, keyword, minBudget, maxBudget, minPeople, maxPeople, sortBy } = {}) {
+export function listMeals({ status, campus, keyword, minBudget, maxBudget, minPeople, maxPeople, sortBy, restaurantId } = {}) {
   let sql = "SELECT * FROM meals WHERE 1=1";
   const params = [];
 
@@ -491,6 +531,10 @@ export function listMeals({ status, campus, keyword, minBudget, maxBudget, minPe
     sql += " AND (title LIKE ? OR food_type LIKE ? OR place LIKE ? OR description LIKE ?)";
     const kw = `%${keyword}%`;
     params.push(kw, kw, kw, kw);
+  }
+  if (restaurantId) {
+    sql += " AND restaurant_id = ?";
+    params.push(Number(restaurantId));
   }
   
   if (minBudget !== undefined && minBudget > 0) {
@@ -646,8 +690,14 @@ export function getRestaurant(id) {
   return normalizeRestaurant(row);
 }
 
-// 功能：餐厅列表，支持 campus / foodType / keyword 筛选
-export function listRestaurants({ campus, foodType, keyword } = {}) {
+// 功能：按名称模糊查询餐厅
+export function findRestaurantByName(name) {
+  const row = db.prepare("SELECT * FROM restaurants WHERE name LIKE ?").get(`%${name}%`);
+  return normalizeRestaurant(row);
+}
+
+// 功能：餐厅列表，支持 campus / foodType / keyword 筛选以及价格、排序
+export function listRestaurants({ campus, foodType, keyword, minPrice, maxPrice, sortBy } = {}) {
   let sql = "SELECT * FROM restaurants WHERE 1=1";
   const params = [];
 
@@ -665,8 +715,157 @@ export function listRestaurants({ campus, foodType, keyword } = {}) {
     params.push(kw, kw, kw, kw);
   }
 
-  sql += " ORDER BY rating DESC, name ASC";
+  if (minPrice !== undefined && minPrice > 0) {
+    sql += " AND avg_price >= ?";
+    params.push(Number(minPrice) * 100);
+  }
+  if (maxPrice !== undefined && maxPrice > 0) {
+    sql += " AND avg_price <= ?";
+    params.push(Number(maxPrice) * 100);
+  }
+
+  if (sortBy === 'price-asc') {
+    sql += " ORDER BY avg_price ASC";
+  } else if (sortBy === 'rating-desc') {
+    sql += " ORDER BY rating DESC";
+  } else {
+    sql += " ORDER BY rating DESC, name ASC";
+  }
+
   return db.prepare(sql).all(...params).map(normalizeRestaurant);
+}
+
+// 功能：读取独立餐厅仓并转换为前端列表格式。
+// campus 不是筛掉餐厅，而是选择按哪个校区的距离排序和展示。
+// 目前餐厅数量较小（百级），在内存中先合并候选分店和距离数据可读性更好；后续数据很大时再改成 SQL 分页聚合。
+export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pageSize = 12, restaurantId, sortBy } = {}) {
+  if (!restaurantWarehouse) {
+    const legacyItems = listRestaurants({ foodType, keyword });
+    const safePage = Math.max(1, Number(page) || 1);
+    const safePageSize = Math.min(30, Math.max(1, Number(pageSize) || 12));
+    const start = (safePage - 1) * safePageSize;
+    return {
+      items: legacyItems.slice(start, start + safePageSize),
+      total: legacyItems.length,
+      hasMore: start + safePageSize < legacyItems.length,
+      source: "legacy"
+    };
+  }
+
+  let restaurantSql = "SELECT * FROM restaurants WHERE 1=1";
+  const params = [];
+  if (foodType) {
+    restaurantSql += " AND cuisine LIKE ?";
+    params.push(`%${foodType}%`);
+  }
+  if (restaurantId) {
+    restaurantSql += " AND id = ?";
+    params.push(String(restaurantId));
+  }
+  if (keyword) {
+    restaurantSql += " AND (name LIKE ? OR cuisine LIKE ? OR recommended_dishes LIKE ? OR full_address LIKE ?)";
+    const like = `%${keyword}%`;
+    params.push(like, like, like, like);
+  }
+
+  const restaurantRows = restaurantWarehouse.prepare(`${restaurantSql} ORDER BY mention_count DESC, name ASC`).all(...params);
+  const candidateRows = restaurantWarehouse.prepare(`
+    SELECT id, restaurant_id, rank, score, poi_id, name, address, district, location, category, telephone, raw_json
+    FROM poi_candidates ORDER BY restaurant_id, rank ASC
+  `).all();
+  const distanceRows = restaurantWarehouse.prepare(`
+    SELECT poi_candidate_id, campus_code, distance_meters FROM candidate_distances
+  `).all();
+
+  // 先把每个候选分店的两个校区距离整理成 { cufe_shahe: 1.9, cufe_nanlu: 24.3 }。
+  const distanceByCandidateId = new Map();
+  for (const row of distanceRows) {
+    if (!distanceByCandidateId.has(row.poi_candidate_id)) distanceByCandidateId.set(row.poi_candidate_id, {});
+    distanceByCandidateId.get(row.poi_candidate_id)[row.campus_code] = Math.round(row.distance_meters) / 1000;
+  }
+
+  const candidatesByRestaurantId = new Map();
+  for (const row of candidateRows) {
+    if (!candidatesByRestaurantId.has(row.restaurant_id)) candidatesByRestaurantId.set(row.restaurant_id, []);
+    let raw = {};
+    try { raw = JSON.parse(row.raw_json || "{}"); } catch { raw = {}; }
+    const firstPhoto = Array.isArray(raw.photos) ? raw.photos[0] : null;
+    candidatesByRestaurantId.get(row.restaurant_id).push({
+      id: row.id,
+      rank: row.rank,
+      score: row.score,
+      poiId: row.poi_id,
+      name: row.name,
+      address: row.address,
+      district: row.district,
+      location: row.location,
+      category: row.category,
+      telephone: row.telephone,
+      photoUrl: firstPhoto?.url || firstPhoto?.photo_url || null,
+      distanceKm: distanceByCandidateId.get(row.id) || {}
+    });
+  }
+
+  const items = restaurantRows.map((row) => {
+    const candidates = candidatesByRestaurantId.get(row.id) || [];
+    // 用户选校区时优先展示离该校区近的分店；没有选择时优先高德匹配分较高的候选。
+    const orderedCandidates = [...candidates].sort((a, b) => {
+      if (campus && Number.isFinite(a.distanceKm[campus]) && Number.isFinite(b.distanceKm[campus])) {
+        return a.distanceKm[campus] - b.distanceKm[campus];
+      }
+      return b.score - a.score || a.rank - b.rank;
+    });
+    const selected = orderedCandidates[0] || null;
+    return {
+      id: row.id,
+      name: row.name,
+      cuisine: row.cuisine,
+      fullAddress: selected?.address || row.full_address || row.location_hint || "",
+      district: selected?.district || row.district || "",
+      recommendedDishes: row.recommended_dishes,
+      optionalDishes: row.optional_dishes,
+      partySize: row.party_size,
+      bookingNote: row.booking_note,
+      mentionCount: row.mention_count,
+      sentiment: row.sentiment,
+      photoUrl: selected?.photoUrl || row.photo_url || null,
+      distanceKm: selected?.distanceKm || {},
+      poiStatus: row.poi_status,
+      candidateCount: candidates.length,
+      selectedCandidate: selected
+    };
+  });
+
+  // 如果已选校区，距离未知的餐厅放列表末尾；否则按群内提及次数排序。
+  items.sort((a, b) => {
+    // 首页点到“群内最热”时，按群聊提及次数排序；其他情况优先按所选校区距离。
+    if (sortBy === "mention-desc") return b.mentionCount - a.mentionCount || a.name.localeCompare(b.name, "zh-CN");
+    if (campus) {
+      const distanceA = a.distanceKm[campus];
+      const distanceB = b.distanceKm[campus];
+      if (Number.isFinite(distanceA) && Number.isFinite(distanceB)) return distanceA - distanceB;
+      if (Number.isFinite(distanceA)) return -1;
+      if (Number.isFinite(distanceB)) return 1;
+    }
+    return b.mentionCount - a.mentionCount || a.name.localeCompare(b.name, "zh-CN");
+  });
+
+  const safePage = Math.max(1, Number(page) || 1);
+  const safePageSize = Math.min(30, Math.max(1, Number(pageSize) || 12));
+  const start = (safePage - 1) * safePageSize;
+  return {
+    items: items.slice(start, start + safePageSize),
+    total: items.length,
+    hasMore: start + safePageSize < items.length,
+    source: "restaurant_warehouse"
+  };
+}
+
+// 功能：餐厅详情页使用。这里查的是独立餐厅仓的字符串 ID（例如 M001），
+// 和旧演示库使用的数字 ID 不冲突。
+export function getRestaurantCatalogItem(id, campus) {
+  const result = listRestaurantCatalog({ restaurantId: id, campus, page: 1, pageSize: 1 });
+  return result.items[0] || null;
 }
 
 // 功能：新增餐厅
@@ -879,6 +1078,27 @@ export function addWishlistRestaurant(userId, restaurantId, restaurantName) {
     INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at)
     VALUES (?, ?, ?, ?)
   `).run(Number(userId), restaurantId ? Number(restaurantId) : null, restaurantName || '', now);
+}
+
+export function toggleWishlistRestaurant(userId, restaurantId, restaurantName) {
+  let existing;
+  if (restaurantId) {
+    existing = db.prepare("SELECT id FROM wishlist_restaurants WHERE user_id = ? AND restaurant_id = ?")
+      .get(Number(userId), Number(restaurantId));
+  } else {
+    existing = db.prepare("SELECT id FROM wishlist_restaurants WHERE user_id = ? AND restaurant_name = ?")
+      .get(Number(userId), restaurantName);
+  }
+
+  if (existing) {
+    db.prepare("DELETE FROM wishlist_restaurants WHERE id = ?").run(existing.id);
+    return false; // Removed
+  } else {
+    const now = new Date().toISOString();
+    db.prepare("INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (?, ?, ?, ?)")
+      .run(Number(userId), restaurantId ? Number(restaurantId) : null, restaurantName || '', now);
+    return true; // Added
+  }
 }
 
 // 动态 (Moments)

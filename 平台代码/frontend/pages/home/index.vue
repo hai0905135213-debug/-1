@@ -22,52 +22,64 @@
       </scroll-view>
     </view>
 
-    <view class="section">
-      <view class="section-title">今日饭局</view>
-      <view class="muted section-desc">从校园真实约饭里挑出来，好吃和合拍都重要</view>
-      <view class="pill-row filter-row">
-        <view :class="campusIndex > 0 ? 'pill active' : 'pill'" @tap="cycleCampus">{{ campusOptions[campusIndex] }} ⌄</view>
-        <view :class="foodTypeIndex > 0 ? 'pill active' : 'pill'" @tap="cycleFoodType">{{ foodTypeOptions[foodTypeIndex] }} ⌄</view>
-        <view :class="timeIndex > 0 ? 'pill active' : 'pill'" @tap="cycleTime">{{ timeOptions[timeIndex] }} ⌄</view>
+    <!-- 餐厅数据来自独立清洗库；首页只展示 6 家，避免首屏加载过多外部图片。 -->
+    <view class="section restaurant-section">
+      <view class="restaurant-section-title-row">
+        <view>
+          <view class="section-title">今天吃什么？</view>
+          <view class="muted section-desc">附近好吃的 · 群友推荐 · 按校区距离排序</view>
+        </view>
+        <view class="more-link" @tap="goRestaurantList">查看全部 ›</view>
       </view>
-    </view>
 
-    <view class="meal-list">
-      <view v-if="loading" class="muted loading-text">饭局加载中...</view>
-      <view v-else-if="meals.length === 0" class="empty-state">今天还没有可加入饭局</view>
-      <view class="meal-item" v-for="meal in meals" :key="meal.id" @tap="goDetail(meal.id)">
-        <image class="meal-image food-image" :src="meal.image" mode="aspectFill" />
-        <view class="meal-content">
-          <view class="meal-title-row">
-            <view class="meal-title">{{ meal.title }}</view>
-            <view
-              :class="wantedMealIds.includes(meal.id) ? 'want-button active' : 'want-button'"
-              @tap.stop="toggleWant(meal.id)"
-            >♡</view>
-          </view>
-          <view class="meal-meta">{{ meal.location }} · {{ meal.distance }} · {{ meal.budget }}</view>
-          <view class="tag-row">
-            <text class="tag">{{ meal.recommend }}</text>
-            <text class="tag quiet">{{ meal.category }}</text>
-          </view>
-          <view class="quote-card">
-            <view class="quote-user">{{ meal.user }}</view>
-            <view class="quote-text">{{ meal.comment }}</view>
+      <!-- 这排筛选控件直接驱动真实餐厅库；具体标签可在后续继续扩充。 -->
+      <view class="pill-row filter-row">
+        <view :class="restaurantCampusIndex > 0 ? 'pill active' : 'pill'" @tap="cycleRestaurantCampus">{{ restaurantCampusOptions[restaurantCampusIndex] }} ⌄</view>
+        <view :class="restaurantFoodTypeIndex > 0 ? 'pill active' : 'pill'" @tap="cycleRestaurantFoodType">{{ restaurantFoodTypeOptions[restaurantFoodTypeIndex] }} ⌄</view>
+        <view :class="restaurantSortIndex > 0 ? 'pill active' : 'pill'" @tap="cycleRestaurantSort">{{ restaurantSortOptions[restaurantSortIndex] }} ⌄</view>
+        <view class="pill" @tap="showRestaurantFilterHint">筛选⌄</view>
+      </view>
+
+      <view v-if="restaurantLoading" class="muted loading-text">附近餐厅加载中...</view>
+      <view v-else class="featured-restaurant-list">
+        <view
+          v-for="restaurant in featuredRestaurants"
+          :key="restaurant.id"
+          class="featured-restaurant-card"
+          @tap="goRestaurantList"
+        >
+          <!-- lazy-load：图片滚到附近才下载，首页不会同时拉取全部地图图片。 -->
+          <image
+            class="featured-restaurant-image food-image"
+            :src="restaurant.displayImage"
+            mode="aspectFill"
+            lazy-load
+            @error="useRestaurantPlaceholder(restaurant)"
+          />
+          <view class="featured-restaurant-body">
+            <view class="featured-restaurant-name">{{ restaurant.name }}</view>
+            <view class="featured-restaurant-address">{{ restaurant.fullAddress || '地址待补充' }}</view>
+            <view class="featured-restaurant-footer">
+              <text class="featured-distance">距{{ currentRestaurantCampusName }} {{ formatRestaurantDistance(restaurant) }}</text>
+              <text class="featured-cuisine">{{ restaurant.cuisine || '餐厅' }}</text>
+            </view>
           </view>
         </view>
+        <view v-if="featuredRestaurants.length === 0" class="empty-state">附近餐厅正在补充中</view>
       </view>
     </view>
   </view>
 </template>
 
 <script>
-import { mealApi } from '../../services/api'
+import { mealApi, restaurantApi } from '../../services/api'
 
 const foodImages = [
   'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80',
   'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80',
   'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'
 ]
+const RESTAURANT_PLACEHOLDER = 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=480&q=70'
 
 function formatBudget(meal) {
   if (meal.budgetMin && meal.budgetMax) return `¥${meal.budgetMin}-${meal.budgetMax}/人`
@@ -116,18 +128,33 @@ export default {
       currentUser: null,
       loading: false,
       wantedMealIds: [2],
-      meals: []
+      meals: [],
+      // 正式餐厅库只用这两个校区代码计算距离；“全校”会显示两个校区中更近的距离。
+      restaurantCampusOptions: ['全校', '沙河校区', '学院南路校区'],
+      restaurantCampusIndex: 0,
+      restaurantFoodTypeOptions: ['全部品类', '火锅', '湘菜', '烧烤', '米线'],
+      restaurantFoodTypeIndex: 0,
+      restaurantSortOptions: ['智能排序', '距离最近', '群内最热'],
+      restaurantSortIndex: 0,
+      restaurantLoading: false,
+      featuredRestaurants: []
     }
   },
   computed: {
     userInitial() {
       const nickname = this.currentUser?.nickname?.trim()
       return nickname ? Array.from(nickname)[0] : '饭'
+    },
+    currentRestaurantCampusName() {
+      return this.restaurantCampusOptions[this.restaurantCampusIndex] === '全校'
+        ? '最近校区'
+        : this.restaurantCampusOptions[this.restaurantCampusIndex]
     }
   },
   onShow() {
     this.currentUser = uni.getStorageSync('currentUser') || null
     this.loadMeals()
+    this.loadFeaturedRestaurants()
   },
   methods: {
     async loadMeals() {
@@ -161,6 +188,64 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    async loadFeaturedRestaurants() {
+      this.restaurantLoading = true
+      try {
+        // 首页永远只请求 6 条；完整分页列表放在 restaurant-list 页面。
+        const result = await restaurantApi.list({
+          page: 1,
+          pageSize: 6,
+          campus: this.getSelectedRestaurantCampusCode(),
+          foodType: this.restaurantFoodTypeIndex > 0 ? this.restaurantFoodTypeOptions[this.restaurantFoodTypeIndex] : undefined,
+          sortBy: this.restaurantSortIndex === 2 ? 'mention-desc' : undefined
+        })
+        this.featuredRestaurants = (result.items || []).map(item => ({
+          id: item.id,
+          name: item.name || '未命名餐厅',
+          cuisine: item.cuisine || item.foodType || '',
+          fullAddress: item.fullAddress || item.address || item.location || '',
+          displayImage: item.photoUrl || RESTAURANT_PLACEHOLDER,
+          distanceKm: item.distanceKm || {}
+        }))
+      } catch (error) {
+        uni.showToast({ title: error.message || '餐厅加载失败', icon: 'none' })
+      } finally {
+        this.restaurantLoading = false
+      }
+    },
+    getSelectedRestaurantCampusCode() {
+      const campusCodeMap = { '沙河校区': 'cufe_shahe', '学院南路校区': 'cufe_nanlu' }
+      return campusCodeMap[this.restaurantCampusOptions[this.restaurantCampusIndex]] || undefined
+    },
+    cycleRestaurantCampus() {
+      this.restaurantCampusIndex = (this.restaurantCampusIndex + 1) % this.restaurantCampusOptions.length
+      this.loadFeaturedRestaurants()
+    },
+    cycleRestaurantFoodType() {
+      this.restaurantFoodTypeIndex = (this.restaurantFoodTypeIndex + 1) % this.restaurantFoodTypeOptions.length
+      this.loadFeaturedRestaurants()
+    },
+    cycleRestaurantSort() {
+      this.restaurantSortIndex = (this.restaurantSortIndex + 1) % this.restaurantSortOptions.length
+      this.loadFeaturedRestaurants()
+    },
+    formatRestaurantDistance(restaurant) {
+      const distances = restaurant.distanceKm || {}
+      const selectedCampusCode = this.getSelectedRestaurantCampusCode()
+      const campusCode = selectedCampusCode || Object.keys(distances).sort((a, b) => distances[a] - distances[b])[0]
+      const distance = distances[campusCode]
+      return Number.isFinite(distance) ? `${distance.toFixed(1)} km` : '待计算'
+    },
+    showRestaurantFilterHint() {
+      uni.showToast({ title: '标签和高级筛选等你确定规则后接入', icon: 'none' })
+    },
+    useRestaurantPlaceholder(restaurant) {
+      // 只替换失败的这一张图片，不影响其他餐厅卡片，也不会阻塞页面滚动。
+      restaurant.displayImage = RESTAURANT_PLACEHOLDER
+    },
+    goRestaurantList() {
+      uni.navigateTo({ url: '/pages/restaurant-list/index' })
     },
     cycleCampus() {
       this.campusIndex = (this.campusIndex + 1) % this.campusOptions.length
@@ -254,6 +339,19 @@ export default {
 .album-scroll {
   white-space: nowrap;
 }
+
+.restaurant-section { margin-top: 44rpx; padding-bottom: 44rpx; }
+.restaurant-section-title-row { display: flex; align-items: center; justify-content: space-between; }
+.more-link { color: #e6782f; font-size: 26rpx; font-weight: 700; }
+.featured-restaurant-list { display: flex; flex-direction: column; gap: 18rpx; }
+.featured-restaurant-card { display: flex; min-height: 166rpx; overflow: hidden; border-radius: 20rpx; background: #fff; box-shadow: 0 8rpx 22rpx rgba(8, 9, 31, .07); }
+.featured-restaurant-image { width: 190rpx; height: 166rpx; flex: none; background: #f1f2f5; }
+.featured-restaurant-body { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 18rpx; }
+.featured-restaurant-name { overflow: hidden; color: #08091f; font-size: 30rpx; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.featured-restaurant-address { overflow: hidden; margin-top: 9rpx; color: #8e8f98; font-size: 23rpx; text-overflow: ellipsis; white-space: nowrap; }
+.featured-restaurant-footer { display: flex; justify-content: space-between; gap: 12rpx; margin-top: auto; }
+.featured-distance { color: #e6782f; font-size: 23rpx; font-weight: 700; }
+.featured-cuisine { overflow: hidden; max-width: 160rpx; color: #666875; font-size: 23rpx; text-overflow: ellipsis; white-space: nowrap; }
 
 .album-card {
   display: inline-block;

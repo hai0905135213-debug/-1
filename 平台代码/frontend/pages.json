@@ -55,6 +55,12 @@
       }
     },
     {
+      "path": "pages/restaurant-list/index",
+      "style": {
+        "navigationBarTitleText": "附近好吃的"
+      }
+    },
+    {
       "path": "pages/my-meals/index",
       "style": {
         "navigationBarTitleText": "我的饭局"

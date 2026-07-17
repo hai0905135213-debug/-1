@@ -99,6 +99,22 @@ button:disabled {
   margin-bottom: 14px;
 }
 
+/* 首页真实餐厅区：卡片图片按浏览器 lazy loading 延后请求。 */
+.home-restaurant-section { margin-top: 6px; }
+.home-restaurant-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.home-restaurant-heading .section-title { margin-bottom: 6px; }
+.home-restaurant-campuses { display: flex; gap: 9px; margin: 16px 0; }
+.home-restaurant-campus { padding: 7px 12px; border-radius: 99px; background: #f1f2f5; color: #686a75; font-size: 12px; font-weight: 700; }
+.home-restaurant-campus.active { background: #08091f; color: #fff; }
+.home-restaurant-card { display: flex; min-height: 94px; margin-bottom: 10px; overflow: hidden; border: 1px solid #f0f0f5; border-radius: 13px; background: #fff; box-shadow: 0 4px 12px rgba(8, 9, 31, .04); }
+.home-restaurant-card img { width: 106px; height: 94px; flex: none; background: #f1f2f5; object-fit: cover; }
+.home-restaurant-card-body { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 12px; }
+.home-restaurant-card-body strong, .home-restaurant-address { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-restaurant-card-body strong { font-size: 14px; }
+.home-restaurant-address { margin-top: 6px; color: #8e8f98; font-size: 11px; }
+.home-restaurant-card-footer { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; color: #e6782f; font-size: 11px; font-weight: 700; }
+.home-restaurant-card-footer span:last-child { overflow: hidden; color: #777984; text-overflow: ellipsis; white-space: nowrap; }
+
 .albums,
 .pills,
 .dishes {
@@ -395,8 +411,9 @@ button:disabled {
 }
 
 .want-btn.active {
-  background: #fff7bd;
-  border-color: #ffe733;
+  background: #ffeded;
+  border-color: #ffc2c2;
+  color: #ff4d4d;
 }
 
 .form input,
@@ -1326,4 +1343,245 @@ button:disabled {
 .chart-summary-txt {
   font-size: 12px;
   color: #fff;
+}
+
+/* 个人主页子列表项 */
+.profile-list-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f5;
+  background: #fff;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(8, 9, 31, 0.02);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-list-item:last-child {
+  margin-bottom: 0;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-left: 12px;
+}
+
+.item-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #08091f;
+}
+
+.item-meta {
+  font-size: 13px;
+  color: #5a5b6a;
+  margin-top: 4px;
+}
+
+.item-date {
+  font-size: 11px;
+  color: #8e8f98;
+  margin-top: 4px;
+}
+
+.profile-moment-item {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f5;
+  background: #fff;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(8, 9, 31, 0.02);
+}
+
+.profile-moment-item:last-child {
+  margin-bottom: 0;
+}
+
+.moment-content {
+  font-size: 14px;
+  color: #08091f;
+  line-height: 1.5;
+}
+
+.moment-img {
+  width: 100%;
+  max-height: 180px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-top: 10px;
+}
+
+.moment-meta {
+  font-size: 11px;
+  color: #8e8f98;
+  margin-top: 8px;
+}
+
+#profile-tab-content {
+  margin-top: 16px;
+}
+
+/* 个人主页饭局活动预览 */
+.profile-meal-preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: #f7f7fa;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  border: 1px solid #eeeef2;
+}
+
+.profile-meal-preview-item:hover {
+  transform: translateY(-1px);
+  background: #f0f0f5;
+  box-shadow: 0 4px 10px rgba(8, 9, 31, 0.04);
+}
+
+.profile-meal-preview-item:active {
+  transform: translateY(0);
+}
+
+.preview-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  color: #08091f;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.preview-item-status-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.preview-item-status-tag.open {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.preview-item-status-tag.matched {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.preview-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-item-right {
+  font-size: 12px;
+  color: #8e8f98;
+  white-space: nowrap;
+  margin-left: 10px;
+}
+
+/* 美食店铺推荐卡片 (大众点评 style) */
+.restaurant-card {
+  display: flex;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(8, 9, 31, 0.03);
+  border: 1px solid #f0f0f5;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.restaurant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(8, 9, 31, 0.06);
+}
+
+.restaurant-card img.restaurant-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-right: 14px;
+}
+
+.restaurant-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.restaurant-info h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #08091f;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.restaurant-rating {
+  font-size: 13px;
+  color: #ff9900;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+.restaurant-meta {
+  font-size: 12px;
+  color: #8e8f98;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.restaurant-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.restaurant-tags .tag {
+  background: #f5f5f7;
+  color: #5a5b6a;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* 店铺详情页面样式 */
+.restaurant-detail-view {
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+}
+
+.restaurant-detail-view img.hero {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.restaurant-detail-view .detail-info {
+  padding: 20px;
 }

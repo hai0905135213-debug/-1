@@ -25,6 +25,8 @@ import {
   getUserJoinedMealIds,
   getRestaurant,
   listRestaurants,
+  listRestaurantCatalog,
+  getRestaurantCatalogItem,
   createRestaurant,
   getPost,
   listPosts,
@@ -38,6 +40,8 @@ import {
   addVisitedRestaurant,
   listWishlistRestaurants,
   addWishlistRestaurant,
+  toggleWishlistRestaurant,
+  findRestaurantByName,
   listMoments,
   createMoment,
   listSavedMeals,
@@ -263,6 +267,7 @@ function handleMealList(requestUrl, res) {
   const minPeople = requestUrl.searchParams.get("minPeople");
   const maxPeople = requestUrl.searchParams.get("maxPeople");
   const sortBy = requestUrl.searchParams.get("sortBy");
+  const restaurantId = requestUrl.searchParams.get("restaurantId");
 
   let list = listMeals({
     status,
@@ -272,7 +277,8 @@ function handleMealList(requestUrl, res) {
     maxBudget: maxBudget ? Number(maxBudget) : undefined,
     minPeople: minPeople ? Number(minPeople) : undefined,
     maxPeople: maxPeople ? Number(maxPeople) : undefined,
-    sortBy
+    sortBy,
+    restaurantId: restaurantId ? Number(restaurantId) : undefined
   });
 
   if (onlyAvailable) {
@@ -509,19 +515,27 @@ async function handleCreateReport(req, res, mealId) {
   return sendJson(res, 201, { report });
 }
 
-// 功能：餐厅列表。支持 campus / foodType / keyword 筛选，前端发布饭局时选地点用。
+// 功能：餐厅列表。支持 campus / foodType / keyword 筛选以及价格筛选和排序。
 function handleRestaurantList(requestUrl, res) {
   const campus = requestUrl.searchParams.get("campus") || undefined;
   const foodType = requestUrl.searchParams.get("foodType") || undefined;
   const keyword = String(requestUrl.searchParams.get("keyword") || "").trim() || undefined;
+  const minPrice = requestUrl.searchParams.get("minPrice") ? Number(requestUrl.searchParams.get("minPrice")) : undefined;
+  const maxPrice = requestUrl.searchParams.get("maxPrice") ? Number(requestUrl.searchParams.get("maxPrice")) : undefined;
+  const sortBy = requestUrl.searchParams.get("sortBy") || undefined;
+  const page = requestUrl.searchParams.get("page") || 1;
+  const pageSize = requestUrl.searchParams.get("pageSize") || 12;
 
-  const items = listRestaurants({ campus, foodType, keyword });
-  return sendJson(res, 200, { items });
+  // 有独立餐厅仓时会返回真实清洗数据以及两个校区距离；否则保留旧演示数据的兼容逻辑。
+  const result = listRestaurantCatalog({ campus, foodType, keyword, page, pageSize, minPrice, maxPrice, sortBy });
+  return sendJson(res, 200, result);
 }
 
 // 功能：餐厅详情。前端查看某个餐厅的介绍、评分、标签。
 function handleRestaurantDetail(id, res) {
-  const restaurant = getRestaurant(id);
+  const campus = "cufe_shahe";
+  // 优先读清洗后的餐厅仓；找不到时才兼容旧演示餐厅。
+  const restaurant = getRestaurantCatalogItem(id, campus) || getRestaurant(id);
   if (!restaurant) {
     return sendError(res, 404, "RESTAURANT_NOT_FOUND", "餐厅不存在");
   }
@@ -809,17 +823,23 @@ async function handleListWishlist(req, res) {
   return sendJson(res, 200, { items: list });
 }
 
-// 功能：添加想去餐厅
+// 功能：添加/移除想去餐厅（切换状态）
 async function handleAddWishlist(req, res) {
   const user = requireUser(req, res);
   if (!user) return;
   const body = await readBody(req);
-  const { restaurantId, restaurantName } = body;
+  let { restaurantId, restaurantName } = body;
+  
+  if (!restaurantId && restaurantName) {
+    const match = findRestaurantByName(restaurantName);
+    if (match) restaurantId = match.id;
+  }
+
   if (!restaurantId && !restaurantName) {
     return sendError(res, 400, "BAD_REQUEST", "参数不完整");
   }
-  addWishlistRestaurant(user.id, restaurantId, restaurantName);
-  return sendJson(res, 200, { ok: true });
+  const active = toggleWishlistRestaurant(user.id, restaurantId, restaurantName);
+  return sendJson(res, 200, { ok: true, active });
 }
 
 // 功能：获取动态流

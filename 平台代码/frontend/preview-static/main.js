@@ -25,12 +25,17 @@ const pages = {
           <div class="album"><img src="${img.pizza}"><strong>社恐友好饭局</strong><span class="muted">安静吃也舒服</span></div>
         </div>
       </section>
-      <section class="section">
-        <div class="section-title">今日饭局</div>
-        <p class="muted">从校园真实约饭里挑出来，好吃和合拍都重要</p>
-        <div class="pills" data-choice-group><button class="pill active">全校⌄</button><button class="pill">品类⌄</button><button class="pill">时间⌄</button><button class="pill">筛选⌄</button></div>
+      <section class="section home-restaurant-section">
+        <div class="home-restaurant-heading">
+          <div>
+            <div class="section-title">今天吃什么？</div>
+            <div class="muted">附近好吃的 · 群友推荐 · 按校区距离排序</div>
+          </div>
+        </div>
+        <!-- 这排控件保留；现在直接向真实餐厅库传查询参数。 -->
+        <div class="pills" data-choice-group><button class="pill active">全校⌄</button><button class="pill">品类⌄</button><button class="pill">排序⌄</button><button class="pill">筛选⌄</button></div>
+        <div id="home-restaurant-list"><div class="empty"><p>附近餐厅加载中...</p></div></div>
       </section>
-      <div id="meal-list"><div class="empty"><p>饭局加载中...</p></div></div>
 
       <!-- 筛选模态弹窗 -->
       <div id="filter-modal" class="modal-overlay">
@@ -137,13 +142,39 @@ const pages = {
   profile: `
     <div>
       <div class="profile-hero"><div class="stats"><div><strong>3</strong><br><span>关注</span></div><div><strong>2</strong><br><span>饭搭子</span></div><div><strong>8</strong><br><span>好评与想去</span></div><button class="edit" data-go-edit>编辑资料</button></div><h2>${authSession ? `${authSession.user.nickname}，今天吃什么？` : '说点什么吧...'}</h2><button class="quiet" data-go-edit>${getTasteLabel()}</button></div>
-      <div class="profile-panel"><div class="section-title">我的饭局</div><div class="empty"><div style="font-size:56px">🍽</div><p>查看你发起和加入的饭局</p><button class="primary" data-go-my-meals>我的饭局</button><button class="secondary full-width" data-go-publish>新建饭局</button></div><div class="pills" data-choice-group><button class="pill active">去过</button><button class="pill">想去</button><button class="pill">动态</button><button class="pill">收藏</button></div><div class="empty"><div style="font-size:48px">☕</div><p>哪次饭局让你印象深刻</p><button class="primary" data-go-review>发布评价</button></div>${authSession ? '' : '<button class="secondary full-width" data-go-login>登录账号</button>'}</div>
+      <div class="profile-panel">
+        <div class="section-title">我的饭局</div>
+        <div id="profile-my-meals-preview">
+          <div class="empty"><p>饭局列表加载中...</p></div>
+        </div>
+        <div style="margin: 12px 0 20px; display: flex; gap: 10px;">
+          <button class="secondary full-width" data-go-my-meals>全部饭局</button>
+          <button class="primary full-width" data-go-publish>新建饭局</button>
+        </div>
+        <div class="pills" id="profile-tab-pills">
+          <button class="pill active" data-profile-tab="visited">去过</button>
+          <button class="pill" data-profile-tab="wishlist">想去</button>
+          <button class="pill" data-profile-tab="moments">动态</button>
+          <button class="pill" data-profile-tab="saved">收藏</button>
+        </div>
+        <div id="profile-tab-content">
+          <div class="empty"><p>点击上方切换查看详情</p></div>
+        </div>
+        ${authSession ? '' : '<button class="secondary full-width" data-go-login>登录账号</button>'}
+      </div>
     </div>
   `,
   detail: `
     <div>
       <div id="detail-content"><div class="empty"><p>饭局详情加载中...</p></div></div>
       <div class="bottom-actions"><button class="secondary" data-go-review>评价</button><button class="primary" data-join>想去/加入</button></div>
+    </div>
+  `,
+  'restaurant-detail': `
+    <div>
+      <div id="restaurant-detail-content">
+        <div class="empty"><p>店铺详情加载中...</p></div>
+      </div>
     </div>
   `,
   myMeals: `
@@ -233,16 +264,19 @@ let currentPage = 'home'
 let reviewRating = 5
 let activeFindCategory = '全部'
 let activeMealId = 1
+let activeRestaurantId = 1
+let activeRestaurantName = ''
 let mealsCache = []
 let myMealsCache = { created: [], joined: [] }
 let myMealsTab = 'created'
-
-let campusFilterOptions = ['全校', '主校区', '西校区']
+let activeProfileTab = 'visited'
+// 首页新餐厅区选择的校区，用来决定显示哪一个距离字段。
+let campusFilterOptions = ['全校', '沙河校区', '学院南路校区']
 let campusFilterIndex = 0
 let foodFilterOptions = ['全部品类', '麻辣香锅', '米线', '轻食', '火锅']
 let foodFilterIndex = 0
-let timeFilterOptions = ['全部时间', '今日', '可加入']
-let timeFilterIndex = 0
+let sortFilterOptions = ['智能排序', '评价最高', '价格最低']
+let sortFilterIndex = 0
 
 let selectedBudget = 'all'
 let selectedCampus = 'all'
@@ -447,7 +481,19 @@ function render(page) {
   buttons.forEach((button) => button.classList.toggle('active', button.dataset.page === page))
   if (page === 'home') loadPreviewMeals()
   if (page === 'detail') loadPreviewMealDetail(activeMealId)
+  if (page === 'restaurant-detail') loadPreviewRestaurantDetail(activeRestaurantId)
   if (page === 'myMeals') loadPreviewMyMeals()
+  if (page === 'profile') loadProfilePage()
+  if (page === 'publish') {
+    if (activeRestaurantName) {
+      const placeInput = screen.querySelector('#meal-place')
+      if (placeInput) placeInput.value = activeRestaurantName
+      const titleInput = screen.querySelector('#meal-title')
+      if (titleInput) titleInput.value = `拼桌去吃「${activeRestaurantName}」`
+      // Reset after prefill
+      activeRestaurantName = ''
+    }
+  }
   if (page === 'review') {
     const reviewMealInput = screen.querySelector('#review-meal')
     if (reviewMealInput) reviewMealInput.value = activeMealId || 1
@@ -472,10 +518,42 @@ function bindPageActions() {
   })
 
   screen.querySelectorAll('[data-want]').forEach((button) => {
-    button.addEventListener('click', (event) => {
+    let placeName = button.getAttribute('data-restaurant-name') || ''
+    if (!placeName) {
+      const mealCard = button.closest('[data-meal-detail]')
+      if (mealCard) {
+        const mutedDiv = mealCard.querySelector('.muted')
+        if (mutedDiv) {
+          placeName = mutedDiv.textContent.split('·')[0].trim()
+        }
+      }
+    }
+
+    const clone = button.cloneNode(true)
+    button.parentNode.replaceChild(clone, button)
+
+    clone.addEventListener('click', async (event) => {
       event.stopPropagation()
-      button.classList.toggle('active')
-      toast(button.classList.contains('active') ? '已加入想去' : '已取消想去')
+      if (!authSession?.token) {
+        toast('请先登录再操作')
+        navigate('login')
+        return
+      }
+
+      clone.disabled = true
+      try {
+        const res = await apiRequest('/profile/wishlist', {
+          method: 'POST',
+          data: { restaurantName: placeName }
+        })
+        clone.classList.toggle('active', res.active)
+        clone.textContent = res.active ? '♥' : '♡'
+        toast(res.active ? '已加入想去' : '已取消想去')
+      } catch (error) {
+        toast(error.message)
+      } finally {
+        clone.disabled = false
+      }
     })
   })
 
@@ -499,6 +577,15 @@ function bindPageActions() {
       activeMealId = Number(card.dataset.mealDetail)
       previousPage = currentPage
       render('detail')
+    })
+  })
+
+  screen.querySelectorAll('[data-restaurant-detail]').forEach((card) => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('[data-want]')) return
+      activeRestaurantId = Number(card.dataset.restaurantDetail)
+      previousPage = currentPage
+      render('restaurant-detail')
     })
   })
 
@@ -540,7 +627,8 @@ function bindPageActions() {
           foodFilterIndex = (foodFilterIndex + 1) % foodFilterOptions.length
           loadPreviewMeals()
         } else if (idx === 2) {
-          timeFilterIndex = (timeFilterIndex + 1) % timeFilterOptions.length
+          sortFilterIndex = (sortFilterIndex + 1) % sortFilterOptions.length
+          selectedSort = sortFilterIndex === 0 ? 'default' : (sortFilterIndex === 1 ? 'rating-desc' : 'price-asc')
           loadPreviewMeals()
         } else if (idx === 3) {
           openFilterModal()
@@ -548,6 +636,7 @@ function bindPageActions() {
       })
     })
   }
+
 
   const modal = screen.querySelector('#filter-modal')
   if (modal && currentPage === 'home') {
@@ -626,6 +715,21 @@ function bindPageActions() {
       renderMyMeals()
     })
   })
+
+  // Profile sub-tabs click handler
+  const profilePillsContainer = screen.querySelector('#profile-tab-pills')
+  if (profilePillsContainer && currentPage === 'profile') {
+    profilePillsContainer.querySelectorAll('[data-profile-tab]').forEach((button) => {
+      const clone = button.cloneNode(true)
+      button.parentNode.replaceChild(clone, button)
+      clone.addEventListener('click', (e) => {
+        e.stopPropagation()
+        activeProfileTab = clone.dataset.profileTab
+        profilePillsContainer.querySelectorAll('[data-profile-tab]').forEach((item) => item.classList.toggle('active', item === clone))
+        loadProfileTabContent()
+      })
+    })
+  }
 
   const loginSubmit = screen.querySelector('[data-login]')
   if (loginSubmit) loginSubmit.addEventListener('click', loginFromForm)
@@ -859,7 +963,7 @@ function renderFindDetail(page) {
             <span>💰 ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</span>
           </div>
           <div class="detail-tags">
-            ${restaurant.tags.map(t => `<span class="detail-tag rest">${t}</span>`).join('')}
+            ${parseRestaurantTags(restaurant.tags).map(t => `<span class="detail-tag rest">${t}</span>`).join('')}
           </div>
           <p class="restaurant-desc">${restaurant.description}</p>
         </div>
@@ -879,54 +983,83 @@ function renderFindDetail(page) {
 }
 
 async function loadPreviewMeals() {
-  const target = screen.querySelector('#meal-list')
+  // 名字沿用旧函数，实际已改为读取真实餐厅库。
+  const target = screen.querySelector('#home-restaurant-list')
   if (!target) return
 
   try {
-    let query = '?onlyAvailable=true'
+    let query = '?page=1&pageSize=6'
     
     // 1. Campus Filter
-    if (selectedCampus !== 'all') {
-      query += `&campus=${encodeURIComponent(selectedCampus)}`
-    } else if (campusFilterIndex > 0) {
-      query += `&campus=${encodeURIComponent(campusFilterOptions[campusFilterIndex])}`
-    }
+    const selectedCampusLabel = selectedCampus !== 'all' ? selectedCampus : campusFilterOptions[campusFilterIndex]
+    const campusCodeByLabel = { '沙河校区': 'cufe_shahe', '学院南路校区': 'cufe_nanlu' }
+    if (campusCodeByLabel[selectedCampusLabel]) query += `&campus=${campusCodeByLabel[selectedCampusLabel]}`
     
-    // 2. Keyword/Category Filter
+    // 2. Food Type Filter
     if (foodFilterIndex > 0) {
-      query += `&keyword=${encodeURIComponent(foodFilterOptions[foodFilterIndex])}`
+      query += `&foodType=${encodeURIComponent(foodFilterOptions[foodFilterIndex])}`
     }
     
-    // 3. Budget Filter
+    // 3. Price Filter (translated from budget options)
     if (selectedBudget !== 'all') {
       const [minB, maxB] = parseBudgetRange(selectedBudget)
-      query += `&minBudget=${minB}&maxBudget=${maxB}`
+      query += `&minPrice=${(minB / 100).toFixed(0)}&maxPrice=${(maxB / 100).toFixed(0)}`
     }
     
-    // 4. People Limit Filter
-    if (selectedPeople !== 'all') {
-      const [minP, maxP] = parsePeopleRange(selectedPeople)
-      query += `&minPeople=${minP}&maxPeople=${maxP}`
-    }
-    
-    // 5. Sort By
+    // 4. Sort By
     if (selectedSort !== 'default') {
       query += `&sortBy=${selectedSort}`
+    } else if (sortFilterIndex > 0) {
+      query += `&sortBy=${sortFilterIndex === 1 ? 'rating-desc' : 'price-asc'}`
     }
 
-    const data = await apiRequest(`/meals${query}`)
-    mealsCache = data.items || []
-    if (mealsCache.length && !activeMealId) activeMealId = mealsCache[0].id
-    target.innerHTML = mealsCache.length
-      ? mealsCache.map(renderMealCard).join('')
-      : `<div class="empty"><div style="font-size:48px">🍽</div><p>现在还没有可加入的饭局</p><button class="primary" data-go-publish>发布第一场</button></div>`
+    const data = await apiRequest(`/restaurants${query}`)
+    const items = data.items || []
+
+    let wishlist = []
+    if (authSession?.token) {
+      try {
+        const wishData = await apiRequest('/profile/wishlist')
+        wishlist = wishData.items || []
+      } catch (e) {
+        console.error("Failed to load wishlist:", e)
+      }
+    }
+
+    target.innerHTML = items.length
+      ? items.map((restaurant) => renderHomeRestaurantCard(restaurant, campusCodeByLabel[selectedCampusLabel])).join('')
+      : `<div class="empty"><div style="font-size:48px">🍽</div><p>没有找到符合条件的美食推荐</p></div>`
     
     updateHomeFilterPills()
     bindPageActions()
   } catch (error) {
-    target.innerHTML = `<div class="empty"><p>${error.message}</p><button class="secondary full-width" data-go-publish>去发布饭局</button></div>`
+    target.innerHTML = `<div class="empty"><p>${error.message}</p></div>`
     bindPageActions()
   }
+}
+
+// 首页只请求 6 家。图片使用 loading="lazy"，滚到卡片附近才会实际下载。
+function renderHomeRestaurantCard(restaurant, selectedCampusCode) {
+  const distances = restaurant.distanceKm || {}
+  // 「全校」时不丢掉距离：展示两个校区里更近的那个，方便列表快速浏览。
+  const campusCode = selectedCampusCode || Object.keys(distances).sort((a, b) => distances[a] - distances[b])[0]
+  const distance = campusCode ? distances[campusCode] : null
+  const campusName = campusCode === 'cufe_nanlu' ? '学院南路' : campusCode === 'cufe_shahe' ? '沙河校区' : '最近校区'
+  const distanceText = Number.isFinite(distance) ? `${distance.toFixed(1)} km` : '待计算'
+  const imageUrl = restaurant.photoUrl || img.salad
+  return `
+    <article class="home-restaurant-card">
+      <img src="${imageUrl}" loading="lazy" onerror="this.onerror=null;this.src='${img.salad}'" alt="${restaurant.name}">
+      <div class="home-restaurant-card-body">
+        <strong>${restaurant.name}</strong>
+        <span class="home-restaurant-address">${restaurant.fullAddress || '地址待补充'}</span>
+        <div class="home-restaurant-card-footer">
+          <span>距${campusName} ${distanceText}</span>
+          <span>${restaurant.cuisine || '餐厅'}</span>
+        </div>
+      </div>
+    </article>
+  `
 }
 
 function parseBudgetRange(val) {
@@ -968,18 +1101,147 @@ function closeFilterModal() {
   if (modal) modal.classList.remove('active')
 }
 
-function renderMealCard(meal) {
+function renderMealCard(meal, isWished = false) {
   return `
     <div class="meal" data-meal-detail="${meal.id}">
       <img src="${getMealImage(meal.foodType)}">
       <div>
-        <h3>${meal.title} <button class="want-btn" data-want>♡</button></h3>
+        <h3>${meal.title} <button class="want-btn${isWished ? ' active' : ''}" data-want>${isWished ? '♥' : '♡'}</button></h3>
         <div class="muted">${meal.place} · ${formatMealTime(meal.mealTime)} · ${formatBudget(meal)}</div>
         <span class="tag">${meal.currentPeople || 1}/${meal.maxPeople} 人</span><span class="tag">${meal.foodType || '约饭'}</span>
         <div class="quote">${meal.description || `${meal.creator?.nickname || '同学'} 发起了这场饭局。`}</div>
       </div>
     </div>
   `
+}
+
+function parseRestaurantTags(tags) {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags;
+  try {
+    const parsed = JSON.parse(tags);
+    if (Array.isArray(parsed)) return parsed;
+  } catch (e) {
+    if (typeof tags === 'string') {
+      return tags.split(',').map(t => t.trim()).filter(Boolean);
+    }
+  }
+  return [];
+}
+
+function renderRestaurantCard(restaurant, isWished = false) {
+  return `
+    <div class="restaurant-card" data-restaurant-detail="${restaurant.id}">
+      <img class="restaurant-img" src="${getMealImage(restaurant.foodType)}">
+      <div class="restaurant-info">
+        <h3>
+          ${restaurant.name}
+          <button class="want-btn${isWished ? ' active' : ''}" data-want data-restaurant-name="${restaurant.name}">${isWished ? '♥' : '♡'}</button>
+        </h3>
+        <div class="restaurant-rating">⭐ ${restaurant.rating.toFixed(1)} · ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</div>
+        <div class="restaurant-meta">${restaurant.campus} · ${restaurant.location} · ${restaurant.foodType}</div>
+        <div class="restaurant-tags">
+          ${parseRestaurantTags(restaurant.tags).map(t => `<span class="tag">${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `
+}
+
+async function loadPreviewRestaurantDetail(id) {
+  const target = screen.querySelector('#restaurant-detail-content')
+  if (!target) return
+
+  try {
+    const data = await apiRequest(`/restaurants/${id || activeRestaurantId}`)
+    const restaurant = data.restaurant
+    activeRestaurantId = restaurant.id
+    activeRestaurantName = restaurant.name
+
+    let wishlist = []
+    if (authSession?.token) {
+      try {
+        const wishData = await apiRequest('/profile/wishlist')
+        wishlist = wishData.items || []
+      } catch (e) {
+        console.error("Failed to load wishlist:", e)
+      }
+    }
+    const isWished = wishlist.some(w => w.restaurantId === restaurant.id || w.restaurantName === restaurant.name)
+
+    target.innerHTML = `
+      <div class="restaurant-detail-view">
+        <div style="position:relative">
+          <img class="hero" src="${getMealImage(restaurant.foodType)}">
+          <button class="icon-btn dark" data-back style="position:absolute;left:16px;top:18px">‹</button>
+        </div>
+        <div class="detail-info">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0;font-size:22px;font-weight:800;color:#08091f;">${restaurant.name}</h2>
+            <button class="want-btn${isWished ? ' active' : ''}" data-want data-restaurant-name="${restaurant.name}" style="font-size:22px;border:none;background:none;cursor:pointer;">${isWished ? '♥' : '♡'}</button>
+          </div>
+          <div style="margin-top: 8px; font-size:15px; color:#ff9900; font-weight:bold;">⭐ ${restaurant.rating.toFixed(1)} · ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</div>
+          <div style="margin-top: 8px; font-size:13px; color:#5a5b6a;">${restaurant.campus} · ${restaurant.location} · ${restaurant.foodType}</div>
+          
+          <div class="restaurant-tags" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+            ${parseRestaurantTags(restaurant.tags).map(t => `<span class="tag" style="background:#f0f0f5;color:#5a5b6a;padding:3px 8px;border-radius:6px;font-size:12px;">${t}</span>`).join('')}
+          </div>
+
+          <div style="margin-top: 16px; font-size:14px; color:#08091f; line-height:1.6; border-top:1px solid #f0f0f5; padding-top:14px;">
+            <strong>店家介绍：</strong>
+            <p style="margin:6px 0 0 0;color:#5a5b6a;">${restaurant.description || '暂无特色介绍，快来亲自品尝一下吧！'}</p>
+          </div>
+          
+          <div style="margin-top: 24px; border-top: 1px solid #f0f0f5; padding-top: 16px;">
+            <h3 style="margin: 0 0 12px 0;font-size:16px;font-weight:800;color:#08091f;">在此店约饭的同学</h3>
+            <div id="restaurant-active-meals-list">
+              <div class="empty" style="padding: 12px 0;"><p>加载中...</p></div>
+            </div>
+            <button class="primary full-width" id="btn-create-meal-for-restaurant" style="margin-top: 16px;">在此店发起约饭</button>
+          </div>
+        </div>
+      </div>
+    `
+
+    // Load active meals at this restaurant
+    const mealsData = await apiRequest(`/meals?restaurantId=${restaurant.id}`)
+    const meals = mealsData.items || []
+    const mealsListContainer = screen.querySelector('#restaurant-active-meals-list')
+    if (mealsListContainer) {
+      if (meals.length === 0) {
+        mealsListContainer.innerHTML = `
+          <div class="empty" style="padding: 16px 0; background:#f7f7fa; border-radius:12px;">
+            <p style="margin:0;color:#8e8f98;font-size:13px;">暂无同学在此店约饭，你来发起第一场吧！</p>
+          </div>
+        `
+      } else {
+        mealsListContainer.innerHTML = meals.map(meal => `
+          <div class="profile-meal-preview-item" data-meal-detail="${meal.id}" style="margin-bottom:8px;">
+            <div class="preview-item-left">
+              <span class="preview-item-status-tag ${meal.status === 'open' ? 'open' : 'matched'}">
+                ${meal.status === 'open' ? '招募中' : '已成局'}
+              </span>
+              <span class="preview-item-title">${meal.title}</span>
+            </div>
+            <div class="preview-item-right">
+              <span>${formatMealTime(meal.mealTime)}</span>
+            </div>
+          </div>
+        `).join('')
+      }
+    }
+
+    const startMealBtn = screen.querySelector('#btn-create-meal-for-restaurant')
+    if (startMealBtn) {
+      startMealBtn.onclick = () => {
+        render('publish')
+      }
+    }
+
+    bindPageActions()
+  } catch (error) {
+    target.innerHTML = `<div class="empty"><p>加载失败: ${error.message}</p></div>`
+  }
 }
 
 async function loadPreviewMealDetail(id) {
@@ -1060,6 +1322,137 @@ function renderMyMeals() {
     ? meals.map(renderMealCard).join('')
     : `<div class="empty"><div style="font-size:48px">🍽</div><p>${myMealsTab === 'created' ? '你还没发起饭局' : '你还没加入饭局'}</p><button class="primary" data-go-publish>去发布</button></div>`
   bindPageActions()
+}
+
+async function loadProfilePage() {
+  if (!authSession?.token) {
+    const previewContainer = screen.querySelector('#profile-my-meals-preview')
+    if (previewContainer) {
+      previewContainer.innerHTML = `
+        <div class="empty" style="padding: 12px 0;">
+          <div style="font-size:36px">🍽</div>
+          <p>请先登录查看你的饭局信息</p>
+        </div>
+      `
+    }
+    const tabContainer = screen.querySelector('#profile-tab-content')
+    if (tabContainer) {
+      tabContainer.innerHTML = `<div class="empty"><p>请先登录查看记录</p><button class="primary" data-go-login>去登录</button></div>`
+      bindPageActions()
+    }
+    return
+  }
+  loadProfileMyMealsPreview()
+  loadProfileTabContent()
+}
+
+async function loadProfileMyMealsPreview() {
+  const container = screen.querySelector('#profile-my-meals-preview')
+  if (!container) return
+
+  try {
+    const data = await apiRequest('/meals/mine')
+    const created = data.created || []
+    const joined = data.joined || []
+    const allMeals = [...created.map(m => ({ ...m, role: 'creator' })), ...joined.map(m => ({ ...m, role: 'member' }))]
+    
+    if (allMeals.length === 0) {
+      container.innerHTML = `
+        <div class="empty" style="padding: 20px 0;">
+          <div style="font-size:36px">🍲</div>
+          <p>暂无活动中的饭局，快去发布吧！</p>
+        </div>
+      `
+      return
+    }
+
+    container.innerHTML = allMeals.slice(0, 3).map(meal => `
+      <div class="profile-meal-preview-item" data-meal-detail="${meal.id}">
+        <div class="preview-item-left">
+          <span class="preview-item-status-tag ${meal.status === 'open' ? 'open' : 'matched'}">
+            ${meal.status === 'open' ? '招募中' : '已成局'}
+          </span>
+          <span class="preview-item-title">${meal.title}</span>
+        </div>
+        <div class="preview-item-right">
+          <span>${meal.place}</span>
+        </div>
+      </div>
+    `).join('')
+    
+    bindPageActions()
+  } catch (error) {
+    container.innerHTML = `<p class="error-msg">${error.message}</p>`
+  }
+}
+
+async function loadProfileTabContent() {
+  const container = screen.querySelector('#profile-tab-content')
+  if (!container) return
+
+  container.innerHTML = '<div class="empty"><p>内容加载中...</p></div>'
+
+  try {
+    if (activeProfileTab === 'visited') {
+      const data = await apiRequest('/profile/visited')
+      const items = data.items || []
+      container.innerHTML = items.length === 0
+        ? `<div class="empty"><div style="font-size:48px">🍽</div><p>你还没有去过的餐厅记录</p></div>`
+        : items.map(item => `
+            <div class="profile-list-item">
+              <div class="item-info">
+                <div class="item-title"><strong>${item.restaurantName}</strong></div>
+                <div class="item-meta">${item.foodType || '约餐'} · ⭐${item.rating} · ¥${(item.avgPrice / 100).toFixed(0)}/人</div>
+                <div class="item-date">记录时间: ${formatFindPostTime(item.visitedAt)}</div>
+              </div>
+              <img class="item-thumb" src="${getMealImage(item.foodType)}">
+            </div>
+          `).join('')
+    } else if (activeProfileTab === 'wishlist') {
+      const data = await apiRequest('/profile/wishlist')
+      const items = data.items || []
+      container.innerHTML = items.length === 0
+        ? `<div class="empty"><div style="font-size:48px">💖</div><p>你还没有想去的餐厅，去首页点点红心吧！</p></div>`
+        : items.map(item => `
+            <div class="profile-list-item">
+              <div class="item-info">
+                <div class="item-title"><strong>${item.restaurantName}</strong></div>
+                <div class="item-meta">${item.foodType || '美食'} · ⭐${item.rating} · ¥${(item.avgPrice / 100).toFixed(0)}/人</div>
+                <div class="item-date">添加时间: ${formatFindPostTime(item.createdAt)}</div>
+              </div>
+              <img class="item-thumb" src="${getMealImage(item.foodType)}">
+            </div>
+          `).join('')
+    } else if (activeProfileTab === 'moments') {
+      const data = await apiRequest(`/moments?userId=${authSession.user.id}`)
+      const items = data.items || []
+      container.innerHTML = items.length === 0
+        ? `<div class="empty"><div style="font-size:48px">📝</div><p>你还没有发布过动态</p></div>`
+        : items.map(item => `
+            <div class="profile-moment-item">
+              <div class="moment-content">${item.content}</div>
+              ${item.imageUrl ? `<img class="moment-img" src="${item.imageUrl}">` : ''}
+              <div class="moment-meta">👍 ${item.likesCount} · ${formatFindPostTime(item.createdAt)}</div>
+            </div>
+          `).join('')
+    } else if (activeProfileTab === 'saved') {
+      const data = await apiRequest('/profile/saved')
+      const items = data.items || []
+      container.innerHTML = items.length === 0
+        ? `<div class="empty"><div style="font-size:48px">⭐</div><p>你还没有收藏的饭局</p></div>`
+        : items.map(item => `
+            <div class="profile-list-item" data-meal-detail="${item.mealId}">
+              <div class="item-title">⭐ <strong>${item.meal.title}</strong></div>
+              <div class="item-meta">${item.meal.place} · ${formatMealTime(item.meal.mealTime)}</div>
+              <div class="item-date">发起人: ${item.meal.creatorName} · 状态: ${item.meal.status === 'open' ? '招募中' : '已成局'}</div>
+            </div>
+          `).join('')
+    }
+    
+    bindPageActions()
+  } catch (error) {
+    container.innerHTML = `<div class="empty"><p>${error.message}</p></div>`
+  }
 }
 
 function renderFindPosts() {
@@ -1354,8 +1747,8 @@ function updateHomeFilterPills() {
     pills[1].textContent = `${foodFilterOptions[foodFilterIndex]}⌄`
     pills[1].classList.toggle('active', foodFilterIndex > 0)
     
-    pills[2].textContent = `${timeFilterOptions[timeFilterIndex]}⌄`
-    pills[2].classList.toggle('active', timeFilterIndex > 0)
+    pills[2].textContent = `${sortFilterOptions[sortFilterIndex]}⌄`
+    pills[2].classList.toggle('active', sortFilterIndex > 0)
     
     const hasAdvancedFilter = selectedBudget !== 'all' || selectedPeople !== 'all' || selectedSort !== 'default'
     pills[3].textContent = hasAdvancedFilter ? '已筛选⌄' : '筛选⌄'
@@ -1541,7 +1934,7 @@ async function loadPreviewFindDetail(postId) {
               <span style="margin-left:12px">💰 ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</span>
             </div>
             <div class="detail-tags" style="margin-top:12px">
-              ${(JSON.parse(restaurant.tags || '[]')).map(t => `<span class="detail-tag rest">${t}</span>`).join('')}
+              ${parseRestaurantTags(restaurant.tags).map(t => `<span class="detail-tag rest">${t}</span>`).join('')}
             </div>
             <p class="restaurant-desc">${restaurant.description}</p>
           </div>
