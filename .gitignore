@@ -6,5 +6,7 @@
 node_modules/
 .env
 .env.*
-平台代码/backend/data/
+# 平台代码/backend/data/
+平台代码/backend/data/*.db-shm
+平台代码/backend/data/*.db-wal
 database/data/
