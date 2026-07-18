@@ -1,0 +1,4404 @@
+{
+  "generatedAt": "2026-07-18T11:13:18.748Z",
+  "source": "database/data/restaurants.db",
+  "totals": {
+    "restaurants": 136,
+    "suggestions": 136,
+    "highConfidence": 48,
+    "needsReview": 88
+  },
+  "suggestions": [
+    {
+      "id": "M029",
+      "name": "肖蘸",
+      "mentionCount": 3,
+      "current": {
+        "cuisine": "潮汕牛肉火锅（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "火锅",
+          "餐饮服务",
+          "快餐厅",
+          "中餐厅"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M038",
+      "name": "嫩牛家",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "吊龙（待核验）",
+        "optionalDishes": "",
+        "locationHint": "交大附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "",
+        "tags": [
+          "火锅",
+          "吊龙",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M039",
+      "name": "沙胆彪",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "超级合生汇",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "火锅",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M047",
+      "name": "赵阗阗",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "潮汕牛肉火锅（推测）",
+        "recommendedDishes": "吊龙；吊龙，虾滑，香菜",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "",
+        "tags": [
+          "火锅",
+          "吊龙",
+          "虾滑",
+          "香菜",
+          "餐饮服务",
+          "中餐厅",
+          "餐饮相关场所",
+          "餐饮相关"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M068",
+      "name": "蚝叔",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "距离较远",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "清真",
+        "recommendedDishes": "锅包肉",
+        "tags": [
+          "清真",
+          "餐饮服务",
+          "中餐厅",
+          "清真菜馆",
+          "锅包肉"
+        ],
+        "confidence": 0.9,
+        "reason": "/清真|牛街|阿拉伯|ALAMEEN/i"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M101",
+      "name": "小木船",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "人大附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "火锅",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M102",
+      "name": "小御府",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "腊肉炒饭",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "",
+        "tags": [
+          "火锅",
+          "腊肉炒饭",
+          "餐饮服务",
+          "中餐厅",
+          "四川菜",
+          "火锅店",
+          "快餐厅"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M062",
+      "name": "额尔敦",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "涮肉自助（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "火锅",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M096",
+      "name": "鲜牛记",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "潮汕牛肉火锅（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "火锅",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M116",
+      "name": "潮汕258·聚味牛杂煲火锅（昌平店）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "昌平店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "火锅",
+          "餐饮服务",
+          "中餐厅",
+          "适合聚餐"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M119",
+      "name": "京馋猫山野鲜货火锅",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "牛肝菌，吊龙牛肉，招牌菌汤锅",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "",
+        "tags": [
+          "火锅",
+          "牛肝菌",
+          "吊龙牛肉",
+          "招牌菌汤锅",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M120",
+      "name": "聚首堂·特色小吃·肘子",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "什刹海附近（待确认）",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "清真",
+        "recommendedDishes": "",
+        "tags": [
+          "清真",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "中餐厅",
+          "风景名胜",
+          "国家级景点",
+          "交通设施服务",
+          "地铁站",
+          "适合聚餐"
+        ],
+        "confidence": 0.9,
+        "reason": "/清真|牛街|阿拉伯|ALAMEEN/i"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M121",
+      "name": "宽板凳老灶火锅",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "自助；不要选辣锅；吊龙",
+        "optionalDishes": "",
+        "locationHint": "沙河店",
+        "fullAddress": "沙河镇兆丰家园东区13-1号",
+        "amapCategory": "餐饮服务;中餐厅;火锅店"
+      },
+      "issues": [
+        "cuisine_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "",
+        "tags": [
+          "火锅",
+          "自助",
+          "不要选辣锅",
+          "吊龙",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店",
+          "近沙河"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M124",
+      "name": "浅锅日式和牛火锅自助·寿喜烧",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "火锅、寿喜烧",
+        "tags": [
+          "火锅",
+          "餐饮服务",
+          "外国餐厅",
+          "日本料理",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅",
+          "寿喜烧"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M135",
+      "name": "重八牛府之小刀牛试（魏公村店）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "魏公村店",
+        "fullAddress": "北京城区中关村南大街2号华宇时尚购物中心夹层",
+        "amapCategory": "餐饮服务;中餐厅;火锅店"
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "火锅",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.9,
+        "reason": "/火锅|涮|锅底|毛肚|鸭肠|酸汤|牛杂煲|猪肚鸡/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M136",
+      "name": "ALAMEEN 阿拉伯餐厅（三里屯店）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "三里屯",
+        "fullAddress": "三里屯西五街西2号(近德国大使馆)",
+        "amapCategory": "餐饮服务;外国餐厅;其它亚洲菜"
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "清真",
+        "recommendedDishes": "",
+        "tags": [
+          "清真",
+          "餐饮服务",
+          "外国餐厅",
+          "其它亚洲菜",
+          "中餐厅",
+          "清真菜馆",
+          "餐饮相关场所",
+          "餐饮相关"
+        ],
+        "confidence": 0.9,
+        "reason": "/清真|牛街|阿拉伯|ALAMEEN/i"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M025",
+      "name": "鹤一",
+      "mentionCount": 3,
+      "current": {
+        "cuisine": "烧肉（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "亚运村店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "烧烤",
+          "餐饮服务",
+          "中餐厅",
+          "冷饮店",
+          "烤肉",
+          "近学院南路"
+        ],
+        "confidence": 0.88,
+        "reason": "/烧烤|烤翅|烤串|烤肉|焖烤/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M065",
+      "name": "戈拿旺",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "烤肉自助（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "烧烤",
+          "餐饮服务",
+          "外国餐厅",
+          "巴西菜",
+          "餐饮相关场所",
+          "餐饮相关",
+          "烤肉"
+        ],
+        "confidence": 0.88,
+        "reason": "/烧烤|烤翅|烤串|烤肉|焖烤/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M071",
+      "name": "煌朝排档（三里屯店）",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "排档 / 粤菜（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "三里屯",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "烧烤",
+          "餐饮服务",
+          "中餐厅",
+          "湖北菜",
+          "烤肉"
+        ],
+        "confidence": 0.88,
+        "reason": "/烧烤|烤翅|烤串|烤肉|焖烤/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M122",
+      "name": "猛古里烤肉自助（王府井银泰in88店）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "王府井银泰in88",
+        "fullAddress": "王府井大街88号北京王府井银泰in883层",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "烧烤",
+          "餐饮服务",
+          "中餐厅",
+          "烤肉"
+        ],
+        "confidence": 0.88,
+        "reason": "/烧烤|烤翅|烤串|烤肉|焖烤/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M132",
+      "name": "幸福砂锅居",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "酸菜白肉，烤羊肉串",
+        "optionalDishes": "",
+        "locationHint": "白浮店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "",
+        "tags": [
+          "烧烤",
+          "酸菜白肉",
+          "烤羊肉串",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.88,
+        "reason": "/烧烤|烤翅|烤串|烤肉|焖烤/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M134",
+      "name": "张记焖窖·十五年专注焖烤",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "烧烤",
+          "餐饮服务",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅",
+          "烤肉"
+        ],
+        "confidence": 0.88,
+        "reason": "/烧烤|烤翅|烤串|烤肉|焖烤/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M043",
+      "name": "湘彬萱",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "湘菜（推测，需确认）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "小炒黄牛肉",
+        "tags": [
+          "湘菜",
+          "餐饮服务",
+          "中餐厅",
+          "湖南菜",
+          "小炒黄牛肉"
+        ],
+        "confidence": 0.86,
+        "reason": "/湘|臭鳜鱼|小炒黄牛肉/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M077",
+      "name": "利哥",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "湘菜（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "匠熙小馆隔壁，南路东门外附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "小炒黄牛肉",
+        "tags": [
+          "湘菜",
+          "餐饮服务",
+          "中餐厅",
+          "四川菜",
+          "湖南菜",
+          "小炒黄牛肉",
+          "近学院南路"
+        ],
+        "confidence": 0.86,
+        "reason": "/湘|臭鳜鱼|小炒黄牛肉/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M131",
+      "name": "湘北·臭鳜鱼·湘土菜（北街家园店）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "北街家园店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "小炒黄牛肉",
+        "tags": [
+          "湘菜",
+          "餐饮服务",
+          "中餐厅",
+          "湖南菜",
+          "小炒黄牛肉"
+        ],
+        "confidence": 0.86,
+        "reason": "/湘|臭鳜鱼|小炒黄牛肉/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M007",
+      "name": "匠熙小馆",
+      "mentionCount": 6,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "南路东门外附近；市里亦有分店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "餐饮服务",
+          "中餐厅",
+          "四川菜",
+          "近学院南路"
+        ],
+        "confidence": 0.84,
+        "reason": "/川|蜀|渝|宜宾|小面|燃面|麻辣|水煮|酸菜鱼/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M009",
+      "name": "郑阿公",
+      "mentionCount": 6,
+      "current": {
+        "cuisine": "顺德菜 / 牛肉煲（推测）",
+        "recommendedDishes": "牛肉煲、虾皇饺；牛肉煲，鸡煲，肠粉，虾皇饺",
+        "optionalDishes": "番茄豆腐煲（油），双皮奶（一般）",
+        "locationHint": "昌平万达、五道口均提及",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "粤菜",
+        "recommendedDishes": "",
+        "tags": [
+          "粤菜",
+          "牛肉煲",
+          "虾皇饺",
+          "鸡煲",
+          "肠粉",
+          "番茄豆腐煲",
+          "双皮奶",
+          "地名地址信息",
+          "热点地名",
+          "交通设施服务"
+        ],
+        "confidence": 0.84,
+        "reason": "/粤|顺德|茶餐厅|冰室|干蒸|煲仔|肠粉/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M018",
+      "name": "江川佑",
+      "mentionCount": 4,
+      "current": {
+        "cuisine": "轻食（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "沙河",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "餐饮服务",
+          "中餐厅",
+          "餐饮相关场所",
+          "餐饮相关",
+          "生活服务",
+          "事务所",
+          "律师事务所",
+          "近沙河"
+        ],
+        "confidence": 0.84,
+        "reason": "/川|蜀|渝|宜宾|小面|燃面|麻辣|水煮|酸菜鱼/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M028",
+      "name": "腊罗巴",
+      "mentionCount": 3,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "南路附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "餐饮服务",
+          "中餐厅",
+          "云贵菜",
+          "近学院南路"
+        ],
+        "confidence": 0.84,
+        "reason": "/川|蜀|渝|宜宾|小面|燃面|麻辣|水煮|酸菜鱼/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M041",
+      "name": "文通冰室",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "港式茶餐厅（推测）",
+        "recommendedDishes": "炖汤",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "粤菜",
+        "recommendedDishes": "",
+        "tags": [
+          "粤菜",
+          "炖汤",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "中餐厅"
+        ],
+        "confidence": 0.84,
+        "reason": "/粤|顺德|茶餐厅|冰室|干蒸|煲仔|肠粉/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M080",
+      "name": "曼玲",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "轻食（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "沙河",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "餐饮服务",
+          "快餐厅",
+          "中餐厅",
+          "近沙河"
+        ],
+        "confidence": 0.84,
+        "reason": "/川|蜀|渝|宜宾|小面|燃面|麻辣|水煮|酸菜鱼/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M090",
+      "name": "蜀阳酒店",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "川菜（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "南路后面",
+        "fullAddress": "皂君庙乙4号",
+        "amapCategory": "住宿服务;宾馆酒店;宾馆酒店"
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "住宿服务",
+          "宾馆酒店",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "近学院南路"
+        ],
+        "confidence": 0.84,
+        "reason": "/川|蜀|渝|宜宾|小面|燃面|麻辣|水煮|酸菜鱼/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M109",
+      "name": "宜宾招待所",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "川菜（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "南路附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "餐饮服务",
+          "中餐厅",
+          "四川菜",
+          "住宿服务",
+          "旅馆招待所",
+          "近学院南路"
+        ],
+        "confidence": 0.84,
+        "reason": "/川|蜀|渝|宜宾|小面|燃面|麻辣|水煮|酸菜鱼/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M115",
+      "name": "北平宴（中关村）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "烤鸭，炙羊肉，干炸丸子，香椿豆腐丝",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "烤鸭",
+          "炙羊肉",
+          "干炸丸子",
+          "香椿豆腐丝",
+          "餐饮服务",
+          "中餐厅",
+          "四川菜"
+        ],
+        "confidence": 0.84,
+        "reason": "/川|蜀|渝|宜宾|小面|燃面|麻辣|水煮|酸菜鱼/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M117",
+      "name": "陈潮昇顺德干蒸（北京首店）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "北京首店",
+        "fullAddress": "中关村大街49号3幢平房102号",
+        "amapCategory": "生活服务;洗浴推拿场所;洗浴推拿场所|科教文化服务;科教文化场所;科教文化场所"
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "粤菜",
+        "recommendedDishes": "",
+        "tags": [
+          "粤菜",
+          "生活服务",
+          "洗浴推拿场所",
+          "科教文化服务",
+          "科教文化场所"
+        ],
+        "confidence": 0.84,
+        "reason": "/粤|顺德|茶餐厅|冰室|干蒸|煲仔|肠粉/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M128",
+      "name": "思念妈妈菜东北小馆",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "北京城区蓝郡国际花园商住楼东2门旁",
+        "amapCategory": "餐饮服务;中餐厅;东北菜"
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "东北菜",
+        "recommendedDishes": "锅包肉",
+        "tags": [
+          "东北菜",
+          "餐饮服务",
+          "中餐厅",
+          "锅包肉"
+        ],
+        "confidence": 0.84,
+        "reason": "/东北|铁锅炖|锅包肉|砂锅居/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M129",
+      "name": "随园食记",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "锅包肉，咖喱肥牛",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "东北菜",
+        "recommendedDishes": "",
+        "tags": [
+          "东北菜",
+          "锅包肉",
+          "咖喱肥牛",
+          "餐饮服务",
+          "中餐厅",
+          "生活服务",
+          "美容美发店",
+          "特色",
+          "地方风味餐厅"
+        ],
+        "confidence": 0.84,
+        "reason": "/东北|铁锅炖|锅包肉|砂锅居/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M133",
+      "name": "粤食佳",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "海鲜蚝仔烙，凤爪，脆黄瓜",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "粤菜",
+        "recommendedDishes": "",
+        "tags": [
+          "粤菜",
+          "海鲜蚝仔烙",
+          "凤爪",
+          "脆黄瓜",
+          "餐饮服务",
+          "中餐厅",
+          "广东菜"
+        ],
+        "confidence": 0.84,
+        "reason": "/粤|顺德|茶餐厅|冰室|干蒸|煲仔|肠粉/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M011",
+      "name": "方砖厂",
+      "mentionCount": 5,
+      "current": {
+        "cuisine": "炸酱面（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京菜",
+        "recommendedDishes": "炸酱面",
+        "tags": [
+          "北京菜",
+          "餐饮服务",
+          "中餐厅",
+          "炸酱面"
+        ],
+        "confidence": 0.82,
+        "reason": "/北京|北平|炸酱面|烤鸭|铜锅|涮羊肉|护国寺/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M020",
+      "name": "徐小黑",
+      "mentionCount": 4,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "北京菜",
+          "餐饮服务",
+          "中餐厅",
+          "近沙河"
+        ],
+        "confidence": 0.82,
+        "reason": "/北京|北平|炸酱面|烤鸭|铜锅|涮羊肉|护国寺/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M023",
+      "name": "大理石",
+      "mentionCount": 3,
+      "current": {
+        "cuisine": "自助餐（推测）",
+        "recommendedDishes": "酸奶、牛肉馅饺子",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "北京菜",
+          "酸奶",
+          "牛肉馅饺子",
+          "购物服务",
+          "家居建材市场",
+          "建材五金市场",
+          "家具建材综合市场",
+          "生活服务",
+          "美容美发店",
+          "灯具瓷器市场"
+        ],
+        "confidence": 0.82,
+        "reason": "/北京|北平|炸酱面|烤鸭|铜锅|涮羊肉|护国寺/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M033",
+      "name": "聚恩园",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "炸酱面 / 北京菜（推测）",
+        "recommendedDishes": "肘子、酱肉",
+        "optionalDishes": "",
+        "locationHint": "雍和宫附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "北京菜",
+          "肘子",
+          "酱肉",
+          "餐饮服务",
+          "中餐厅",
+          "风景名胜",
+          "风景名胜相关",
+          "旅游景点",
+          "商务住宅",
+          "商务住宅相关"
+        ],
+        "confidence": 0.82,
+        "reason": "/北京|北平|炸酱面|烤鸭|铜锅|涮羊肉|护国寺/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M073",
+      "name": "锦炉",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "郊区多店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "北京菜",
+          "餐饮服务",
+          "中餐厅",
+          "餐饮相关场所",
+          "餐饮相关",
+          "特色",
+          "地方风味餐厅"
+        ],
+        "confidence": 0.82,
+        "reason": "/北京|北平|炸酱面|烤鸭|铜锅|涮羊肉|护国寺/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M111",
+      "name": "云野菜·和牛寿喜烧（新中关店）",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "寿喜烧 / 日料（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "新中关",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "日料",
+        "recommendedDishes": "寿喜烧",
+        "tags": [
+          "日料",
+          "餐饮服务",
+          "外国餐厅",
+          "日本料理",
+          "寿喜烧"
+        ],
+        "confidence": 0.82,
+        "reason": "/日式|寿喜烧|和牛|寿司|三文鱼/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M123",
+      "name": "南京大牌档",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "南京烤鸭，赤豆元宵，美龄粥，泡椒鸡，虾黄豆腐，糖芋苗",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "北京菜",
+          "南京烤鸭",
+          "赤豆元宵",
+          "美龄粥",
+          "泡椒鸡",
+          "虾黄豆腐",
+          "糖芋苗",
+          "餐饮服务",
+          "中餐厅",
+          "江苏菜"
+        ],
+        "confidence": 0.82,
+        "reason": "/北京|北平|炸酱面|烤鸭|铜锅|涮羊肉|护国寺/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M125",
+      "name": "三文鱼大王（减脂版）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "北京菜",
+          "餐饮服务",
+          "外国餐厅",
+          "日本料理",
+          "购物服务",
+          "综合市场",
+          "水产海鲜市场",
+          "中餐厅",
+          "海鲜酒楼"
+        ],
+        "confidence": 0.82,
+        "reason": "/北京|北平|炸酱面|烤鸭|铜锅|涮羊肉|护国寺/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M126",
+      "name": "申德勒加油站西餐厅（日坛路总店）",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "日坛路总店",
+        "fullAddress": "光华路甲17号",
+        "amapCategory": "餐饮服务;外国餐厅;西餐厅(综合风味)"
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "西餐",
+        "recommendedDishes": "",
+        "tags": [
+          "西餐",
+          "餐饮服务",
+          "外国餐厅",
+          "西餐厅",
+          "德国菜",
+          "汽车服务",
+          "加油站",
+          "中国石化",
+          "中餐厅",
+          "咖啡厅"
+        ],
+        "confidence": 0.82,
+        "reason": "/西餐|披萨|pizza|俄餐|阿拉伯/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M127",
+      "name": "水平有限广西米粉·广西风味集",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "北京城区成府路华清嘉园7-6号(五道口地铁站B南口步行330米)",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "北京菜",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.82,
+        "reason": "/北京|北平|炸酱面|烤鸭|铜锅|涮羊肉|护国寺/"
+      },
+      "reviewStatus": "high_confidence"
+    },
+    {
+      "id": "M016",
+      "name": "1733",
+      "mentionCount": 4,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "大钟寺站附近 / 北航附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "面食",
+        "recommendedDishes": "",
+        "tags": [
+          "面食",
+          "购物服务",
+          "购物相关场所",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "交通设施服务",
+          "公交车站",
+          "公交车站相关",
+          "地铁站"
+        ],
+        "confidence": 0.78,
+        "reason": "/面|米粉|米线|粉|炸酱/"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M074",
+      "name": "晋喜",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "山西面食（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "大同古城",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "面食",
+        "recommendedDishes": "",
+        "tags": [
+          "面食",
+          "餐饮服务",
+          "中餐厅",
+          "地名地址信息",
+          "热点地名",
+          "风景名胜",
+          "公园广场",
+          "公园",
+          "交通设施服务",
+          "地铁站"
+        ],
+        "confidence": 0.78,
+        "reason": "/面|米粉|米线|粉|炸酱/"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M008",
+      "name": "小渝府",
+      "mentionCount": 6,
+      "current": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "南路附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "川菜",
+          "餐饮服务",
+          "中餐厅",
+          "四川菜",
+          "火锅店",
+          "火锅",
+          "近学院南路"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M022",
+      "name": "比格",
+      "mentionCount": 3,
+      "current": {
+        "cuisine": "披萨自助",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "披萨自助",
+        "recommendedDishes": "披萨",
+        "tags": [
+          "披萨自助",
+          "餐饮服务",
+          "外国餐厅",
+          "西餐厅",
+          "快餐厅",
+          "披萨"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M026",
+      "name": "聚宝源",
+      "mentionCount": 3,
+      "current": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "牛街总店",
+        "fullAddress": "北京城区牛街5-2号(牛街地铁站D2口步行390米)",
+        "amapCategory": "餐饮服务;中餐厅;清真菜馆"
+      },
+      "issues": [
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "北京涮羊肉",
+          "餐饮服务",
+          "中餐厅",
+          "清真菜馆",
+          "购物服务",
+          "专卖店",
+          "专营店",
+          "火锅",
+          "清真",
+          "适合聚餐"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M027",
+      "name": "烤匠",
+      "mentionCount": 3,
+      "current": {
+        "cuisine": "烤鱼",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "超级合生汇",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烤鱼",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "烤鱼",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店",
+          "冷饮店",
+          "体育休闲服务",
+          "娱乐场所",
+          "火锅"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M032",
+      "name": "汉巴味德",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "巴西烤肉自助",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "巴西烤肉自助",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "巴西烤肉自助",
+          "餐饮服务",
+          "快餐厅",
+          "中餐厅",
+          "烤肉"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M035",
+      "name": "烤小呆",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "火锅鸡 / 聚餐",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅鸡 / 聚餐",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "火锅鸡",
+          "聚餐",
+          "餐饮服务",
+          "中餐厅",
+          "综合酒楼",
+          "火锅",
+          "适合聚餐"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M036",
+      "name": "客拉客",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "火锅、烤肉",
+        "tags": [
+          "烧烤",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店",
+          "特色",
+          "地方风味餐厅",
+          "火锅",
+          "烤肉",
+          "近沙河"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M042",
+      "name": "鲜潭蒸汽石锅鱼",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "鱼火锅 / 蒸汽鱼",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "超级合生汇、悦荟广场、五道口均有店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "鱼火锅 / 蒸汽鱼",
+        "recommendedDishes": "火锅、酸菜鱼",
+        "tags": [
+          "鱼火锅",
+          "蒸汽鱼",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店",
+          "特色",
+          "地方风味餐厅",
+          "购物服务",
+          "购物相关场所",
+          "体育用品店"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M046",
+      "name": "小院子湘菜馆",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "沙河；青年创业大厦店",
+        "fullAddress": "百沙路200号青年创业大厦F1层",
+        "amapCategory": "餐饮服务;中餐厅;湖南菜(湘菜)"
+      },
+      "issues": [
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "小炒黄牛肉",
+        "tags": [
+          "湘菜",
+          "餐饮服务",
+          "中餐厅",
+          "湖南菜",
+          "小炒黄牛肉",
+          "近沙河"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M051",
+      "name": "安又胖",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "烤肉",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "超级合生汇",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烤肉",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "烤肉",
+          "餐饮服务",
+          "外国餐厅",
+          "韩国料理"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M052",
+      "name": "煲仔皇",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "煲仔饭",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "超级合生汇",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "煲仔饭",
+        "recommendedDishes": "煲仔饭",
+        "tags": [
+          "煲仔饭",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M054",
+      "name": "承京运·宫廷炸酱面",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "北京炸酱面",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京炸酱面",
+        "recommendedDishes": "炸酱面",
+        "tags": [
+          "北京炸酱面",
+          "餐饮服务",
+          "中餐厅",
+          "生活服务",
+          "生活服务场所",
+          "炸酱面"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M060",
+      "name": "东北原味烧烤",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤肉、锅包肉",
+        "tags": [
+          "烧烤",
+          "餐饮服务",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅",
+          "餐饮相关场所",
+          "餐饮相关",
+          "烤肉",
+          "锅包肉"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M075",
+      "name": "京晟铜锅涮肉（护国寺店）",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "护国寺",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "火锅、烤肉",
+        "tags": [
+          "北京涮羊肉",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "火锅",
+          "烤肉"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M079",
+      "name": "满恒记",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "涮肉",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "地安门西大街与西四北大街交叉口东南40米",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "涮肉",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "涮肉",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店",
+          "火锅",
+          "清真"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M083",
+      "name": "嬲塞de湘菜馆",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "北师大附近",
+        "fullAddress": "杏坛路44号(蓟门桥地铁站C口步行460米)",
+        "amapCategory": "餐饮服务;中餐厅;湖南菜(湘菜)"
+      },
+      "issues": [
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "小炒黄牛肉",
+        "tags": [
+          "湘菜",
+          "餐饮服务",
+          "中餐厅",
+          "湖南菜",
+          "小炒黄牛肉"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M085",
+      "name": "彭厨",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "昌平城里",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "小炒黄牛肉",
+        "tags": [
+          "湘菜",
+          "餐饮服务",
+          "中餐厅",
+          "湖南菜",
+          "餐饮相关场所",
+          "餐饮相关",
+          "小炒黄牛肉"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M088",
+      "name": "山葵村",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "烤肉",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "沙河较远",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烤肉",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "烤肉",
+          "餐饮服务",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅",
+          "近沙河"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M089",
+      "name": "石器时代",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤肉",
+        "tags": [
+          "烧烤",
+          "餐饮服务",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅",
+          "烤肉"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M093",
+      "name": "王奋斗贵州酸汤火锅",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "贵州酸汤火锅",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "沙河附近（推测）",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "贵州酸汤火锅",
+        "recommendedDishes": "火锅、酸菜鱼",
+        "tags": [
+          "贵州酸汤火锅",
+          "餐饮服务",
+          "中餐厅",
+          "云贵菜",
+          "火锅店",
+          "火锅",
+          "酸菜鱼",
+          "近沙河"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M095",
+      "name": "玺源居",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "鼓楼",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "北京涮羊肉",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店",
+          "清真菜馆",
+          "火锅",
+          "清真"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M098",
+      "name": "小江庐江西小炒",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "江西菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "玖耀里",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "江西菜",
+        "recommendedDishes": "小炒黄牛肉",
+        "tags": [
+          "江西菜",
+          "餐饮服务",
+          "中餐厅",
+          "小炒黄牛肉"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M099",
+      "name": "小街猪手",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "猪手 / 小吃",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "望京；疑似南路",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "猪手 / 小吃",
+        "recommendedDishes": "火锅、酸菜鱼",
+        "tags": [
+          "猪手",
+          "小吃",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "中餐厅",
+          "火锅店",
+          "火锅",
+          "酸菜鱼",
+          "近学院南路"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M100",
+      "name": "小炉灶铁锅炖",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "东北铁锅炖",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "北京富雷科技股份有限公司西北门旁",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "东北铁锅炖",
+        "recommendedDishes": "锅包肉",
+        "tags": [
+          "东北铁锅炖",
+          "餐饮服务",
+          "中餐厅",
+          "锅包肉"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M104",
+      "name": "鸦儿李记",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "西直门旁、什刹海均有店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "火锅",
+        "tags": [
+          "北京涮羊肉",
+          "餐饮服务",
+          "中餐厅",
+          "清真菜馆",
+          "火锅店",
+          "火锅",
+          "清真"
+        ],
+        "confidence": 0.68,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M001",
+      "name": "老张头东北菜",
+      "mentionCount": 19,
+      "current": {
+        "cuisine": "东北菜",
+        "recommendedDishes": "溜肉段、锅包肉；锅包肉，大骨头烩酸菜，干煸四季豆",
+        "optionalDishes": "",
+        "locationHint": "恒大城附近；老张头东北老菜馆（具体分店待确认）",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "东北菜",
+        "recommendedDishes": "",
+        "tags": [
+          "东北菜",
+          "溜肉段",
+          "锅包肉",
+          "大骨头烩酸菜",
+          "干煸四季豆",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M002",
+      "name": "潇湘阁",
+      "mentionCount": 15,
+      "current": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "小炒黄牛肉、茄子、金钱蛋、鸡爪；金钱蛋，擂辣椒，小炒拆骨肉，爆炒猪肝",
+        "optionalDishes": "",
+        "locationHint": "南路附近；连锁；辉煌国际店",
+        "fullAddress": "北京城区上地十街1号院辉煌国际广场17街B1层(靠近招商银行)",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "",
+        "tags": [
+          "湘菜",
+          "小炒黄牛肉",
+          "茄子",
+          "金钱蛋",
+          "鸡爪",
+          "擂辣椒",
+          "小炒拆骨肉",
+          "爆炒猪肝",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M003",
+      "name": "广顺兴",
+      "mentionCount": 10,
+      "current": {
+        "cuisine": "猪肚鸡 / 煲仔饭",
+        "recommendedDishes": "猪肚鸡、煲仔饭",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "朝阳路辅路与十里堡南里中路交叉口东南160米",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "猪肚鸡 / 煲仔饭",
+        "recommendedDishes": "",
+        "tags": [
+          "猪肚鸡",
+          "煲仔饭",
+          "餐饮服务",
+          "中餐厅",
+          "购物服务",
+          "购物相关场所",
+          "餐饮相关场所",
+          "餐饮相关"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M004",
+      "name": "四川孙鲶鱼",
+      "mentionCount": 10,
+      "current": {
+        "cuisine": "川菜 / 鱼火锅",
+        "recommendedDishes": "鲶鱼、黄辣丁",
+        "optionalDishes": "",
+        "locationHint": "牡丹园；牡丹园店",
+        "fullAddress": "花园路2号33号楼2层(牡丹园地铁站A西北口步行320米)",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "川菜 / 鱼火锅",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "鱼火锅",
+          "鲶鱼",
+          "黄辣丁",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M005",
+      "name": "宏宝莱",
+      "mentionCount": 8,
+      "current": {
+        "cuisine": "冰淇淋 / 饮品",
+        "recommendedDishes": "抹茶、奥利奥口味",
+        "optionalDishes": "",
+        "locationHint": "南路",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "冰淇淋 / 饮品",
+        "recommendedDishes": "",
+        "tags": [
+          "冰淇淋",
+          "饮品",
+          "抹茶",
+          "奥利奥口味",
+          "购物服务",
+          "综合市场",
+          "果品市场",
+          "汽车服务",
+          "充电站",
+          "近学院南路"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M006",
+      "name": "作作烧肉",
+      "mentionCount": 7,
+      "current": {
+        "cuisine": "日式烧肉",
+        "recommendedDishes": "牛油果冰沙",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "日式烧肉",
+        "recommendedDishes": "",
+        "tags": [
+          "日式烧肉",
+          "牛油果冰沙",
+          "餐饮服务",
+          "外国餐厅",
+          "餐饮相关场所",
+          "餐饮相关",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M010",
+      "name": "超意兴",
+      "mentionCount": 5,
+      "current": {
+        "cuisine": "鲁菜快餐",
+        "recommendedDishes": "把子肉",
+        "optionalDishes": "",
+        "locationHint": "九耀里附近（依据对话）",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "鲁菜快餐",
+        "recommendedDishes": "",
+        "tags": [
+          "鲁菜快餐",
+          "把子肉",
+          "餐饮服务",
+          "快餐厅",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M012",
+      "name": "凤临阁",
+      "mentionCount": 5,
+      "current": {
+        "cuisine": "山西菜 / 烧卖",
+        "recommendedDishes": "烧卖",
+        "optionalDishes": "",
+        "locationHint": "大同古城",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "山西菜 / 烧卖",
+        "recommendedDishes": "",
+        "tags": [
+          "山西菜",
+          "烧卖",
+          "地名地址信息",
+          "热点地名",
+          "交通设施服务",
+          "地铁站",
+          "风景名胜",
+          "风景名胜相关",
+          "旅游景点",
+          "商务住宅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M013",
+      "name": "拉蒂娜",
+      "mentionCount": 5,
+      "current": {
+        "cuisine": "巴西烤肉自助",
+        "recommendedDishes": "菠萝",
+        "optionalDishes": "",
+        "locationHint": "连锁；具体门店待确认",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "巴西烤肉自助",
+        "recommendedDishes": "",
+        "tags": [
+          "巴西烤肉自助",
+          "菠萝",
+          "餐饮服务",
+          "外国餐厅",
+          "西餐厅",
+          "牛扒店",
+          "购物服务",
+          "家居建材市场",
+          "家具城"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M014",
+      "name": "探鱼",
+      "mentionCount": 5,
+      "current": {
+        "cuisine": "烤鱼",
+        "recommendedDishes": "都可以尝试",
+        "optionalDishes": "",
+        "locationHint": "沙河附近（推测）",
+        "fullAddress": "中海大吉巷B1层大吉巷北街152号",
+        "amapCategory": "餐饮服务;餐饮相关场所;餐饮相关"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "烤鱼",
+        "recommendedDishes": "",
+        "tags": [
+          "烤鱼",
+          "都可以尝试",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "中餐厅",
+          "外国餐厅",
+          "美式风味",
+          "特色",
+          "地方风味餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M015",
+      "name": "醉江边",
+      "mentionCount": 5,
+      "current": {
+        "cuisine": "烤鱼 / 牛蛙",
+        "recommendedDishes": "甜辣烤鱼、牛蛙",
+        "optionalDishes": "",
+        "locationHint": "南路，离学校近；沙河店；豆花烤鱼",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烤鱼 / 牛蛙",
+        "recommendedDishes": "",
+        "tags": [
+          "烤鱼",
+          "牛蛙",
+          "甜辣烤鱼",
+          "餐饮服务",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅",
+          "近沙河",
+          "近学院南路"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M017",
+      "name": "大宅门",
+      "mentionCount": 4,
+      "current": {
+        "cuisine": "烤鸭 / 北京菜",
+        "recommendedDishes": "烤鸭",
+        "optionalDishes": "",
+        "locationHint": "昌平城里",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烤鸭 / 北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "烤鸭",
+          "北京菜",
+          "餐饮服务",
+          "中餐厅",
+          "综合酒楼",
+          "购物服务",
+          "家居建材市场",
+          "建材五金市场",
+          "餐饮相关场所",
+          "餐饮相关"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M019",
+      "name": "西塔老太太",
+      "mentionCount": 4,
+      "current": {
+        "cuisine": "烤肉",
+        "recommendedDishes": "肉整体质量不错",
+        "optionalDishes": "",
+        "locationHint": "超级合生汇",
+        "fullAddress": "广顺北大街16号院3号楼华彩万象汇4F层西塔老太太烤肉",
+        "amapCategory": "餐饮服务;餐饮相关场所;餐饮相关"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "烤肉",
+        "recommendedDishes": "",
+        "tags": [
+          "烤肉",
+          "肉整体质量不错",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M021",
+      "name": "真功夫原盅现蒸",
+      "mentionCount": 4,
+      "current": {
+        "cuisine": "快餐",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "快餐",
+        "recommendedDishes": "",
+        "tags": [
+          "快餐",
+          "餐饮服务",
+          "快餐厅",
+          "中餐厅",
+          "餐饮相关场所",
+          "餐饮相关"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M024",
+      "name": "赣掌佬",
+      "mentionCount": 3,
+      "current": {
+        "cuisine": "江西菜",
+        "recommendedDishes": "小黄鱼",
+        "optionalDishes": "",
+        "locationHint": "玖耀里（推测）",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "江西菜",
+        "recommendedDishes": "",
+        "tags": [
+          "江西菜",
+          "小黄鱼",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "中餐厅",
+          "近沙河"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M030",
+      "name": "必胜客",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "西餐 / 披萨",
+        "recommendedDishes": "自助餐活动",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "西餐 / 披萨",
+        "recommendedDishes": "",
+        "tags": [
+          "西餐",
+          "披萨",
+          "自助餐活动",
+          "餐饮服务",
+          "快餐厅",
+          "必胜客"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M031",
+      "name": "疯狂烤翅",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤翅",
+        "optionalDishes": "",
+        "locationHint": "南路门口",
+        "fullAddress": "唐家岭南环路3号唐家岭新城T08小区",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "",
+        "tags": [
+          "烧烤",
+          "烤翅",
+          "餐饮服务",
+          "中餐厅",
+          "快餐厅",
+          "近学院南路"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M034",
+      "name": "凯鸽",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "山西菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "大同古城",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "山西菜",
+        "recommendedDishes": "",
+        "tags": [
+          "山西菜",
+          "地名地址信息",
+          "热点地名",
+          "风景名胜",
+          "交通设施服务",
+          "地铁站",
+          "商务住宅",
+          "商务住宅相关",
+          "交通地名",
+          "道路名"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M037",
+      "name": "楠小罐云南罐罐米线（学院路店）",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "云南米线",
+        "recommendedDishes": "甜品；各种特色米线和米布",
+        "optionalDishes": "薄荷烧排骨（量少）",
+        "locationHint": "学院路",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "云南米线",
+        "recommendedDishes": "",
+        "tags": [
+          "云南米线",
+          "甜品",
+          "各种特色米线和米布",
+          "薄荷烧排骨",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M040",
+      "name": "山河屯铁锅炖",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "东北铁锅炖",
+        "recommendedDishes": "锅包肉、鸡锅",
+        "optionalDishes": "",
+        "locationHint": "玖耀里；沙河亦有店",
+        "fullAddress": "沙河镇玖耀里东区2号楼2层201",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "东北铁锅炖",
+        "recommendedDishes": "",
+        "tags": [
+          "东北铁锅炖",
+          "锅包肉",
+          "鸡锅",
+          "餐饮服务",
+          "中餐厅",
+          "近沙河"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M044",
+      "name": "湘泽园",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "肉汤拌饭",
+        "optionalDishes": "",
+        "locationHint": "南路附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "湘菜",
+        "recommendedDishes": "",
+        "tags": [
+          "湘菜",
+          "肉汤拌饭",
+          "餐饮服务",
+          "中餐厅",
+          "湖南菜",
+          "商务住宅",
+          "住宅区",
+          "住宅小区",
+          "风景名胜",
+          "公园广场"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M045",
+      "name": "小广东猛火炒饭",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "炒饭",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "炒饭",
+        "recommendedDishes": "",
+        "tags": [
+          "炒饭",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M048",
+      "name": "争鲜",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "日料 / 寿司",
+        "recommendedDishes": "鳗鱼饭",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "日料 / 寿司",
+        "recommendedDishes": "",
+        "tags": [
+          "日料",
+          "寿司",
+          "鳗鱼饭",
+          "餐饮服务",
+          "外国餐厅",
+          "日本料理"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M049",
+      "name": "猪小犟",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "家常菜（推测）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "沙河附近；沙河店",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "家常菜",
+        "recommendedDishes": "",
+        "tags": [
+          "家常菜",
+          "餐饮服务",
+          "中餐厅",
+          "近沙河"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M050",
+      "name": "紫泥",
+      "mentionCount": 2,
+      "current": {
+        "cuisine": "山西菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "大同古城",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "山西菜",
+        "recommendedDishes": "",
+        "tags": [
+          "山西菜",
+          "地名地址信息",
+          "热点地名",
+          "交通地名",
+          "道路名",
+          "交通设施服务",
+          "地铁站",
+          "风景名胜"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M094",
+      "name": "蜗牛小馆",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "南路",
+        "fullAddress": "安苑路惠新西里一区2号楼瑞尔利宾馆1层",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [
+        "cuisine_empty",
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "tags": [
+          "餐饮服务",
+          "中餐厅",
+          "近学院南路"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M053",
+      "name": "便宜坊",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "烤鸭 / 北京菜",
+        "recommendedDishes": "烤鸭",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烤鸭 / 北京菜",
+        "recommendedDishes": "",
+        "tags": [
+          "烤鸭",
+          "北京菜",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M055",
+      "name": "船歌鱼水饺",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "海鲜水饺",
+        "recommendedDishes": "鲅鱼水饺、海肠捞饭",
+        "optionalDishes": "",
+        "locationHint": "青岛",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "海鲜水饺",
+        "recommendedDishes": "",
+        "tags": [
+          "海鲜水饺",
+          "鲅鱼水饺",
+          "海肠捞饭",
+          "餐饮服务",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M056",
+      "name": "创新火锅鸡（于辛庄店）",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "火锅鸡",
+        "recommendedDishes": "方便面",
+        "optionalDishes": "",
+        "locationHint": "昌平区三号公寓",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅鸡",
+        "recommendedDishes": "",
+        "tags": [
+          "火锅鸡",
+          "方便面",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M057",
+      "name": "达美乐",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "披萨",
+        "recommendedDishes": "意式肉酱披萨",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "披萨",
+        "recommendedDishes": "",
+        "tags": [
+          "披萨",
+          "意式肉酱披萨",
+          "餐饮服务",
+          "快餐厅",
+          "外国餐厅",
+          "餐饮相关场所",
+          "餐饮相关"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M058",
+      "name": "大地西餐厅",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "俄餐",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "大使馆区域（推测）",
+        "fullAddress": "西四南大街44号(缸瓦市教堂斜对面)",
+        "amapCategory": "餐饮服务;外国餐厅;俄国菜"
+      },
+      "issues": [
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "俄餐",
+        "recommendedDishes": "",
+        "tags": [
+          "俄餐",
+          "餐饮服务",
+          "外国餐厅",
+          "俄国菜",
+          "政府机构及社会团体",
+          "外国机构",
+          "外国使领馆"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M059",
+      "name": "德南面包房",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "面包 / 甜品",
+        "recommendedDishes": "蛋糕",
+        "optionalDishes": "",
+        "locationHint": "大钟寺附近",
+        "fullAddress": "北京城区北京城区北三环西路1733商业空间2号楼1层底商01号",
+        "amapCategory": "餐饮服务;糕饼店;糕饼店"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "面包 / 甜品",
+        "recommendedDishes": "",
+        "tags": [
+          "面包",
+          "甜品",
+          "蛋糕",
+          "餐饮服务",
+          "糕饼店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M061",
+      "name": "东发道茶冰厅",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "粤式茶餐厅",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "西单附近",
+        "fullAddress": "西单北大街131号西单大悦城8F-03",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "粤式茶餐厅",
+        "recommendedDishes": "",
+        "tags": [
+          "粤式茶餐厅",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M063",
+      "name": "肥鸡烧烤",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "烤鹅肝配馕",
+        "optionalDishes": "",
+        "locationHint": "西直门附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烧烤",
+        "recommendedDishes": "",
+        "tags": [
+          "烧烤",
+          "烤鹅肝配馕",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M064",
+      "name": "冯层层",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "切角蛋糕 / 糕点",
+        "recommendedDishes": "切角蛋糕、糕点",
+        "optionalDishes": "",
+        "locationHint": "南锣鼓巷附近（依据上下文）；南锣鼓巷附近（待确认）",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "切角蛋糕 / 糕点",
+        "recommendedDishes": "",
+        "tags": [
+          "切角蛋糕",
+          "糕点",
+          "风景名胜",
+          "地名地址信息",
+          "交通地名",
+          "道路名",
+          "风景名胜相关",
+          "旅游景点",
+          "观景点",
+          "住宿服务"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M066",
+      "name": "桂满陇",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "杭帮菜",
+        "recommendedDishes": "青菜肉丝炒年糕、豆腐年糕汤、桂花年糕",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "杭帮菜",
+        "recommendedDishes": "",
+        "tags": [
+          "杭帮菜",
+          "青菜肉丝炒年糕",
+          "豆腐年糕汤",
+          "桂花年糕",
+          "餐饮服务",
+          "中餐厅",
+          "风景名胜",
+          "风景名胜相关",
+          "旅游景点"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M067",
+      "name": "海汕记",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "潮汕牛肉火锅自助",
+        "recommendedDishes": "鲜啤",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "潮汕牛肉火锅自助",
+        "recommendedDishes": "",
+        "tags": [
+          "潮汕牛肉火锅自助",
+          "鲜啤",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M069",
+      "name": "淮扬府",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "淮扬菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "北京",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "淮扬菜",
+        "recommendedDishes": "",
+        "tags": [
+          "淮扬菜",
+          "餐饮服务",
+          "中餐厅",
+          "江苏菜",
+          "浙江菜",
+          "公司企业",
+          "公司",
+          "住宿服务",
+          "住宿服务相关"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M070",
+      "name": "黄隐厨老妈蹄花",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "川菜",
+        "recommendedDishes": "老妈蹄花、豆腐",
+        "optionalDishes": "",
+        "locationHint": "昌平地铁站旁、中国黄金楼上",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "老妈蹄花",
+          "豆腐",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M072",
+      "name": "记忆山城巷重庆鸡公煲（昌平南环路店）",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "重庆鸡公煲",
+        "recommendedDishes": "冰豆花",
+        "optionalDishes": "",
+        "locationHint": "昌平区城北街道南环东路21号物美超市1层",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "重庆鸡公煲",
+        "recommendedDishes": "",
+        "tags": [
+          "重庆鸡公煲",
+          "冰豆花",
+          "购物服务",
+          "超级市场",
+          "超市",
+          "便民商店",
+          "便利店",
+          "餐饮服务",
+          "中餐厅",
+          "山东菜"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M076",
+      "name": "雷老哥土鲫鱼下饭菜",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "湘菜 / 下饭菜",
+        "recommendedDishes": "醋炒鸡蛋、土鲫鱼",
+        "optionalDishes": "",
+        "locationHint": "南路附近有分店（待确认）",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "湘菜 / 下饭菜",
+        "recommendedDishes": "",
+        "tags": [
+          "湘菜",
+          "下饭菜",
+          "醋炒鸡蛋",
+          "土鲫鱼",
+          "餐饮服务",
+          "中餐厅",
+          "餐饮相关场所",
+          "餐饮相关",
+          "近学院南路"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M078",
+      "name": "麦记牛奶",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "甜品 / 饮品",
+        "recommendedDishes": "木薯大满贯（冰）",
+        "optionalDishes": "",
+        "locationHint": "沙河",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "甜品 / 饮品",
+        "recommendedDishes": "",
+        "tags": [
+          "甜品",
+          "饮品",
+          "木薯大满贯",
+          "购物服务",
+          "综合市场",
+          "农副产品市场",
+          "近沙河"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M081",
+      "name": "梅果",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "云南菜（依据上下文，需确认）",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_uncertain",
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "云南菜",
+        "recommendedDishes": "",
+        "tags": [
+          "云南菜（",
+          "）",
+          "地名地址信息",
+          "购物服务",
+          "综合市场",
+          "农副产品市场",
+          "果品市场",
+          "餐饮服务",
+          "冷饮店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M082",
+      "name": "芈重山",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "火锅",
+        "recommendedDishes": "嫩牛肉，滑肉片，嫩肉片",
+        "optionalDishes": "",
+        "locationHint": "昌平地铁站附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "火锅",
+        "recommendedDishes": "",
+        "tags": [
+          "火锅",
+          "嫩牛肉",
+          "滑肉片",
+          "嫩肉片",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店",
+          "交通设施服务",
+          "地铁站",
+          "公交车站"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M084",
+      "name": "胖妹小面",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "重庆小面 / 面食",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "重庆小面 / 面食",
+        "recommendedDishes": "",
+        "tags": [
+          "重庆小面",
+          "面食",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M086",
+      "name": "彭姐麻辣烫",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "麻辣烫",
+        "recommendedDishes": "枣糕",
+        "optionalDishes": "",
+        "locationHint": "五道口",
+        "fullAddress": "北京城区王庄路33号底商一层",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "麻辣烫",
+        "recommendedDishes": "",
+        "tags": [
+          "麻辣烫",
+          "枣糕",
+          "餐饮服务",
+          "中餐厅",
+          "快餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M087",
+      "name": "平安锅贴",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "锅贴 / 北京小吃",
+        "recommendedDishes": "酱肉、西葫芦羊肉锅贴",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "锅贴 / 北京小吃",
+        "recommendedDishes": "",
+        "tags": [
+          "锅贴",
+          "北京小吃",
+          "酱肉",
+          "西葫芦羊肉锅贴",
+          "餐饮服务",
+          "中餐厅",
+          "快餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M091",
+      "name": "顺峰",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "粤菜 / 早茶",
+        "recommendedDishes": "早茶自助",
+        "optionalDishes": "",
+        "locationHint": "北京",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "粤菜 / 早茶",
+        "recommendedDishes": "",
+        "tags": [
+          "粤菜",
+          "早茶",
+          "早茶自助",
+          "餐饮服务",
+          "中餐厅",
+          "海鲜酒楼",
+          "火锅店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M092",
+      "name": "四海糖水铺",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "糖水 / 甜品",
+        "recommendedDishes": "清补凉、芋圆糖水",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "糖水 / 甜品",
+        "recommendedDishes": "",
+        "tags": [
+          "糖水",
+          "甜品",
+          "清补凉",
+          "芋圆糖水",
+          "餐饮服务",
+          "甜品店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M097",
+      "name": "小菜园",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "家常菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "超级合生汇附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "家常菜",
+        "recommendedDishes": "",
+        "tags": [
+          "家常菜",
+          "餐饮服务",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅",
+          "安徽菜"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M103",
+      "name": "鑫隆四季涮肉",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "鲜牛肉丸",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "",
+        "tags": [
+          "北京涮羊肉",
+          "鲜牛肉丸",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M105",
+      "name": "雅佳神话",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "烤鱼",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "五道口",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "烤鱼",
+        "recommendedDishes": "",
+        "tags": [
+          "烤鱼",
+          "餐饮服务",
+          "中餐厅",
+          "特色",
+          "地方风味餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M106",
+      "name": "阳坊大都涮羊肉",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "苏尼特羊肉；自助餐",
+        "optionalDishes": "",
+        "locationHint": "朱辛庄",
+        "fullAddress": "安居路7号TBD住总万科天地安居路7号院",
+        "amapCategory": "餐饮服务;中餐厅;火锅店"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "",
+        "tags": [
+          "北京涮羊肉",
+          "苏尼特羊肉",
+          "自助餐",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M107",
+      "name": "阳坊涮肉",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "牛肉丸",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "北京涮羊肉",
+        "recommendedDishes": "",
+        "tags": [
+          "北京涮羊肉",
+          "牛肉丸",
+          "餐饮服务",
+          "中餐厅",
+          "火锅店"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M108",
+      "name": "宜宾燃面",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "面食",
+        "recommendedDishes": "鸡杂面（疑似）",
+        "optionalDishes": "",
+        "locationHint": "学校东区二层附近",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "面食",
+        "recommendedDishes": "",
+        "tags": [
+          "面食",
+          "鸡杂面",
+          "餐饮服务",
+          "中餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M110",
+      "name": "粤云龙广东顺德菜（昌平店）",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "粤菜 / 顺德菜",
+        "recommendedDishes": "鸡、煲仔饭",
+        "optionalDishes": "",
+        "locationHint": "昌平",
+        "fullAddress": "西关路5号1栋",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [],
+      "suggestion": {
+        "cuisine": "粤菜 / 顺德菜",
+        "recommendedDishes": "",
+        "tags": [
+          "粤菜",
+          "顺德菜",
+          "鸡",
+          "煲仔饭",
+          "餐饮服务",
+          "中餐厅",
+          "四川菜",
+          "适合聚餐"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M112",
+      "name": "正兴蜀园",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "川菜",
+        "recommendedDishes": "",
+        "tags": [
+          "川菜",
+          "餐饮服务",
+          "中餐厅",
+          "四川菜"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M113",
+      "name": "紫光园",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "清真 / 北京小吃",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "东大桥路21号(东大桥地铁站G口步行200米)",
+        "amapCategory": "餐饮服务;中餐厅;中餐厅"
+      },
+      "issues": [
+        "recommended_dishes_empty"
+      ],
+      "suggestion": {
+        "cuisine": "清真 / 北京小吃",
+        "recommendedDishes": "",
+        "tags": [
+          "清真",
+          "北京小吃",
+          "餐饮服务",
+          "中餐厅",
+          "北京菜",
+          "清真菜馆"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M114",
+      "name": "紫燕百味鸡",
+      "mentionCount": 1,
+      "current": {
+        "cuisine": "卤味",
+        "recommendedDishes": "",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "recommended_dishes_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "卤味",
+        "recommendedDishes": "",
+        "tags": [
+          "卤味",
+          "餐饮服务",
+          "餐饮相关场所",
+          "餐饮相关",
+          "快餐厅"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M118",
+      "name": "浩海火烧云傣家菜",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "油焖鸡，黑三剁",
+        "optionalDishes": "炸包浆豆腐",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "tags": [
+          "油焖鸡",
+          "黑三剁",
+          "炸包浆豆腐",
+          "餐饮服务",
+          "中餐厅",
+          "云贵菜"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    },
+    {
+      "id": "M130",
+      "name": "蜗牛的家小酒馆",
+      "mentionCount": 0,
+      "current": {
+        "cuisine": "",
+        "recommendedDishes": "炊锅鸡，木姜子煮鱼，清炒小青菜",
+        "optionalDishes": "",
+        "locationHint": "",
+        "fullAddress": "",
+        "amapCategory": ""
+      },
+      "issues": [
+        "cuisine_empty",
+        "full_address_empty"
+      ],
+      "suggestion": {
+        "cuisine": "",
+        "recommendedDishes": "",
+        "tags": [
+          "炊锅鸡",
+          "木姜子煮鱼",
+          "清炒小青菜",
+          "餐饮服务",
+          "中餐厅",
+          "体育休闲服务",
+          "娱乐场所",
+          "酒吧",
+          "体育休闲服务场所",
+          "餐饮相关场所"
+        ],
+        "confidence": 0.35,
+        "reason": "只生成标签/推荐菜线索，需人工确认"
+      },
+      "reviewStatus": "needs_review"
+    }
+  ]
+}

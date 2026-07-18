@@ -140,7 +140,7 @@ const server = http.createServer(async (req, res) => {
 
     const restaurantMatch = path.match(/^\/api\/restaurants\/([^/]+)$/);
     if (method === "GET" && restaurantMatch) {
-      return handleRestaurantDetail(restaurantMatch[1], res);
+      return handleRestaurantDetail(restaurantMatch[1], requestUrl, res);
     }
 
     if (method === "POST" && path === "/api/restaurants") {
@@ -278,7 +278,7 @@ function handleMealList(requestUrl, res) {
     minPeople: minPeople ? Number(minPeople) : undefined,
     maxPeople: maxPeople ? Number(maxPeople) : undefined,
     sortBy,
-    restaurantId: restaurantId ? Number(restaurantId) : undefined
+    restaurantId: restaurantId || undefined
   });
 
   if (onlyAvailable) {
@@ -532,8 +532,8 @@ function handleRestaurantList(requestUrl, res) {
 }
 
 // 功能：餐厅详情。前端查看某个餐厅的介绍、评分、标签。
-function handleRestaurantDetail(id, res) {
-  const campus = "cufe_shahe";
+function handleRestaurantDetail(id, requestUrl, res) {
+  const campus = requestUrl.searchParams.get("campus") || "cufe_shahe";
   // 优先读清洗后的餐厅仓；找不到时才兼容旧演示餐厅。
   const restaurant = getRestaurantCatalogItem(id, campus) || getRestaurant(id);
   if (!restaurant) {
@@ -636,7 +636,7 @@ async function handleCreatePost(req, res) {
     authorId: user.id,
     category: String(body.category).trim(),
     content: String(body.content).trim(),
-    restaurantId: body.restaurantId ? Number(body.restaurantId) : null
+    restaurantId: body.restaurantId || null
   });
 
   return sendJson(res, 201, {

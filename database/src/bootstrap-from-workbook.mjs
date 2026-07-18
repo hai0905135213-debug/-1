@@ -1,9 +1,9 @@
 import path from "node:path";
 import { FileBlob, SpreadsheetFile } from "@oai/artifact-tool";
-import { normalizeName, nowIso, openDatabase, parseCliArgs, stableRestaurantId } from "./lib.mjs";
+import { DATABASE_SOURCE_DIR, normalizeName, nowIso, openDatabase, parseCliArgs, stableRestaurantId } from "./lib.mjs";
 
 const args = parseCliArgs(process.argv.slice(2));
-const workbookPath = path.resolve(args.input || "database/source/饭饭之交_合并饭店库.xlsx");
+const workbookPath = path.resolve(args.input || path.join(DATABASE_SOURCE_DIR, "饭饭之交_合并饭店库.xlsx"));
 const workbook = await SpreadsheetFile.importXlsx(await FileBlob.load(workbookPath));
 const sheet = workbook.worksheets.getItem("饭店总库");
 const rows = sheet.getUsedRange().values;

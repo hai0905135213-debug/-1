@@ -106,7 +106,7 @@
             <view class="restaurant-meta">
               <text>⭐ {{ post.restaurant.rating }}</text>
               <text>📍 {{ post.restaurant.location }}</text>
-              <text>💰 ¥{{ (post.restaurant.avgPrice / 100).toFixed(0) }}/人</text>
+              <text>💰 {{ formatRestaurantPrice(post.restaurant) }}</text>
             </view>
             <view class="detail-tags">
               <text
@@ -194,6 +194,12 @@ export default {
         '咖啡': '#D88BB3'
       }
       return colors[category] || '#FF9F43'
+    },
+    formatRestaurantPrice(restaurant = {}) {
+      const rawPrice = Number(restaurant.avgPrice ?? restaurant.averagePrice)
+      if (!Number.isFinite(rawPrice) || rawPrice <= 0) return '人均待补'
+      const yuan = rawPrice > 1000 ? rawPrice / 100 : rawPrice
+      return `¥${yuan.toFixed(0)}/人`
     },
     goBack() {
       uni.navigateBack()

@@ -26,6 +26,58 @@ const restaurantWarehouse = existsSync(RESTAURANT_WAREHOUSE_PATH)
   ? new Database(RESTAURANT_WAREHOUSE_PATH, { readonly: true, fileMustExist: true })
   : null;
 
+function isNumericRestaurantId(value) {
+  return value !== undefined && value !== null && value !== "" && Number.isInteger(Number(value));
+}
+
+function getRestaurantNameForStorage(restaurantId, restaurantName = "") {
+  if (restaurantName) return restaurantName;
+  if (!restaurantId) return "";
+  const catalogItem = getRestaurantCatalogItem(restaurantId);
+  if (catalogItem?.name) return catalogItem.name;
+  const legacyItem = isNumericRestaurantId(restaurantId) ? getRestaurant(restaurantId) : null;
+  return legacyItem?.name || String(restaurantId);
+}
+
+function getRestaurantKeywordTerms(keyword) {
+  const raw = String(keyword || "").trim();
+  if (!raw) return [];
+  const terms = raw
+    .split(/[\s,，、/|]+/)
+    .map((term) => term.trim())
+    .filter(Boolean);
+  terms.push(raw);
+  for (const term of [...terms]) {
+    const nearbyTerm = term.replace(/^(附近|近|离)/, "").trim();
+    if (nearbyTerm && nearbyTerm !== term) terms.push(nearbyTerm);
+  }
+  return [...new Set(terms)];
+}
+
+function compactRestaurantTag(value) {
+  return String(value || "")
+    .replace(/[（(].*?[）)]/g, "")
+    .replace(/需确认|待核验|推测|依据上下文/g, "")
+    .trim();
+}
+
+function splitRestaurantTags(...values) {
+  return values
+    .flatMap((value) => String(value || "").split(/[、,，/｜|;；\s]+/))
+    .map(compactRestaurantTag)
+    .filter(Boolean);
+}
+
+function buildRestaurantTags(row, selectedCandidate) {
+  const tags = splitRestaurantTags(row.cuisine, row.recommended_dishes, row.optional_dishes, row.amap_category, selectedCandidate?.category);
+  if (/沙河/.test(`${row.location_hint || ""} ${row.full_address || ""} ${selectedCandidate?.address || ""}`)) tags.push("近沙河");
+  if (/学院南路|南路/.test(`${row.location_hint || ""} ${row.full_address || ""} ${selectedCandidate?.address || ""}`)) tags.push("近学院南路");
+  if (/聚|约|多人|团建|宴请/.test(`${row.party_size || ""} ${row.booking_note || ""}`)) tags.push("适合聚餐");
+  if (/清真/.test(`${row.cuisine || ""} ${row.name || ""} ${row.raw_messages || ""}`)) tags.push("清真");
+  if (row.sentiment === "positive" || Number(row.positive_count) > Number(row.caution_count || 0)) tags.push("群友推荐");
+  return [...new Set(tags)].slice(0, 8);
+}
+
 // 功能：建表（如果表不存在则创建），后续切 MySQL 时只需替换建表语句和驱动
 // 功能：建表（如果表不存在则创建），后续切 MySQL 时只需替换建表语句和驱动
 function initTables() {
@@ -205,13 +257,15 @@ function upgradeMealsTable() {
 
 function seedNewTablesIfEmpty() {
   const now = new Date().toISOString();
+  const userCount = db.prepare("SELECT COUNT(*) as cnt FROM users").get();
+  if (userCount.cnt === 0) return;
   
   const visitedCount = db.pragma("table_info(visited_restaurants)");
   if (visitedCount.length > 0) {
     const rowCount = db.prepare("SELECT COUNT(*) as cnt FROM visited_restaurants").get();
     if (rowCount.cnt === 0) {
-      db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, 1, '', ?)`).run(now);
-      db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, 2, '', ?)`).run(now);
+      db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, NULL, '二食堂麻辣香锅', ?)`).run(now);
+      db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, NULL, '东门米线店', ?)`).run(now);
     }
   }
   
@@ -219,8 +273,8 @@ function seedNewTablesIfEmpty() {
   if (wishlistCount.length > 0) {
     const rowCount = db.prepare("SELECT COUNT(*) as cnt FROM wishlist_restaurants").get();
     if (rowCount.cnt === 0) {
-      db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, 4, '', ?)`).run(now);
-      db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, 5, '', ?)`).run(now);
+      db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, NULL, '一食堂火锅', ?)`).run(now);
+      db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, NULL, '教工食堂牛肉面', ?)`).run(now);
     }
   }
 
@@ -491,8 +545,9 @@ export function createMeal(data) {
   let restaurantId = data.restaurantId || null;
   if (!restaurantId && data.place) {
     const match = findRestaurantByName(data.place);
-    if (match) restaurantId = match.id;
+    if (match && isNumericRestaurantId(match.id)) restaurantId = match.id;
   }
+  const legacyRestaurantId = isNumericRestaurantId(restaurantId) ? Number(restaurantId) : null;
 
   const result = db.prepare(`
     INSERT INTO meals (title, food_type, meal_time, place, campus, max_people, budget_min, budget_max, chat_mode, description, status, creator_id, restaurant_id, created_at, updated_at)
@@ -500,7 +555,7 @@ export function createMeal(data) {
   `).run(
     data.title, data.foodType || "不限", data.mealTime, data.place,
     data.campus || "主校区", data.maxPeople, data.budgetMin || 0, data.budgetMax || 0,
-    data.chatMode || "quiet", data.description || "", data.creatorId, restaurantId, now, now
+    data.chatMode || "quiet", data.description || "", data.creatorId, legacyRestaurantId, now, now
   );
 
   const mealId = result.lastInsertRowid;
@@ -533,8 +588,16 @@ export function listMeals({ status, campus, keyword, minBudget, maxBudget, minPe
     params.push(kw, kw, kw, kw);
   }
   if (restaurantId) {
-    sql += " AND restaurant_id = ?";
-    params.push(Number(restaurantId));
+    if (isNumericRestaurantId(restaurantId)) {
+      sql += " AND restaurant_id = ?";
+      params.push(Number(restaurantId));
+    } else {
+      const catalogItem = getRestaurantCatalogItem(restaurantId);
+      if (catalogItem?.name) {
+        sql += " AND (place LIKE ? OR description LIKE ?)";
+        params.push(`%${catalogItem.name}%`, `%${catalogItem.name}%`);
+      }
+    }
   }
   
   if (minBudget !== undefined && minBudget > 0) {
@@ -692,7 +755,13 @@ export function getRestaurant(id) {
 
 // 功能：按名称模糊查询餐厅
 export function findRestaurantByName(name) {
-  const row = db.prepare("SELECT * FROM restaurants WHERE name LIKE ?").get(`%${name}%`);
+  const keyword = String(name || "").trim();
+  if (!keyword) return null;
+
+  const catalogResult = listRestaurantCatalog({ keyword, page: 1, pageSize: 1 });
+  if (catalogResult.items.length > 0) return catalogResult.items[0];
+
+  const row = db.prepare("SELECT * FROM restaurants WHERE name LIKE ?").get(`%${keyword}%`);
   return normalizeRestaurant(row);
 }
 
@@ -762,12 +831,6 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
     restaurantSql += " AND id = ?";
     params.push(String(restaurantId));
   }
-  if (keyword) {
-    restaurantSql += " AND (name LIKE ? OR cuisine LIKE ? OR recommended_dishes LIKE ? OR full_address LIKE ?)";
-    const like = `%${keyword}%`;
-    params.push(like, like, like, like);
-  }
-
   const restaurantRows = restaurantWarehouse.prepare(`${restaurantSql} ORDER BY mention_count DESC, name ASC`).all(...params);
   const candidateRows = restaurantWarehouse.prepare(`
     SELECT id, restaurant_id, rank, score, poi_id, name, address, district, location, category, telephone, raw_json
@@ -816,6 +879,7 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
       return b.score - a.score || a.rank - b.rank;
     });
     const selected = orderedCandidates[0] || null;
+    const tags = buildRestaurantTags(row, selected);
     return {
       id: row.id,
       name: row.name,
@@ -828,16 +892,40 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
       bookingNote: row.booking_note,
       mentionCount: row.mention_count,
       sentiment: row.sentiment,
+      tags,
       photoUrl: selected?.photoUrl || row.photo_url || null,
       distanceKm: selected?.distanceKm || {},
       poiStatus: row.poi_status,
       candidateCount: candidates.length,
-      selectedCandidate: selected
+      selectedCandidate: selected,
+      _searchText: [
+        row.name,
+        row.cuisine,
+        row.recommended_dishes,
+        row.optional_dishes,
+        row.full_address,
+        row.location_hint,
+        row.party_size,
+        row.booking_note,
+        row.sentiment,
+        row.cleaning_note,
+        row.raw_messages,
+        row.amap_category,
+        selected?.name,
+        selected?.address,
+        selected?.category,
+        ...tags
+      ].filter(Boolean).join(" ")
     };
   });
 
   // 如果已选校区，距离未知的餐厅放列表末尾；否则按群内提及次数排序。
-  items.sort((a, b) => {
+  const keywordTerms = getRestaurantKeywordTerms(keyword);
+  const filteredItems = keywordTerms.length > 0
+    ? items.filter((item) => keywordTerms.some((term) => item._searchText.includes(term)))
+    : items;
+
+  filteredItems.sort((a, b) => {
     // 首页点到“群内最热”时，按群聊提及次数排序；其他情况优先按所选校区距离。
     if (sortBy === "mention-desc") return b.mentionCount - a.mentionCount || a.name.localeCompare(b.name, "zh-CN");
     if (campus) {
@@ -853,10 +941,11 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
   const safePage = Math.max(1, Number(page) || 1);
   const safePageSize = Math.min(30, Math.max(1, Number(pageSize) || 12));
   const start = (safePage - 1) * safePageSize;
+  const pageItems = filteredItems.slice(start, start + safePageSize).map(({ _searchText, ...item }) => item);
   return {
-    items: items.slice(start, start + safePageSize),
-    total: items.length,
-    hasMore: start + safePageSize < items.length,
+    items: pageItems,
+    total: filteredItems.length,
+    hasMore: start + safePageSize < filteredItems.length,
     source: "restaurant_warehouse"
   };
 }
@@ -960,10 +1049,11 @@ export function listPosts({ category } = {}) {
 // 功能：创建找人帖
 export function createPost({ authorId, category, content, restaurantId }) {
   const now = new Date().toISOString();
+  const legacyRestaurantId = isNumericRestaurantId(restaurantId) ? Number(restaurantId) : null;
   const result = db.prepare(`
     INSERT INTO posts (author_id, category, content, restaurant_id, created_at)
     VALUES (?, ?, ?, ?, ?)
-  `).run(Number(authorId), category, content, restaurantId ? Number(restaurantId) : null, now);
+  `).run(Number(authorId), category, content, legacyRestaurantId, now);
 
   return getPost(result.lastInsertRowid);
 }
@@ -1045,10 +1135,12 @@ export function listVisitedRestaurants(userId) {
 
 export function addVisitedRestaurant(userId, restaurantId, restaurantName) {
   const now = new Date().toISOString();
+  const numericId = isNumericRestaurantId(restaurantId) ? Number(restaurantId) : null;
+  const storedName = getRestaurantNameForStorage(restaurantId, restaurantName);
   db.prepare(`
     INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at)
     VALUES (?, ?, ?, ?)
-  `).run(Number(userId), restaurantId ? Number(restaurantId) : null, restaurantName || '', now);
+  `).run(Number(userId), numericId, storedName, now);
 }
 
 // 想去 (Wishlist Restaurants)
@@ -1074,20 +1166,24 @@ export function listWishlistRestaurants(userId) {
 
 export function addWishlistRestaurant(userId, restaurantId, restaurantName) {
   const now = new Date().toISOString();
+  const numericId = isNumericRestaurantId(restaurantId) ? Number(restaurantId) : null;
+  const storedName = getRestaurantNameForStorage(restaurantId, restaurantName);
   db.prepare(`
     INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at)
     VALUES (?, ?, ?, ?)
-  `).run(Number(userId), restaurantId ? Number(restaurantId) : null, restaurantName || '', now);
+  `).run(Number(userId), numericId, storedName, now);
 }
 
 export function toggleWishlistRestaurant(userId, restaurantId, restaurantName) {
   let existing;
-  if (restaurantId) {
+  const numericId = isNumericRestaurantId(restaurantId) ? Number(restaurantId) : null;
+  const storedName = getRestaurantNameForStorage(restaurantId, restaurantName);
+  if (numericId) {
     existing = db.prepare("SELECT id FROM wishlist_restaurants WHERE user_id = ? AND restaurant_id = ?")
-      .get(Number(userId), Number(restaurantId));
+      .get(Number(userId), numericId);
   } else {
     existing = db.prepare("SELECT id FROM wishlist_restaurants WHERE user_id = ? AND restaurant_name = ?")
-      .get(Number(userId), restaurantName);
+      .get(Number(userId), storedName);
   }
 
   if (existing) {
@@ -1096,7 +1192,7 @@ export function toggleWishlistRestaurant(userId, restaurantId, restaurantName) {
   } else {
     const now = new Date().toISOString();
     db.prepare("INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (?, ?, ?, ?)")
-      .run(Number(userId), restaurantId ? Number(restaurantId) : null, restaurantName || '', now);
+      .run(Number(userId), numericId, storedName, now);
     return true; // Added
   }
 }
@@ -1245,12 +1341,12 @@ export function seedIfEmpty() {
   db.prepare(`INSERT INTO post_participants (post_id, user_id, joined_at) VALUES (5, 2, ?)`).run(now);
 
   // 种子去过数据 (Visited)
-  db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, 1, '', ?)`).run(now);
-  db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, 2, '', ?)`).run(now);
+  db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, NULL, '二食堂麻辣香锅', ?)`).run(now);
+  db.prepare(`INSERT INTO visited_restaurants (user_id, restaurant_id, restaurant_name, visited_at) VALUES (1, NULL, '东门米线店', ?)`).run(now);
   
   // 种子想去数据 (Wishlist)
-  db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, 4, '', ?)`).run(now);
-  db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, 5, '', ?)`).run(now);
+  db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, NULL, '一食堂火锅', ?)`).run(now);
+  db.prepare(`INSERT INTO wishlist_restaurants (user_id, restaurant_id, restaurant_name, created_at) VALUES (1, NULL, '教工食堂牛肉面', ?)`).run(now);
 
   // 种子动态数据 (Moments)
   db.prepare(`INSERT INTO user_moments (user_id, content, image_url, likes_count, created_at) VALUES (3, '今天在二食堂二楼发现了一家新的拉面，味道绝了！推荐大家去尝尝。🍔', 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80', 5, ?)`).run(now);

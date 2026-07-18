@@ -67,3 +67,28 @@ node database/src/export-for-app.mjs
 - 地图图片只保存公开 POI 返回的 URL，不抓取或转存图片。
 - `poi_status=人工确认` 时，请先核验候选项再在库里确认；不要把同名不同店自动合并。
 - 查询日志、候选结果和最后查询时间都会存库，方便复查和控制重复请求。
+
+## 半自动分类补全
+
+当 `cuisine`、推荐菜或标签不完整时，可以先生成审核队列，不直接改库：
+
+```bash
+node database/src/suggest-classification.mjs
+```
+
+脚本会输出：
+
+```text
+database/data/classification-suggestions.json
+database/data/classification-suggestions.csv
+```
+
+CSV 适合用 Excel 打开人工审核；JSON 适合后续继续写审核工具。建议先看 `reviewStatus=high_confidence` 的记录，再看 `needs_review`。
+
+确认规则可靠后，才使用高置信自动应用：
+
+```bash
+node database/src/suggest-classification.mjs --apply-high-confidence
+```
+
+该命令只会应用高置信建议，并写入 `sync_log`。低置信建议仍需人工确认。

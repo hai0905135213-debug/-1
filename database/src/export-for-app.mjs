@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { openDatabase } from "./lib.mjs";
+import { DATABASE_DATA_DIR, openDatabase } from "./lib.mjs";
 
 const db = await openDatabase();
 const restaurants = db.prepare(`SELECT
@@ -50,7 +50,7 @@ for (const row of candidateRows) {
     distanceKm: distanceByCandidate.get(row.candidateId) || {},
   });
 }
-const outputDir = path.resolve("database/data");
+const outputDir = DATABASE_DATA_DIR;
 await fs.mkdir(outputDir, { recursive: true });
 await fs.writeFile(path.join(outputDir, "restaurants-public.json"), JSON.stringify({ generatedAt: new Date().toISOString(), restaurants }, null, 2));
 await fs.writeFile(path.join(outputDir, "poi-review-queue.json"), JSON.stringify({ generatedAt: new Date().toISOString(), restaurants: pending }, null, 2));

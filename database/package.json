@@ -7,6 +7,8 @@
     "enrich:amap": "node src/enrich-amap.mjs",
     "campuses:sync": "node src/sync-campus-locations.mjs",
     "distance:campus": "node src/calculate-campus-distances.mjs",
+    "classify:suggest": "node src/suggest-classification.mjs",
+    "classify:apply-high-confidence": "node src/suggest-classification.mjs --apply-high-confidence",
     "export": "node src/export-for-app.mjs",
     "status": "node src/status.mjs"
   }

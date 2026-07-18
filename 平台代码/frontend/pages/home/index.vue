@@ -5,9 +5,17 @@
       <view class="search-box">
         <text class="city">本校⌄</text>
         <view class="divider"></view>
-        <text class="search-placeholder">今天吃什么</text>
+        <input
+          class="search-input"
+          v-model="restaurantKeyword"
+          confirm-type="search"
+          placeholder="火锅 / 清真 / 近沙河"
+          @confirm="applyRestaurantSearch"
+          @input="queueRestaurantSearch"
+        />
+        <view v-if="restaurantKeyword" class="search-clear" @tap.stop="clearRestaurantSearch">×</view>
       </view>
-      <view class="map-icon">⌖</view>
+      <view class="map-icon" @tap="applyRestaurantSearch">⌕</view>
     </view>
 
     <view class="section">
@@ -40,7 +48,7 @@
         <view class="pill" @tap="showRestaurantFilterHint">筛选⌄</view>
       </view>
 
-      <view v-if="restaurantLoading" class="muted loading-text">附近餐厅加载中...</view>
+      <view v-if="restaurantLoading && featuredRestaurants.length === 0" class="muted loading-text">附近餐厅加载中...</view>
       <view v-else class="featured-restaurant-list">
         <view
           v-for="restaurant in featuredRestaurants"
@@ -66,6 +74,8 @@
           </view>
         </view>
         <view v-if="featuredRestaurants.length === 0" class="empty-state">附近餐厅正在补充中</view>
+        <view v-else-if="restaurantLoadingMore" class="muted loading-text">继续加载 6 家...</view>
+        <view v-else-if="!restaurantHasMore" class="muted loading-text">已经到底啦</view>
       </view>
     </view>
   </view>
@@ -80,6 +90,7 @@ const foodImages = [
   'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'
 ]
 const RESTAURANT_PLACEHOLDER = 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=480&q=70'
+const RESTAURANT_PAGE_SIZE = 6
 
 function formatBudget(meal) {
   if (meal.budgetMin && meal.budgetMax) return `¥${meal.budgetMin}-${meal.budgetMax}/人`
@@ -137,6 +148,11 @@ export default {
       restaurantSortOptions: ['智能排序', '距离最近', '群内最热'],
       restaurantSortIndex: 0,
       restaurantLoading: false,
+      restaurantLoadingMore: false,
+      restaurantPage: 1,
+      restaurantHasMore: true,
+      restaurantKeyword: '',
+      restaurantSearchTimer: null,
       featuredRestaurants: []
     }
   },
@@ -154,7 +170,10 @@ export default {
   onShow() {
     this.currentUser = uni.getStorageSync('currentUser') || null
     this.loadMeals()
-    this.loadFeaturedRestaurants()
+    this.resetFeaturedRestaurants()
+  },
+  onReachBottom() {
+    this.loadMoreFeaturedRestaurants()
   },
   methods: {
     async loadMeals() {
@@ -189,29 +208,47 @@ export default {
         this.loading = false
       }
     },
+    async resetFeaturedRestaurants() {
+      this.restaurantPage = 1
+      this.restaurantHasMore = true
+      this.featuredRestaurants = []
+      await this.loadFeaturedRestaurants()
+    },
+    async loadMoreFeaturedRestaurants() {
+      await this.loadFeaturedRestaurants()
+    },
     async loadFeaturedRestaurants() {
-      this.restaurantLoading = true
+      if (this.restaurantLoading || this.restaurantLoadingMore || !this.restaurantHasMore) return
+      const isFirstPage = this.restaurantPage === 1
+      if (isFirstPage) this.restaurantLoading = true
+      else this.restaurantLoadingMore = true
       try {
-        // 首页永远只请求 6 条；完整分页列表放在 restaurant-list 页面。
+        // 首页按 6 家一页加载；用户滑到底后继续追加下一页。
         const result = await restaurantApi.list({
-          page: 1,
-          pageSize: 6,
+          page: this.restaurantPage,
+          pageSize: RESTAURANT_PAGE_SIZE,
           campus: this.getSelectedRestaurantCampusCode(),
+          keyword: this.restaurantKeyword.trim() || undefined,
           foodType: this.restaurantFoodTypeIndex > 0 ? this.restaurantFoodTypeOptions[this.restaurantFoodTypeIndex] : undefined,
           sortBy: this.restaurantSortIndex === 2 ? 'mention-desc' : undefined
         })
-        this.featuredRestaurants = (result.items || []).map(item => ({
+        const items = (result.items || []).map(item => ({
           id: item.id,
           name: item.name || '未命名餐厅',
           cuisine: item.cuisine || item.foodType || '',
           fullAddress: item.fullAddress || item.address || item.location || '',
           displayImage: item.photoUrl || RESTAURANT_PLACEHOLDER,
-          distanceKm: item.distanceKm || {}
+          distanceKm: item.distanceKm || {},
+          tags: item.tags || []
         }))
+        this.featuredRestaurants = [...this.featuredRestaurants, ...items]
+        this.restaurantHasMore = typeof result.hasMore === 'boolean' ? result.hasMore : items.length === RESTAURANT_PAGE_SIZE
+        if (items.length > 0) this.restaurantPage += 1
       } catch (error) {
         uni.showToast({ title: error.message || '餐厅加载失败', icon: 'none' })
       } finally {
         this.restaurantLoading = false
+        this.restaurantLoadingMore = false
       }
     },
     getSelectedRestaurantCampusCode() {
@@ -220,15 +257,32 @@ export default {
     },
     cycleRestaurantCampus() {
       this.restaurantCampusIndex = (this.restaurantCampusIndex + 1) % this.restaurantCampusOptions.length
-      this.loadFeaturedRestaurants()
+      this.resetFeaturedRestaurants()
     },
     cycleRestaurantFoodType() {
       this.restaurantFoodTypeIndex = (this.restaurantFoodTypeIndex + 1) % this.restaurantFoodTypeOptions.length
-      this.loadFeaturedRestaurants()
+      this.resetFeaturedRestaurants()
     },
     cycleRestaurantSort() {
       this.restaurantSortIndex = (this.restaurantSortIndex + 1) % this.restaurantSortOptions.length
-      this.loadFeaturedRestaurants()
+      this.resetFeaturedRestaurants()
+    },
+    queueRestaurantSearch() {
+      if (this.restaurantSearchTimer) clearTimeout(this.restaurantSearchTimer)
+      this.restaurantSearchTimer = setTimeout(() => {
+        this.applyRestaurantSearch()
+      }, 360)
+    },
+    applyRestaurantSearch() {
+      if (this.restaurantSearchTimer) {
+        clearTimeout(this.restaurantSearchTimer)
+        this.restaurantSearchTimer = null
+      }
+      this.resetFeaturedRestaurants()
+    },
+    clearRestaurantSearch() {
+      this.restaurantKeyword = ''
+      this.applyRestaurantSearch()
     },
     formatRestaurantDistance(restaurant) {
       const distances = restaurant.distanceKm || {}
@@ -324,9 +378,23 @@ export default {
   margin: 0 22rpx;
 }
 
-.search-placeholder {
+.search-input {
+  flex: 1;
+  min-width: 0;
   color: #a1a2aa;
   font-size: 30rpx;
+  line-height: 40rpx;
+}
+
+.search-clear {
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 21rpx;
+  background: #f1f2f5;
+  color: #8e8f98;
+  text-align: center;
+  font-size: 32rpx;
+  line-height: 40rpx;
 }
 
 .map-icon {
@@ -355,23 +423,28 @@ export default {
 
 .album-card {
   display: inline-block;
-  width: 248rpx;
-  margin-right: 24rpx;
+  width: 214rpx;
+  margin-right: 22rpx;
   vertical-align: top;
 }
 
+.album-card:last-child {
+  margin-right: 0;
+}
+
 .album-image {
-  width: 248rpx;
-  height: 218rpx;
+  width: 214rpx;
+  height: 214rpx;
   border-radius: 18rpx;
+  background: #f1f2f5;
 }
 
 .album-overlay {
-  margin-top: -164rpx;
+  margin-top: -142rpx;
   padding-left: 20rpx;
-  height: 150rpx;
+  height: 128rpx;
   color: #ffffff;
-  font-size: 54rpx;
+  font-size: 42rpx;
   font-weight: 900;
   text-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.28);
   position: relative;
@@ -379,14 +452,20 @@ export default {
 
 .album-title {
   margin-top: 18rpx;
+  overflow: hidden;
   font-size: 30rpx;
   font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .album-subtitle {
+  overflow: hidden;
   color: #94959f;
   font-size: 26rpx;
   margin-top: 6rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .section-desc {

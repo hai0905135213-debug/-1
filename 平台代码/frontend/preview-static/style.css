@@ -89,6 +89,24 @@ button:disabled {
   font-size: 15px;
 }
 
+.search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #08091f;
+  font: inherit;
+}
+
+.search input::placeholder {
+  color: #a1a2aa;
+}
+
+.search-action {
+  cursor: pointer;
+}
+
 .section {
   margin-bottom: 30px;
 }
@@ -124,20 +142,52 @@ button:disabled {
   padding-bottom: 4px;
 }
 
+.albums {
+  gap: 12px;
+  margin-right: -18px;
+  padding-right: 18px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.albums::-webkit-scrollbar {
+  display: none;
+}
+
 .album {
-  min-width: 128px;
+  flex: 0 0 calc((100% - 24px) / 3);
+  min-width: 0;
+  scroll-snap-align: start;
 }
 
 .album img {
-  width: 128px;
-  height: 112px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
   border-radius: 10px;
+  background: #f1f2f5;
   object-fit: cover;
 }
 
 .album strong {
   display: block;
   margin-top: 8px;
+  overflow: hidden;
+  color: #08091f;
+  font-size: 14px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album .muted {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pill {

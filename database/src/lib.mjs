@@ -2,8 +2,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
 
-export const DATABASE_PATH = path.resolve("database/data/restaurants.db");
+export const DATABASE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+export const DATABASE_PATH = path.join(DATABASE_ROOT, "data", "restaurants.db");
+export const DATABASE_SOURCE_DIR = path.join(DATABASE_ROOT, "source");
+export const DATABASE_DATA_DIR = path.join(DATABASE_ROOT, "data");
 
 export async function ensureDatabaseDirectory() {
   await fs.mkdir(path.dirname(DATABASE_PATH), { recursive: true });
@@ -143,7 +147,7 @@ export function haversineMeters(longitudeA, latitudeA, longitudeB, latitudeB) {
   return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function readEnvFile(filePath = path.resolve("database/.env")) {
+export function readEnvFile(filePath = path.join(DATABASE_ROOT, ".env")) {
   return fs.readFile(filePath, "utf8")
     .then((text) => Object.fromEntries(text.split(/\r?\n/)
       .map((line) => line.trim())

@@ -14,8 +14,8 @@ const pages = {
     <div class="page">
       <div class="header">
         <div class="mascot">${getUserInitial()}</div>
-        <div class="search"><strong>本校⌄</strong><span class="muted">今天吃什么</span></div>
-        <strong>⌖</strong>
+        <div class="search"><strong>本校⌄</strong><input id="home-search-input" placeholder="火锅 / 清真 / 近沙河"></div>
+        <strong class="search-action" data-home-search>⌕</strong>
       </div>
       <section class="section">
         <div class="section-title">精选专辑 ›</div>
@@ -277,6 +277,12 @@ let foodFilterOptions = ['全部品类', '麻辣香锅', '米线', '轻食', '�
 let foodFilterIndex = 0
 let sortFilterOptions = ['智能排序', '评价最高', '价格最低']
 let sortFilterIndex = 0
+const HOME_RESTAURANT_PAGE_SIZE = 6
+let homeRestaurantPage = 1
+let homeRestaurantHasMore = true
+let homeRestaurantLoading = false
+let homeRestaurantKeyword = ''
+let homeRestaurantSearchTimer = null
 
 let selectedBudget = 'all'
 let selectedCampus = 'all'
@@ -479,7 +485,7 @@ function render(page) {
   currentPage = page
   screen.scrollTop = 0
   buttons.forEach((button) => button.classList.toggle('active', button.dataset.page === page))
-  if (page === 'home') loadPreviewMeals()
+  if (page === 'home') resetPreviewHomeRestaurants()
   if (page === 'detail') loadPreviewMealDetail(activeMealId)
   if (page === 'restaurant-detail') loadPreviewRestaurantDetail(activeRestaurantId)
   if (page === 'myMeals') loadPreviewMyMeals()
@@ -583,7 +589,7 @@ function bindPageActions() {
   screen.querySelectorAll('[data-restaurant-detail]').forEach((card) => {
     card.addEventListener('click', (e) => {
       if (e.target.closest('[data-want]')) return
-      activeRestaurantId = Number(card.dataset.restaurantDetail)
+      activeRestaurantId = card.dataset.restaurantDetail
       previousPage = currentPage
       render('restaurant-detail')
     })
@@ -622,19 +628,46 @@ function bindPageActions() {
         if (idx === 0) {
           campusFilterIndex = (campusFilterIndex + 1) % campusFilterOptions.length
           selectedCampus = campusFilterIndex === 0 ? 'all' : campusFilterOptions[campusFilterIndex]
-          loadPreviewMeals()
+          resetPreviewHomeRestaurants()
         } else if (idx === 1) {
           foodFilterIndex = (foodFilterIndex + 1) % foodFilterOptions.length
-          loadPreviewMeals()
+          resetPreviewHomeRestaurants()
         } else if (idx === 2) {
           sortFilterIndex = (sortFilterIndex + 1) % sortFilterOptions.length
           selectedSort = sortFilterIndex === 0 ? 'default' : (sortFilterIndex === 1 ? 'rating-desc' : 'price-asc')
-          loadPreviewMeals()
+          resetPreviewHomeRestaurants()
         } else if (idx === 3) {
           openFilterModal()
         }
       })
     })
+  }
+
+  const homeSearchInput = screen.querySelector('#home-search-input')
+  if (homeSearchInput && currentPage === 'home') {
+    homeSearchInput.value = homeRestaurantKeyword
+    homeSearchInput.oninput = () => {
+      homeRestaurantKeyword = homeSearchInput.value.trim()
+      if (homeRestaurantSearchTimer) clearTimeout(homeRestaurantSearchTimer)
+      homeRestaurantSearchTimer = setTimeout(() => resetPreviewHomeRestaurants(), 360)
+    }
+    homeSearchInput.onkeydown = (event) => {
+      if (event.key !== 'Enter') return
+      event.preventDefault()
+      homeRestaurantKeyword = homeSearchInput.value.trim()
+      if (homeRestaurantSearchTimer) clearTimeout(homeRestaurantSearchTimer)
+      resetPreviewHomeRestaurants()
+    }
+  }
+
+  const homeSearchButton = screen.querySelector('[data-home-search]')
+  if (homeSearchButton && currentPage === 'home') {
+    homeSearchButton.onclick = () => {
+      const input = screen.querySelector('#home-search-input')
+      homeRestaurantKeyword = input ? input.value.trim() : homeRestaurantKeyword
+      if (homeRestaurantSearchTimer) clearTimeout(homeRestaurantSearchTimer)
+      resetPreviewHomeRestaurants()
+    }
   }
 
 
@@ -691,7 +724,7 @@ function bindPageActions() {
         }
         
         closeFilterModal()
-        loadPreviewMeals()
+        resetPreviewHomeRestaurants()
       }
     }
   }
@@ -960,7 +993,7 @@ function renderFindDetail(page) {
           <div class="restaurant-meta">
             <span>⭐ ${restaurant.rating}</span>
             <span>📍 ${restaurant.location}</span>
-            <span>💰 ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</span>
+            <span>💰 ${formatRestaurantPrice(restaurant)}</span>
           </div>
           <div class="detail-tags">
             ${parseRestaurantTags(restaurant.tags).map(t => `<span class="detail-tag rest">${t}</span>`).join('')}
@@ -982,13 +1015,24 @@ function renderFindDetail(page) {
   `
 }
 
-async function loadPreviewMeals() {
+function resetPreviewHomeRestaurants() {
+  homeRestaurantPage = 1
+  homeRestaurantHasMore = true
+  loadPreviewMeals({ append: false })
+}
+
+async function loadPreviewMeals({ append = false } = {}) {
   // 名字沿用旧函数，实际已改为读取真实餐厅库。
   const target = screen.querySelector('#home-restaurant-list')
   if (!target) return
+  if (homeRestaurantLoading || !homeRestaurantHasMore) return
+  homeRestaurantLoading = true
 
   try {
-    let query = '?page=1&pageSize=6'
+    const oldState = target.querySelector('.home-load-state')
+    if (oldState) oldState.remove()
+
+    let query = `?page=${homeRestaurantPage}&pageSize=${HOME_RESTAURANT_PAGE_SIZE}`
     
     // 1. Campus Filter
     const selectedCampusLabel = selectedCampus !== 'all' ? selectedCampus : campusFilterOptions[campusFilterIndex]
@@ -998,6 +1042,9 @@ async function loadPreviewMeals() {
     // 2. Food Type Filter
     if (foodFilterIndex > 0) {
       query += `&foodType=${encodeURIComponent(foodFilterOptions[foodFilterIndex])}`
+    }
+    if (homeRestaurantKeyword) {
+      query += `&keyword=${encodeURIComponent(homeRestaurantKeyword)}`
     }
     
     // 3. Price Filter (translated from budget options)
@@ -1026,14 +1073,36 @@ async function loadPreviewMeals() {
       }
     }
 
+    homeRestaurantHasMore = typeof data.hasMore === 'boolean'
+      ? data.hasMore
+      : items.length === HOME_RESTAURANT_PAGE_SIZE
+    if (items.length > 0) homeRestaurantPage += 1
+
+    if (append) {
+      const listHtml = items.map((restaurant) => renderHomeRestaurantCard(restaurant, campusCodeByLabel[selectedCampusLabel])).join('')
+      if (listHtml) target.insertAdjacentHTML('beforeend', listHtml)
+      if (target.children.length > 0) {
+        target.insertAdjacentHTML('beforeend', `<div class="home-load-state muted">${homeRestaurantHasMore ? '继续下滑加载 6 家' : '已经到底啦'}</div>`)
+      }
+      updateHomeFilterPills()
+      bindPageActions()
+      homeRestaurantLoading = false
+      return
+    }
+
     target.innerHTML = items.length
       ? items.map((restaurant) => renderHomeRestaurantCard(restaurant, campusCodeByLabel[selectedCampusLabel])).join('')
       : `<div class="empty"><div style="font-size:48px">🍽</div><p>没有找到符合条件的美食推荐</p></div>`
-    
+    if (target.children.length > 0 && items.length > 0) {
+      target.insertAdjacentHTML('beforeend', `<div class="home-load-state muted">${homeRestaurantHasMore ? '继续下滑加载 6 家' : '已经到底啦'}</div>`)
+    }
+    homeRestaurantLoading = false
+
     updateHomeFilterPills()
     bindPageActions()
   } catch (error) {
     target.innerHTML = `<div class="empty"><p>${error.message}</p></div>`
+    homeRestaurantLoading = false
     bindPageActions()
   }
 }
@@ -1046,9 +1115,9 @@ function renderHomeRestaurantCard(restaurant, selectedCampusCode) {
   const distance = campusCode ? distances[campusCode] : null
   const campusName = campusCode === 'cufe_nanlu' ? '学院南路' : campusCode === 'cufe_shahe' ? '沙河校区' : '最近校区'
   const distanceText = Number.isFinite(distance) ? `${distance.toFixed(1)} km` : '待计算'
-  const imageUrl = restaurant.photoUrl || img.salad
+  const imageUrl = getRestaurantImage(restaurant)
   return `
-    <article class="home-restaurant-card">
+    <article class="home-restaurant-card" data-restaurant-detail="${restaurant.id}">
       <img src="${imageUrl}" loading="lazy" onerror="this.onerror=null;this.src='${img.salad}'" alt="${restaurant.name}">
       <div class="home-restaurant-card-body">
         <strong>${restaurant.name}</strong>
@@ -1129,16 +1198,40 @@ function parseRestaurantTags(tags) {
   return [];
 }
 
+function formatRestaurantRating(restaurant = {}) {
+  const rating = Number(restaurant.rating ?? restaurant.score ?? restaurant.poiMatchScore)
+  return Number.isFinite(rating) && rating > 0 ? `⭐ ${rating.toFixed(1)}` : '暂无评分'
+}
+
+function formatRestaurantPrice(restaurant = {}) {
+  const rawPrice = Number(restaurant.avgPrice ?? restaurant.averagePrice)
+  if (!Number.isFinite(rawPrice) || rawPrice <= 0) return '人均待补'
+  const yuan = rawPrice > 1000 ? rawPrice / 100 : rawPrice
+  return `¥${yuan.toFixed(0)}/人`
+}
+
+function getRestaurantCuisine(restaurant = {}) {
+  return restaurant.foodType || restaurant.cuisine || '美食'
+}
+
+function getRestaurantLocationText(restaurant = {}) {
+  return restaurant.location || restaurant.fullAddress || restaurant.address || restaurant.district || '地址待补'
+}
+
+function getRestaurantImage(restaurant = {}) {
+  return restaurant.photoUrl || restaurant.image || restaurant.coverUrl || restaurant.imageUrl || getMealImage(restaurant.foodType || restaurant.cuisine)
+}
+
 function renderRestaurantCard(restaurant, isWished = false) {
   return `
     <div class="restaurant-card" data-restaurant-detail="${restaurant.id}">
-      <img class="restaurant-img" src="${getMealImage(restaurant.foodType)}">
+      <img class="restaurant-img" src="${getRestaurantImage(restaurant)}" onerror="this.onerror=null;this.src='${img.salad}'">
       <div class="restaurant-info">
         <h3>
           ${restaurant.name}
           <button class="want-btn${isWished ? ' active' : ''}" data-want data-restaurant-name="${restaurant.name}">${isWished ? '♥' : '♡'}</button>
         </h3>
-        <div class="restaurant-rating">⭐ ${restaurant.rating.toFixed(1)} · ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</div>
+        <div class="restaurant-rating">${formatRestaurantRating(restaurant)} · ${formatRestaurantPrice(restaurant)}</div>
         <div class="restaurant-meta">${restaurant.campus} · ${restaurant.location} · ${restaurant.foodType}</div>
         <div class="restaurant-tags">
           ${parseRestaurantTags(restaurant.tags).map(t => `<span class="tag">${t}</span>`).join('')}
@@ -1172,7 +1265,7 @@ async function loadPreviewRestaurantDetail(id) {
     target.innerHTML = `
       <div class="restaurant-detail-view">
         <div style="position:relative">
-          <img class="hero" src="${getMealImage(restaurant.foodType)}">
+          <img class="hero" src="${getRestaurantImage(restaurant)}" onerror="this.onerror=null;this.src='${img.salad}'">
           <button class="icon-btn dark" data-back style="position:absolute;left:16px;top:18px">‹</button>
         </div>
         <div class="detail-info">
@@ -1180,7 +1273,7 @@ async function loadPreviewRestaurantDetail(id) {
             <h2 style="margin:0;font-size:22px;font-weight:800;color:#08091f;">${restaurant.name}</h2>
             <button class="want-btn${isWished ? ' active' : ''}" data-want data-restaurant-name="${restaurant.name}" style="font-size:22px;border:none;background:none;cursor:pointer;">${isWished ? '♥' : '♡'}</button>
           </div>
-          <div style="margin-top: 8px; font-size:15px; color:#ff9900; font-weight:bold;">⭐ ${restaurant.rating.toFixed(1)} · ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</div>
+          <div style="margin-top: 8px; font-size:15px; color:#ff9900; font-weight:bold;">${formatRestaurantRating(restaurant)} · ${formatRestaurantPrice(restaurant)}</div>
           <div style="margin-top: 8px; font-size:13px; color:#5a5b6a;">${restaurant.campus} · ${restaurant.location} · ${restaurant.foodType}</div>
           
           <div class="restaurant-tags" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
@@ -1402,7 +1495,7 @@ async function loadProfileTabContent() {
             <div class="profile-list-item">
               <div class="item-info">
                 <div class="item-title"><strong>${item.restaurantName}</strong></div>
-                <div class="item-meta">${item.foodType || '约餐'} · ⭐${item.rating} · ¥${(item.avgPrice / 100).toFixed(0)}/人</div>
+                <div class="item-meta">${item.foodType || '约餐'} · ${formatRestaurantRating(item)} · ${formatRestaurantPrice(item)}</div>
                 <div class="item-date">记录时间: ${formatFindPostTime(item.visitedAt)}</div>
               </div>
               <img class="item-thumb" src="${getMealImage(item.foodType)}">
@@ -1417,7 +1510,7 @@ async function loadProfileTabContent() {
             <div class="profile-list-item">
               <div class="item-info">
                 <div class="item-title"><strong>${item.restaurantName}</strong></div>
-                <div class="item-meta">${item.foodType || '美食'} · ⭐${item.rating} · ¥${(item.avgPrice / 100).toFixed(0)}/人</div>
+                <div class="item-meta">${item.foodType || '美食'} · ${formatRestaurantRating(item)} · ${formatRestaurantPrice(item)}</div>
                 <div class="item-date">添加时间: ${formatFindPostTime(item.createdAt)}</div>
               </div>
               <img class="item-thumb" src="${getMealImage(item.foodType)}">
@@ -1931,7 +2024,7 @@ async function loadPreviewFindDetail(postId) {
             <div class="restaurant-meta">
               <span>⭐ ${restaurant.rating}</span>
               <span style="margin-left:12px">📍 ${restaurant.location}</span>
-              <span style="margin-left:12px">💰 ¥${(restaurant.avgPrice / 100).toFixed(0)}/人</span>
+              <span style="margin-left:12px">💰 ${formatRestaurantPrice(restaurant)}</span>
             </div>
             <div class="detail-tags" style="margin-top:12px">
               ${parseRestaurantTags(restaurant.tags).map(t => `<span class="detail-tag rest">${t}</span>`).join('')}
@@ -1972,6 +2065,12 @@ function getFindPostCategoryColor(category) {
   }
   return colors[category] || '#FF9F43'
 }
+
+screen.addEventListener('scroll', () => {
+  if (currentPage !== 'home') return
+  const nearBottom = screen.scrollTop + screen.clientHeight >= screen.scrollHeight - 80
+  if (nearBottom) loadPreviewMeals({ append: true })
+})
 
 buttons.forEach((button) => {
   button.addEventListener('click', () => {

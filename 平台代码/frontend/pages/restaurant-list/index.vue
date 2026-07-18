@@ -50,7 +50,7 @@ import { restaurantApi } from '../../services/api'
 
 // 不依赖外部图片时也能正常显示；地图图片慢或失效时会回退到这张占位图。
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=480&q=70'
-const PAGE_SIZE = 12
+const PAGE_SIZE = 6
 
 export default {
   data() {
