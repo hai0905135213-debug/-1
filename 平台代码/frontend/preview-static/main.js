@@ -316,22 +316,22 @@ const pages = {
       <div class="url-bar-card" style="margin-top:14px;background:#fff;padding:14px;border-radius:16px;border:1px solid #f0f0f5;">
         <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:6px;">教务处课表系统网址</label>
         <div style="display:flex;gap:8px;">
-          <input id="jwxt-url-input" value="https://jwxt.university.edu.cn/student/timetable" placeholder="输入教务处课表网址..." style="flex:1;padding:8px 12px;border:1px solid #e5e5ea;border-radius:10px;font-size:13px;">
+          <input id="jwxt-url-input" value="https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default" placeholder="输入教务处课表网址..." style="flex:1;padding:8px 12px;border:1px solid #e5e5ea;border-radius:10px;font-size:13px;">
           <button class="primary" data-fetch-timetable style="padding:8px 16px;white-space:nowrap;font-size:13px;">⚡ 检测拉取</button>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
-          <span style="font-size:12px;color:#8e8f98;">快捷测试：</span>
+          <span style="font-size:12px;color:#8e8f98;">快速测试：</span>
           <button class="pill active" data-load-sample-timetable style="font-size:12px;padding:4px 10px;">🧪 载入示范课表数据</button>
         </div>
       </div>
 
       <div class="webview-preview-card" style="margin-top:14px;background:#fff;padding:14px;border-radius:16px;border:1px solid #f0f0f5;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-size:13px;font-weight:700;color:#08091f;">🌐 Webview 网页容器预览</span>
+          <span style="font-size:13px;font-weight:700;color:#08091f;">🌐 Webview 网页容器预览 (央财教务处)</span>
           <span class="status-tag" id="webview-status" style="font-size:11px;background:#e6f7ff;color:#1890ff;padding:2px 8px;border-radius:6px;">已就绪</span>
         </div>
         <div id="webview-frame-container" style="height:120px;background:#f9f9fc;border:1px dashed #d1d5db;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8e8f98;font-size:13px;text-align:center;padding:12px;">
-          <p id="webview-frame-text">打开教务处课表界面后，脚本将自动识别并抽取课程 DOM 表格。</p>
+          <p id="webview-frame-text">已连接中央财经大学教务系统 (xuanke.cufe.edu.cn)。登录后自动抓取表格。</p>
         </div>
       </div>
 
