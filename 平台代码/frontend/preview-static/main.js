@@ -141,7 +141,16 @@ const pages = {
   `,
   profile: `
     <div>
-      <div class="profile-hero"><div class="stats"><div><strong>3</strong><br><span>关注</span></div><div><strong>2</strong><br><span>饭搭子</span></div><div><strong>8</strong><br><span>好评与想去</span></div><button class="edit" data-go-edit>编辑资料</button></div><h2>${authSession ? `${authSession.user.nickname}，今天吃什么？` : '说点什么吧...'}</h2><button class="quiet" data-go-edit>${getTasteLabel()}</button></div>
+      <div class="profile-hero">
+        <div class="stats">
+          <div><strong>3</strong><br><span>关注</span></div>
+          <div><strong>2</strong><br><span>饭搭子</span></div>
+          <div><strong>8</strong><br><span>好评与想去</span></div>
+          <button class="edit" data-go-edit>编辑资料</button>
+        </div>
+        <h2>${authSession ? `${authSession.user.nickname}，今天吃什么？` : '发现属于你的校园美食'}</h2>
+        <button class="quiet" data-go-edit>${getTasteLabel()}</button>
+      </div>
       <div class="profile-panel">
         <div class="section-title">我的饭局</div>
         <div id="profile-my-meals-preview">
@@ -160,7 +169,15 @@ const pages = {
         <div id="profile-tab-content">
           <div class="empty"><p>点击上方切换查看详情</p></div>
         </div>
-        ${authSession ? '' : '<button class="secondary full-width" data-go-login>登录账号</button>'}
+        <div style="margin-top: 24px; border-top: 1px dashed #e5e5ea; padding-top: 16px;">
+          ${authSession ? `
+            <button class="secondary full-width danger-btn" data-switch-account style="border-color:#ff4d4f;color:#ff4d4f;background:#fff1f0;font-weight:600;">
+              🔄 切换账号 / 退出登录
+            </button>
+          ` : `
+            <button class="primary full-width" data-go-login>登录账号</button>
+          `}
+        </div>
       </div>
     </div>
   `,
@@ -759,6 +776,16 @@ function bindPageActions() {
 
   const loginButton = screen.querySelector('[data-go-login]')
   if (loginButton) loginButton.addEventListener('click', () => navigate('login'))
+
+  const switchAccountBtn = screen.querySelector('[data-switch-account]')
+  if (switchAccountBtn) {
+    switchAccountBtn.addEventListener('click', () => {
+      authSession = null
+      window.localStorage.removeItem('fanfanPreviewAuth')
+      toast('已退出当前账号，请选择或登录新账号')
+      render('login')
+    })
+  }
 
   const editButton = screen.querySelector('[data-go-edit]')
   if (editButton) editButton.addEventListener('click', () => requireLoginThen('edit'))
