@@ -142,11 +142,13 @@ const pages = {
   profile: `
     <div>
       <div class="profile-hero">
-        <div class="stats">
-          <div><strong>3</strong><br><span>关注</span></div>
-          <div><strong>2</strong><br><span>饭搭子</span></div>
-          <div><strong>8</strong><br><span>好评与想去</span></div>
-          <div style="display:flex; gap:6px;">
+        <div class="profile-hero-top">
+          <div class="stats">
+            <div><strong>3</strong><br><span>关注</span></div>
+            <div><strong>2</strong><br><span>饭搭子</span></div>
+            <div><strong>8</strong><br><span>好评与想去</span></div>
+          </div>
+          <div class="hero-action-buttons">
             <button class="edit" data-go-edit>编辑资料</button>
             <button class="edit" data-switch-account style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); cursor:pointer;">切换账号</button>
           </div>

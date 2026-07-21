@@ -513,19 +513,43 @@ button:disabled {
   color: #fff;
 }
 
-.stats {
+.profile-hero-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stats {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.stats div {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.hero-action-buttons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .edit {
-  padding: 8px 18px;
+  padding: 6px 12px;
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 20px;
   background: transparent;
   color: #fff;
-  font-weight: 900;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .empty {
