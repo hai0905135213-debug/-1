@@ -146,7 +146,10 @@ const pages = {
           <div><strong>3</strong><br><span>关注</span></div>
           <div><strong>2</strong><br><span>饭搭子</span></div>
           <div><strong>8</strong><br><span>好评与想去</span></div>
-          <button class="edit" data-go-edit>编辑资料</button>
+          <div style="display:flex; gap:6px;">
+            <button class="edit" data-go-edit>编辑资料</button>
+            <button class="edit" data-switch-account style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); cursor:pointer;">切换账号</button>
+          </div>
         </div>
         <h2>${authSession ? `${authSession.user.nickname}，今天吃什么？` : '发现属于你的校园美食'}</h2>
         <button class="quiet" data-go-edit>${getTasteLabel()}</button>
@@ -171,8 +174,8 @@ const pages = {
         </div>
         <div style="margin-top: 24px; border-top: 1px dashed #e5e5ea; padding-top: 16px;">
           ${authSession ? `
-            <button class="secondary full-width danger-btn" data-switch-account style="border-color:#ff4d4f;color:#ff4d4f;background:#fff1f0;font-weight:600;">
-              🔄 切换账号 / 退出登录
+            <button class="secondary full-width" data-switch-account style="font-weight:600;">
+              🔄 切换当前账号
             </button>
           ` : `
             <button class="primary full-width" data-go-login>登录账号</button>
