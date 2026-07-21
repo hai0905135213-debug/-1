@@ -1635,3 +1635,76 @@ button:disabled {
 .restaurant-detail-view .detail-info {
   padding: 20px;
 }
+
+/* 登录窗口样式 (Login Card UI) */
+.login-page-card {
+  padding: 24px 20px;
+  background: #ffffff;
+  border-radius: 20px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.login-avatar-wrap {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #fff0f5 0%, #ffe4e6 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(230, 80, 110, 0.12);
+}
+
+.demo-accounts-section {
+  margin-top: 24px;
+  border-top: 1px dashed #e5e5ea;
+  padding-top: 18px;
+}
+
+.demo-divider {
+  text-align: center;
+  font-size: 12px;
+  color: #8e8f98;
+  margin-bottom: 12px;
+}
+
+.demo-account-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.demo-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #f7f7fa;
+  border: 1px solid #eef0f5;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.demo-pill:hover {
+  background: #f0f0f5;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.demo-pill strong {
+  font-size: 14px;
+  color: #08091f;
+}
+
+.demo-pill span {
+  font-size: 12px;
+  color: #8e8f98;
+}

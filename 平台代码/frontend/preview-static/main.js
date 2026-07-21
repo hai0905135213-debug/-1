@@ -221,14 +221,42 @@ const pages = {
     </div>
   `,
   login: `
-    <div class="page form">
-      <div class="title">登录饭搭子</div>
-      <p class="muted">登录后可以保存资料、发布评价和加入饭局。</p>
-      <label>昵称</label><input id="login-nickname" value="${authSession?.user?.nickname || '小林'}" placeholder="例如：小林">
-      <label>学号</label><input id="login-student" value="${authSession?.user?.studentNo || '2026001'}" placeholder="例如：2026001">
-      <label>学校</label><input id="login-school" value="${authSession?.user?.school || '示例大学'}" placeholder="例如：示例大学">
-      <button class="primary" data-login>登录 / 注册</button>
-      <button class="secondary full-width" data-login-demo>使用示例账号</button>
+    <div class="page form login-page-card">
+      <div class="login-header">
+        <div class="login-avatar-wrap">🍲</div>
+        <div class="title" style="margin-top:8px;">登录饭饭之交</div>
+        <p class="muted" style="margin-top:4px;">寻找口味相投的校园饭搭子 · 轻松拼桌</p>
+      </div>
+
+      <div class="login-fields" style="margin-top:16px;">
+        <label>学号 / 手机号</label>
+        <input id="login-student" value="${authSession?.user?.studentNo || '2026001'}" placeholder="例如：2026001">
+
+        <label>用户昵称</label>
+        <input id="login-nickname" value="${authSession?.user?.nickname || '小林'}" placeholder="例如：小林">
+
+        <label>就读高校</label>
+        <input id="login-school" value="${authSession?.user?.school || '示例大学'}" placeholder="例如：示例大学">
+      </div>
+
+      <button class="primary full-width login-submit-btn" data-login style="margin-top:18px;">验证进入 / 登录账号</button>
+
+      <div class="demo-accounts-section">
+        <div class="demo-divider"><span>或一键体验预设测试账号</span></div>
+        <div class="demo-account-pills">
+          <button class="demo-pill" data-demo-user="1">
+            <strong>小林</strong> <span>主校区 · 计算机系</span>
+          </button>
+          <button class="demo-pill" data-demo-user="2">
+            <strong>阿晴</strong> <span>主校区 · 设计系</span>
+          </button>
+          <button class="demo-pill" data-demo-user="3">
+            <strong>米雪</strong> <span>西校区 · 软件工程</span>
+          </button>
+        </div>
+      </div>
+      
+      <button class="secondary full-width" data-back style="margin-top: 16px;">返回上一页</button>
     </div>
   `,
   edit: `
@@ -767,15 +795,26 @@ function bindPageActions() {
   const loginSubmit = screen.querySelector('[data-login]')
   if (loginSubmit) loginSubmit.addEventListener('click', loginFromForm)
 
-  const loginDemo = screen.querySelector('[data-login-demo]')
-  if (loginDemo) {
-    loginDemo.addEventListener('click', () => {
-      document.querySelector('#login-nickname').value = '小林'
-      document.querySelector('#login-student').value = '2026001'
-      document.querySelector('#login-school').value = '示例大学'
+  screen.querySelectorAll('[data-demo-user]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault()
+      const userId = btn.dataset.demoUser
+      if (userId === '1') {
+        document.querySelector('#login-nickname').value = '小林'
+        document.querySelector('#login-student').value = '2026001'
+        document.querySelector('#login-school').value = '示例大学'
+      } else if (userId === '2') {
+        document.querySelector('#login-nickname').value = '阿晴'
+        document.querySelector('#login-student').value = '2026002'
+        document.querySelector('#login-school').value = '示例大学'
+      } else if (userId === '3') {
+        document.querySelector('#login-nickname').value = '米雪'
+        document.querySelector('#login-student').value = '2026003'
+        document.querySelector('#login-school').value = '示例大学'
+      }
       loginFromForm()
     })
-  }
+  })
 
   const saveProfile = screen.querySelector('[data-save-profile]')
   if (saveProfile) saveProfile.addEventListener('click', saveProfileFromForm)
