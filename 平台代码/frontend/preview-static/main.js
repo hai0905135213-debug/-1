@@ -15,7 +15,12 @@ const pages = {
       <div class="header">
         <div class="mascot">${getUserInitial()}</div>
         <div class="search"><strong>本校⌄</strong><input id="home-search-input" placeholder="火锅 / 清真 / 近沙河"></div>
-        <strong class="search-action" data-home-search>⌕</strong>
+      </div>
+      <div style="padding: 0 16px 12px 16px;">
+        <button class="secondary full-width" data-go-timetable style="background:linear-gradient(135deg, #e6f7ff 0%, #f0f5ff 100%);color:#096dd9;border:1px solid #91d5ff;padding:10px 14px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;font-weight:bold;cursor:pointer;">
+          <span>📅 联通教务处课表 · 自动拉取导出</span>
+          <span style="font-size:12px;background:#1890ff;color:#fff;padding:2px 8px;border-radius:10px;">测试入口 ›</span>
+        </button>
       </div>
       <section class="section">
         <div class="section-title">精选专辑 ›</div>
@@ -175,6 +180,9 @@ const pages = {
           <div class="empty"><p>点击上方切换查看详情</p></div>
         </div>
         <div style="margin-top: 24px; border-top: 1px dashed #e5e5ea; padding-top: 16px;">
+          <button class="secondary full-width" data-go-timetable style="margin-bottom:10px;font-weight:bold;background:#e6f7ff;color:#096dd9;border:1px solid #91d5ff;">
+            📅 联通教务处拉取课表与导出测试
+          </button>
           ${authSession ? `
             <button class="secondary full-width" data-switch-account style="font-weight:600;">
               🔄 切换当前账号
