@@ -219,6 +219,13 @@ function initTables() {
       meal_id INTEGER NOT NULL REFERENCES meals(id),
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS user_timetables (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id),
+      courses_json TEXT NOT NULL DEFAULT '[]',
+      free_slots_json TEXT NOT NULL DEFAULT '[]',
+      updated_at TEXT NOT NULL
+    );
   `);
 
   upgradeProfilesTable();
@@ -1357,6 +1364,78 @@ export function seedIfEmpty() {
   db.prepare(`INSERT INTO saved_meals (user_id, meal_id, created_at) VALUES (1, 2, ?)`).run(now);
 
   console.log("[db] 已写入种子数据");
+}
+
+// ========== 课表与空闲分析 ==========
+
+export function analyzeFreeTimeSlots(courses = []) {
+  const dayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const freeSlots = [];
+
+  for (let day = 1; day <= 5; day++) {
+    const dayCourses = courses.filter(c => Number(c.dayOfWeek) === day);
+    
+    const hasMorning = dayCourses.some(c => (Number(c.startPeriod) <= 4 && Number(c.endPeriod) >= 1));
+    const hasAfternoon = dayCourses.some(c => (Number(c.startPeriod) <= 8 && Number(c.endPeriod) >= 5));
+    const hasEvening = dayCourses.some(c => Number(c.startPeriod) >= 9);
+
+    if (!hasMorning && !hasAfternoon) {
+      freeSlots.push({ day, timeRange: 'full', label: `${dayNames[day]}全天无课`, tag: '全天有空' });
+    } else if (!hasMorning) {
+      freeSlots.push({ day, timeRange: 'morning', label: `${dayNames[day]}上午无课`, tag: '上午空闲' });
+    } else if (!hasAfternoon) {
+      freeSlots.push({ day, timeRange: 'afternoon', label: `${dayNames[day]}下午无课`, tag: '适合下午茶/聚餐' });
+    }
+
+    if (!hasEvening) {
+      freeSlots.push({ day, timeRange: 'evening', label: `${dayNames[day]}晚间无课`, tag: '适合夜宵/夜聚' });
+    }
+  }
+
+  return freeSlots;
+}
+
+export function saveUserTimetable(userId, coursesData = []) {
+  const now = new Date().toISOString();
+  const freeSlots = analyzeFreeTimeSlots(coursesData);
+
+  const coursesJson = JSON.stringify(coursesData);
+  const freeSlotsJson = JSON.stringify(freeSlots);
+
+  db.prepare(`
+    INSERT INTO user_timetables (user_id, courses_json, free_slots_json, updated_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET
+      courses_json = excluded.courses_json,
+      free_slots_json = excluded.free_slots_json,
+      updated_at = excluded.updated_at
+  `).run(userId, coursesJson, freeSlotsJson, now);
+
+  return {
+    userId,
+    courses: coursesData,
+    freeSlots,
+    updatedAt: now
+  };
+}
+
+export function getUserTimetable(userId) {
+  const row = db.prepare("SELECT * FROM user_timetables WHERE user_id = ?").get(userId);
+  if (!row) {
+    return {
+      userId,
+      courses: [],
+      freeSlots: [],
+      updatedAt: null
+    };
+  }
+
+  return {
+    userId: row.user_id,
+    courses: JSON.parse(row.courses_json || "[]"),
+    freeSlots: JSON.parse(row.free_slots_json || "[]"),
+    updatedAt: row.updated_at
+  };
 }
 
 export default db;

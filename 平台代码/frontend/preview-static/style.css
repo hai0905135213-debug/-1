@@ -1732,3 +1732,16 @@ button:disabled {
   font-size: 12px;
   color: #8e8f98;
 }
+
+/* 课表对接与导出样式 (Timetable Card UI) */
+.timetable-import-page {
+  padding: 16px 14px 40px;
+}
+
+.free-slot-tag {
+  transition: transform 0.2s;
+}
+
+.free-slot-tag:hover {
+  transform: translateY(-1px);
+}

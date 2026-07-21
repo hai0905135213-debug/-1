@@ -46,6 +46,8 @@ import {
   createMoment,
   listSavedMeals,
   toggleSaveMeal,
+  saveUserTimetable,
+  getUserTimetable,
   seedIfEmpty
 } from "./db.js";
 
@@ -85,6 +87,14 @@ const server = http.createServer(async (req, res) => {
 
     if (method === "PUT" && path === "/api/profile") {
       return handleUpdateProfile(req, res);
+    }
+
+    if (method === "POST" && path === "/api/timetable/import") {
+      return handleImportTimetable(req, res);
+    }
+
+    if (method === "GET" && path === "/api/timetable/mine") {
+      return handleGetMyTimetable(req, res);
     }
 
     if (method === "GET" && path === "/api/meals/mine") {
@@ -242,6 +252,27 @@ function handleGetProfile(req, res) {
     user,
     profile: getProfile(user.id)
   });
+}
+
+// 功能：导入课表 JSON 并存储，自动返回分析结果。
+async function handleImportTimetable(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const body = await readBody(req);
+  const courses = Array.isArray(body.courses) ? body.courses : [];
+
+  const result = saveUserTimetable(user.id, courses);
+  return sendJson(res, 200, result);
+}
+
+// 功能：读取当前用户的课表及无课时段分析。
+function handleGetMyTimetable(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const timetable = getUserTimetable(user.id);
+  return sendJson(res, 200, timetable);
 }
 
 // 功能：更新资料。包含口味偏好、性格标签、信用展示等字段。

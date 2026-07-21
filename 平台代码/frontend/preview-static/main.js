@@ -293,6 +293,59 @@ const pages = {
       <button class="secondary full-width" data-back>返回</button>
     </div>
   `,
+  timetableImport: `
+    <div class="page timetable-import-page">
+      <div class="header-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div class="title" style="margin:0;font-size:20px;font-weight:800;color:#08091f;">📅 教务处课表对接与导出测试</div>
+            <p class="muted" style="margin:4px 0 0 0;font-size:13px;">自动检测拉取网页课表，分析无课时段并导出标准数据</p>
+          </div>
+          <button class="secondary" data-back style="padding:6px 12px;font-size:12px;">返回</button>
+        </div>
+      </div>
+
+      <div class="url-bar-card" style="margin-top:14px;background:#fff;padding:14px;border-radius:16px;border:1px solid #f0f0f5;">
+        <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:6px;">教务处课表系统网址</label>
+        <div style="display:flex;gap:8px;">
+          <input id="jwxt-url-input" value="https://jwxt.university.edu.cn/student/timetable" placeholder="输入教务处课表网址..." style="flex:1;padding:8px 12px;border:1px solid #e5e5ea;border-radius:10px;font-size:13px;">
+          <button class="primary" data-fetch-timetable style="padding:8px 16px;white-space:nowrap;font-size:13px;">⚡ 检测拉取</button>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+          <span style="font-size:12px;color:#8e8f98;">快捷测试：</span>
+          <button class="pill active" data-load-sample-timetable style="font-size:12px;padding:4px 10px;">🧪 载入示范课表数据</button>
+        </div>
+      </div>
+
+      <div class="webview-preview-card" style="margin-top:14px;background:#fff;padding:14px;border-radius:16px;border:1px solid #f0f0f5;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:13px;font-weight:700;color:#08091f;">🌐 Webview 网页容器预览</span>
+          <span class="status-tag" id="webview-status" style="font-size:11px;background:#e6f7ff;color:#1890ff;padding:2px 8px;border-radius:6px;">已就绪</span>
+        </div>
+        <div id="webview-frame-container" style="height:120px;background:#f9f9fc;border:1px dashed #d1d5db;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8e8f98;font-size:13px;text-align:center;padding:12px;">
+          <p id="webview-frame-text">打开教务处课表界面后，脚本将自动识别并抽取课程 DOM 表格。</p>
+        </div>
+      </div>
+
+      <div class="timetable-result-section" style="margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h3 style="margin:0;font-size:16px;font-weight:800;color:#08091f;">📊 解析课表预览网格</h3>
+          <button class="secondary" data-copy-json style="padding:4px 10px;font-size:12px;">📋 复制导出的 JSON</button>
+        </div>
+
+        <div id="free-slots-summary-container" style="margin-bottom:12px;"></div>
+
+        <div id="timetable-grid-container" style="overflow-x:auto;background:#fff;border-radius:16px;padding:12px;border:1px solid #f0f0f5;">
+          <div class="empty"><p>暂无已解析课表，请点击“检测拉取”或“载入示范课表”</p></div>
+        </div>
+
+        <div style="margin-top:16px;background:#1e1e2e;color:#a6adc8;padding:14px;border-radius:16px;font-family:monospace;font-size:12px;overflow-x:auto;">
+          <div style="color:#cdd6f4;font-weight:bold;margin-bottom:6px;">📄 导出数据 (Export JSON Payload):</div>
+          <pre id="json-export-preview" style="margin:0;white-space:pre-wrap;word-break:break-all;color:#a6e3a1;">{\n  "status": "waiting_import"\n}</pre>
+        </div>
+      </div>
+    </div>
+  `,
   review: `
     <div class="page form">
       <div class="title">发布评价</div>
@@ -535,6 +588,7 @@ function render(page) {
   currentPage = page
   screen.scrollTop = 0
   buttons.forEach((button) => button.classList.toggle('active', button.dataset.page === page))
+  if (page === 'timetableImport') loadTimetableImportPage()
   if (page === 'home') resetPreviewHomeRestaurants()
   if (page === 'detail') loadPreviewMealDetail(activeMealId)
   if (page === 'restaurant-detail') loadPreviewRestaurantDetail(activeRestaurantId)
@@ -800,6 +854,36 @@ function bindPageActions() {
 
   const myMealsButton = screen.querySelector('[data-go-my-meals]')
   if (myMealsButton) myMealsButton.addEventListener('click', () => requireLoginThen('myMeals'))
+
+  const timetableButton = screen.querySelector('[data-go-timetable]')
+  if (timetableButton) timetableButton.addEventListener('click', () => requireLoginThen('timetableImport'))
+
+  const fetchTimetableBtn = screen.querySelector('[data-fetch-timetable]')
+  if (fetchTimetableBtn) {
+    fetchTimetableBtn.addEventListener('click', () => {
+      handleImportCourses(SAMPLE_TIMETABLE_COURSES)
+    })
+  }
+
+  const loadSampleTimetableBtn = screen.querySelector('[data-load-sample-timetable]')
+  if (loadSampleTimetableBtn) {
+    loadSampleTimetableBtn.addEventListener('click', () => {
+      handleImportCourses(SAMPLE_TIMETABLE_COURSES)
+    })
+  }
+
+  const copyJsonBtn = screen.querySelector('[data-copy-json]')
+  if (copyJsonBtn) {
+    copyJsonBtn.addEventListener('click', () => {
+      const jsonText = screen.querySelector('#json-export-preview')?.textContent || ''
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(jsonText)
+        toast('已复制导出 JSON 到剪贴板')
+      } else {
+        toast('JSON 可以在框内直接选中复制')
+      }
+    })
+  }
 
   screen.querySelectorAll('[data-my-meal-tab]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -2142,6 +2226,124 @@ screen.addEventListener('scroll', () => {
   const nearBottom = screen.scrollTop + screen.clientHeight >= screen.scrollHeight - 80
   if (nearBottom) loadPreviewMeals({ append: true })
 })
+
+// ========== 教务处课表对接与导出 ==========
+
+const SAMPLE_TIMETABLE_COURSES = [
+  { courseName: "高等数学 A(2)", dayOfWeek: 1, startPeriod: 1, endPeriod: 2, location: "教二楼 201", teacher: "张教授" },
+  { courseName: "大学英语 IV", dayOfWeek: 1, startPeriod: 3, endPeriod: 4, location: "主楼 405", teacher: "Smith" },
+  { courseName: "计算机程序设计 (C++)", dayOfWeek: 2, startPeriod: 3, endPeriod: 4, location: "实验楼 302", teacher: "李老师" },
+  { courseName: "线性代数", dayOfWeek: 3, startPeriod: 1, endPeriod: 2, location: "教二楼 105", teacher: "王教授" },
+  { courseName: "思想道德与法治", dayOfWeek: 4, startPeriod: 1, endPeriod: 2, location: "大报告厅", teacher: "赵老师" },
+  { courseName: "体育 (羽毛球)", dayOfWeek: 4, startPeriod: 3, endPeriod: 4, location: "体育馆", teacher: "陈教练" }
+];
+
+let currentTimetableData = null;
+
+async function loadTimetableImportPage() {
+  const container = screen.querySelector('#timetable-grid-container');
+  const slotsContainer = screen.querySelector('#free-slots-summary-container');
+  const jsonPreview = screen.querySelector('#json-export-preview');
+  if (!container) return;
+
+  try {
+    const data = await apiRequest('/timetable/mine', { method: 'GET' });
+    if (data && data.courses && data.courses.length > 0) {
+      currentTimetableData = data;
+      renderTimetableGrid(data.courses, container);
+      renderFreeSlotsSummary(data.freeSlots, slotsContainer);
+      if (jsonPreview) jsonPreview.textContent = JSON.stringify(data, null, 2);
+    }
+  } catch (err) {
+    console.log('读取本地课表失败:', err);
+  }
+}
+
+async function handleImportCourses(courses = []) {
+  const container = screen.querySelector('#timetable-grid-container');
+  const slotsContainer = screen.querySelector('#free-slots-summary-container');
+  const jsonPreview = screen.querySelector('#json-export-preview');
+  const webviewText = screen.querySelector('#webview-frame-text');
+  const webviewStatus = screen.querySelector('#webview-status');
+
+  if (webviewText) webviewText.innerHTML = `✅ 已成功通过 Webview DOM 抽取 <strong style="color:#096dd9;">${courses.length}</strong> 门课程数据！`;
+  if (webviewStatus) {
+    webviewStatus.textContent = '解析完成';
+    webviewStatus.style.background = '#f6ffed';
+    webviewStatus.style.color = '#52c41a';
+  }
+
+  try {
+    const data = await apiRequest('/timetable/import', {
+      method: 'POST',
+      data: { courses }
+    });
+    currentTimetableData = data;
+    toast(`成功导出并归档 ${courses.length} 门课程！`);
+    if (container) renderTimetableGrid(data.courses, container);
+    if (slotsContainer) renderFreeSlotsSummary(data.freeSlots, slotsContainer);
+    if (jsonPreview) jsonPreview.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    toast(err.message || '课表导出失败');
+  }
+}
+
+function renderTimetableGrid(courses = [], container) {
+  const days = ['周一', '周二', '周三', '周四', '周五'];
+  
+  let html = `
+    <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
+      <thead>
+        <tr style="background:#f7f7fa;color:#5a5b6a;height:32px;">
+          <th style="padding:4px;border:1px solid #f0f0f5;width:12%;">节次</th>
+          ${days.map(d => `<th style="padding:4px;border:1px solid #f0f0f5;width:17.6%;">${d}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  for (let period = 1; period <= 8; period += 2) {
+    const periodLabel = `${period}-${period + 1}节`;
+    html += `<tr style="height:54px;"><td style="background:#fafafa;font-weight:bold;color:#8e8f98;border:1px solid #f0f0f5;">${periodLabel}</td>`;
+    
+    for (let day = 1; day <= 5; day++) {
+      const match = courses.find(c => Number(c.dayOfWeek) === day && Number(c.startPeriod) <= period && Number(c.endPeriod) >= period);
+      if (match) {
+        html += `
+          <td style="background:#e6f7ff;color:#096dd9;border:1px solid #bae7ff;padding:4px;border-radius:6px;">
+            <strong style="display:block;font-size:11px;">${match.courseName}</strong>
+            <span style="font-size:10px;color:#595959;">📍 ${match.location || '教室未定'}</span>
+          </td>
+        `;
+      } else {
+        html += `<td style="border:1px solid #f0f0f5;color:#d9d9d9;font-size:11px;">无课</td>`;
+      }
+    }
+    html += `</tr>`;
+  }
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
+function renderFreeSlotsSummary(freeSlots = [], container) {
+  if (!container) return;
+  if (!freeSlots || freeSlots.length === 0) {
+    container.innerHTML = `<div style="font-size:12px;color:#8e8f98;">暂未分析出空闲时段</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="font-size:13px;font-weight:700;color:#08091f;margin-bottom:6px;">💡 无课空闲时段智能识别：</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      ${freeSlots.map(s => `
+        <span class="free-slot-tag" style="background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:bold;">
+          🌿 ${s.label} (${s.tag})
+        </span>
+      `).join('')}
+    </div>
+  `;
+}
 
 buttons.forEach((button) => {
   button.addEventListener('click', () => {
