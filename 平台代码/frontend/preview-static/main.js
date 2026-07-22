@@ -947,35 +947,64 @@ function bindPageActions() {
         return;
       }
 
-      // 真实 DOM 提取逻辑模拟
+      // 二维网格矩阵还原解析算法
       const parsedCourses = [];
-      const cells = screen.querySelectorAll('#cufe-kbtable tbody td.kbcontent');
-      
-      cells.forEach((cell) => {
-        const courseNameEl = cell.querySelector('.kb-course');
-        const teacherEl = cell.querySelector('.kb-teacher');
-        const locEl = cell.querySelector('.kb-loc');
+      const table = screen.querySelector('#cufe-kbtable');
+      if (!table) return;
+
+      const rows = Array.from(table.querySelectorAll('tr'));
+      const grid = [];
+      for (let r = 0; r < rows.length; r++) {
+        grid[r] = new Array(12).fill(false);
+      }
+
+      rows.forEach((tr, rowIndex) => {
+        const cells = Array.from(tr.querySelectorAll('td, th'));
+        let colIndex = 0;
         
-        if (courseNameEl && courseNameEl.textContent.trim()) {
-          const parentRow = cell.closest('tr');
-          const rowIndex = Array.from(parentRow.parentNode.children).indexOf(parentRow);
-          const tds = Array.from(parentRow.querySelectorAll('td'));
-          const cellIndex = tds.indexOf(cell);
+        cells.forEach(cell => {
+          while (grid[rowIndex] && grid[rowIndex][colIndex]) {
+            colIndex++;
+          }
           
-          // cellIndex 1=周一, 2=周二...
-          const dayOfWeek = cellIndex; 
-          const startPeriod = rowIndex === 0 ? 1 : 3;
-          const endPeriod = rowIndex === 0 ? 2 : 4;
+          const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
+          const colspan = parseInt(cell.getAttribute('colspan') || '1');
           
-          parsedCourses.push({
-            courseName: courseNameEl.textContent.trim(),
-            dayOfWeek: dayOfWeek,
-            startPeriod: startPeriod,
-            endPeriod: endPeriod,
-            location: locEl ? locEl.textContent.trim() : '未分配教室',
-            teacher: teacherEl ? teacherEl.textContent.trim() : '教师未定'
-          });
-        }
+          for (let r = 0; r < rowspan; r++) {
+            for (let c = 0; c < colspan; c++) {
+              if (grid[rowIndex + r]) {
+                grid[rowIndex + r][colIndex + c] = true;
+              }
+            }
+          }
+          
+          const courseNameEl = cell.querySelector('.kb-course');
+          if (courseNameEl && courseNameEl.textContent.trim()) {
+            const dayOfWeek = colIndex - 1;
+            if (dayOfWeek >= 1 && dayOfWeek <= 7) {
+              const teacherEl = cell.querySelector('.kb-teacher');
+              const locEl = cell.querySelector('.kb-loc');
+              
+              let startPeriod = 1;
+              let endPeriod = 2;
+              if (rowIndex === 1) { // 第二个数据行表示 3-4节
+                startPeriod = 3;
+                endPeriod = 4;
+              }
+              
+              parsedCourses.push({
+                courseName: courseNameEl.textContent.trim().replace('★', ''),
+                dayOfWeek,
+                startPeriod,
+                endPeriod,
+                location: locEl ? locEl.textContent.trim() : '未安排地点',
+                teacher: teacherEl ? teacherEl.textContent.trim() : '待定'
+              });
+            }
+          }
+          
+          colIndex += colspan;
+        });
       });
 
       if (parsedCourses.length > 0) {
