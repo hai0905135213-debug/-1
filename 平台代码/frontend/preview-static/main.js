@@ -318,23 +318,24 @@ const pages = {
         <div style="font-size:14px;font-weight:bold;color:#d46b08;display:flex;align-items:center;gap:6px;">
           🌐 真实运营 H5 中转站模式 (已测试通过)
         </div>
-        <p style="font-size:12px;color:#8c8c8c;margin:6px 0 12px;line-height:1.5;">
-          微信小程序由于学校域名拦截限制，在真实运营时需引导同学跳转手机浏览器打开中转页导入，免去账号密码泄露顾虑。
+        <p style="font-size:12px;color:#8c8c8c;margin:6px 0 10px;line-height:1.5;">
+          微信小程序由于学校域名拦截限制，真实运营时需跳转手机浏览器中转页导入。<b>导入成功后，请回到此页面点击“刷新课表”载入您的真实数据。</b>
         </p>
-        <a id="h5-import-link" href="./timetable-import.html" target="_blank" class="primary btn" style="display:block; text-align:center; text-decoration:none; padding:10px; font-weight:bold; background:linear-gradient(135deg, #b22222 0%, #d32f2f 100%); color:#fff; border-radius:12px; font-size:13px; box-shadow: 0 4px 10px rgba(178,34,34,0.15);">
-          🚀 打开央财课表 H5 导入中心
-        </a>
+        <div style="display:flex;gap:8px;">
+          <a id="h5-import-link" href="./timetable-import.html" target="_blank" class="primary btn" style="flex:1; display:block; text-align:center; text-decoration:none; padding:10px; font-weight:bold; background:linear-gradient(135deg, #b22222 0%, #d32f2f 100%); color:#fff; border-radius:12px; font-size:13px; box-shadow: 0 4px 10px rgba(178,34,34,0.15);">
+            🚀 打开 H5 导入中心
+          </a>
+          <button data-refresh-timetable class="secondary" style="padding:10px; font-weight:bold; background:#e6f7ff; color:#1890ff; border:1px solid #91d5ff; border-radius:12px; font-size:13px; white-space:nowrap; cursor:pointer;">
+            🔄 刷新已导课表
+          </button>
+        </div>
       </div>
 
-      <div class="url-bar-card" style="margin-top:14px;background:#fff;padding:14px;border-radius:16px;border:1px solid #f0f0f5;">
-        <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:6px;">教务处课表系统网址</label>
+      <div class="url-bar-card" style="margin-top:14px;background:#f9f9fc;padding:14px;border-radius:16px;border:1px solid #e5e5ea; opacity: 0.85;">
+        <label style="font-size:12px;font-weight:700;color:#8e8f98;display:block;margin-bottom:6px;">🧪 离线模拟沙箱 (点击测试会覆盖您的真实课表)</label>
         <div style="display:flex;gap:8px;">
-          <input id="jwxt-url-input" value="https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default" placeholder="输入教务处课表网址..." style="flex:1;padding:8px 12px;border:1px solid #e5e5ea;border-radius:10px;font-size:13px;">
-          <button class="primary" data-fetch-timetable style="padding:8px 16px;white-space:nowrap;font-size:13px;">⚡ 检测拉取</button>
-        </div>
-        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
-          <span style="font-size:12px;color:#8e8f98;">快速测试：</span>
-          <button class="pill active" data-load-sample-timetable style="font-size:12px;padding:4px 10px;">🧪 载入示范课表数据</button>
+          <input id="jwxt-url-input" value="https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default" placeholder="输入教务处课表网址..." style="flex:1;padding:8px 12px;border:1px solid #e5e5ea;border-radius:10px;font-size:13px; background:#f0f0f5; color:#8e8f98;" disabled>
+          <button class="primary" data-fetch-timetable style="padding:8px 16px;white-space:nowrap;font-size:13px; background:#8e8f98; border-color:#8e8f98;">⚡ 模拟抓取</button>
         </div>
       </div>
 
@@ -970,6 +971,14 @@ function bindPageActions() {
 
   const timetableButton = screen.querySelector('[data-go-timetable]')
   if (timetableButton) timetableButton.addEventListener('click', () => requireLoginThen('timetableImport'))
+
+  const refreshTimetableBtn = screen.querySelector('[data-refresh-timetable]')
+  if (refreshTimetableBtn) {
+    refreshTimetableBtn.addEventListener('click', () => {
+      loadTimetableImportPage()
+      toast('🔄 课表数据刷新成功！')
+    })
+  }
 
   const fetchTimetableBtn = screen.querySelector('[data-fetch-timetable]')
   if (fetchTimetableBtn) {
