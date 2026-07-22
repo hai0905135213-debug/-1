@@ -364,54 +364,74 @@ const pages = {
             <table id="cufe-kbtable" style="width:100%;border-collapse:collapse;font-size:10px;background:#fff;border:1px solid #ddd;text-align:center;">
               <thead>
                 <tr style="background:#eef2f7;height:22px;font-weight:bold;">
-                  <th style="border:1px solid #ddd;width:15%;">节次</th>
-                  <th style="border:1px solid #ddd;width:17%;">周一</th>
-                  <th style="border:1px solid #ddd;width:17%;">周二</th>
-                  <th style="border:1px solid #ddd;width:17%;">周三</th>
-                  <th style="border:1px solid #ddd;width:17%;">周四</th>
-                  <th style="border:1px solid #ddd;width:17%;">周五</th>
+                  <th style="border:1px solid #ddd;">时间段</th>
+                  <th style="border:1px solid #ddd;">节次</th>
+                  <th style="border:1px solid #ddd;">周一</th>
+                  <th style="border:1px solid #ddd;">周二</th>
+                  <th style="border:1px solid #ddd;">周三</th>
+                  <th style="border:1px solid #ddd;">周四</th>
+                  <th style="border:1px solid #ddd;">周五</th>
                 </tr>
               </thead>
               <tbody>
-                <tr style="height:44px;">
+                <tr style="height:54px;">
+                  <td style="border:1px solid #ddd;font-weight:bold;background:#fafafa;" rowspan="2">1</td>
                   <td style="border:1px solid #ddd;font-weight:bold;background:#fafafa;">1-2节</td>
-                  <td style="border:1px solid #ddd;" class="kbcontent">
-                    <div class="kb-course" style="font-weight:bold;color:#b22222;">微观经济学</div>
-                    <div class="kb-teacher" style="color:#666;">刘教授</div>
-                    <div class="kb-loc" style="color:#888;">学院楼 301</div>
+                  <td style="border:1px solid #ddd;">
+                    <div class="timetable_con text-left">
+                      <span class="title"><font color="blue">微观经济学★</font></span>
+                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (1-2节)1-16周</font></p>
+                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 学院楼 301</font></p>
+                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 刘教授</font></p>
+                    </div>
                   </td>
-                  <td style="border:1px solid #ddd;" class="kbcontent"></td>
-                  <td style="border:1px solid #ddd;" class="kbcontent">
-                    <div class="kb-course" style="font-weight:bold;color:#b22222;">线性代数</div>
-                    <div class="kb-teacher" style="color:#666;">王教授</div>
-                    <div class="kb-loc" style="color:#888;">教二楼 105</div>
+                  <td style="border:1px solid #ddd;"></td>
+                  <td style="border:1px solid #ddd;">
+                    <div class="timetable_con text-left">
+                      <span class="title"><font color="blue">线性代数★</font></span>
+                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (1-2节)1-16周</font></p>
+                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 教二楼 105</font></p>
+                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 王教授</font></p>
+                    </div>
                   </td>
-                  <td style="border:1px solid #ddd;" class="kbcontent">
-                    <div class="kb-course" style="font-weight:bold;color:#b22222;">思想道德与法治</div>
-                    <div class="kb-teacher" style="color:#666;">赵老师</div>
-                    <div class="kb-loc" style="color:#888;">大报告厅</div>
+                  <td style="border:1px solid #ddd;">
+                    <div class="timetable_con text-left">
+                      <span class="title"><font color="blue">思想道德与法治★</font></span>
+                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (1-2节)1-16周</font></p>
+                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 大报告厅</font></p>
+                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 赵老师</font></p>
+                    </div>
                   </td>
-                  <td style="border:1px solid #ddd;" class="kbcontent"></td>
+                  <td style="border:1px solid #ddd;"></td>
                 </tr>
-                <tr style="height:44px;">
+                <tr style="height:54px;">
                   <td style="border:1px solid #ddd;font-weight:bold;background:#fafafa;">3-4节</td>
-                  <td style="border:1px solid #ddd;" class="kbcontent">
-                    <div class="kb-course" style="font-weight:bold;color:#b22222;">计量经济学</div>
-                    <div class="kb-teacher" style="color:#666;">陈老师</div>
-                    <div class="kb-loc" style="color:#888;">实验楼 204</div>
+                  <td style="border:1px solid #ddd;">
+                    <div class="timetable_con text-left">
+                      <span class="title"><font color="blue">计量经济学★</font></span>
+                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (3-4节)1-16周</font></p>
+                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 实验楼 204</font></p>
+                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 陈老师</font></p>
+                    </div>
                   </td>
-                  <td style="border:1px solid #ddd;" class="kbcontent">
-                    <div class="kb-course" style="font-weight:bold;color:#b22222;">计算机设计 (C++)</div>
-                    <div class="kb-teacher" style="color:#666;">李老师</div>
-                    <div class="kb-loc" style="color:#888;">实验楼 302</div>
+                  <td style="border:1px solid #ddd;">
+                    <div class="timetable_con text-left">
+                      <span class="title"><font color="blue">计算机设计 (C++)★</font></span>
+                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (3-4节)1-16周</font></p>
+                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 实验楼 302</font></p>
+                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 李老师</font></p>
+                    </div>
                   </td>
-                  <td style="border:1px solid #ddd;" class="kbcontent"></td>
-                  <td style="border:1px solid #ddd;" class="kbcontent">
-                    <div class="kb-course" style="font-weight:bold;color:#b22222;">体育 (羽毛球)</div>
-                    <div class="kb-teacher" style="color:#666;">陈教练</div>
-                    <div class="kb-loc" style="color:#888;">体育馆</div>
+                  <td style="border:1px solid #ddd;"></td>
+                  <td style="border:1px solid #ddd;">
+                    <div class="timetable_con text-left">
+                      <span class="title"><font color="blue">体育 (羽毛球)★</font></span>
+                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (3-4节)1-16周</font></p>
+                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 体育馆</font></p>
+                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 陈教练</font></p>
+                    </div>
                   </td>
-                  <td style="border:1px solid #ddd;" class="kbcontent"></td>
+                  <td style="border:1px solid #ddd;"></td>
                 </tr>
               </tbody>
             </table>
@@ -974,15 +994,15 @@ function bindPageActions() {
       rows.forEach((tr, rowIndex) => {
         const cells = Array.from(tr.querySelectorAll('td, th'));
         let colIndex = 0;
-        
+
         cells.forEach(cell => {
           while (grid[rowIndex] && grid[rowIndex][colIndex]) {
             colIndex++;
           }
-          
+
           const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
           const colspan = parseInt(cell.getAttribute('colspan') || '1');
-          
+
           for (let r = 0; r < rowspan; r++) {
             for (let c = 0; c < colspan; c++) {
               if (grid[rowIndex + r]) {
@@ -990,32 +1010,52 @@ function bindPageActions() {
               }
             }
           }
-          
-          const courseNameEl = cell.querySelector('.kb-course');
-          if (courseNameEl && courseNameEl.textContent.trim()) {
+
+          const div = cell.querySelector('div.timetable_con');
+          if (div) {
             const dayOfWeek = colIndex - 1;
             if (dayOfWeek >= 1 && dayOfWeek <= 7) {
-              const teacherEl = cell.querySelector('.kb-teacher');
-              const locEl = cell.querySelector('.kb-loc');
-              
+              const titleEl = div.querySelector('.title');
+              const courseName = titleEl ? titleEl.textContent.trim().replace('★', '') : '未知课程';
+
               let startPeriod = 1;
               let endPeriod = 2;
-              if (rowIndex === 1) { // 第二个数据行表示 3-4节
-                startPeriod = 3;
-                endPeriod = 4;
+              const timeSpan = div.querySelector('span[title*="节"], span[title*="周"]');
+              if (timeSpan) {
+                const timeP = timeSpan.closest('p');
+                const timeText = timeP ? timeP.textContent.trim() : '';
+                const match = timeText.match(/\((\d+)-(\d+)节\)/);
+                if (match) {
+                  startPeriod = parseInt(match[1]);
+                  endPeriod = parseInt(match[2]);
+                }
               }
-              
+
+              let location = "未安排地点";
+              const locSpan = div.querySelector('span[title*="地点"]');
+              if (locSpan) {
+                const locP = locSpan.closest('p');
+                if (locP) location = locP.textContent.trim();
+              }
+
+              let teacher = "待定";
+              const teacherSpan = div.querySelector('span[title*="教师"]');
+              if (teacherSpan) {
+                const teacherP = teacherSpan.closest('p');
+                if (teacherP) teacher = teacherP.textContent.trim();
+              }
+
               parsedCourses.push({
-                courseName: courseNameEl.textContent.trim().replace('★', ''),
+                courseName,
                 dayOfWeek,
                 startPeriod,
                 endPeriod,
-                location: locEl ? locEl.textContent.trim() : '未安排地点',
-                teacher: teacherEl ? teacherEl.textContent.trim() : '待定'
+                location,
+                teacher
               });
             }
           }
-          
+
           colIndex += colspan;
         });
       });
