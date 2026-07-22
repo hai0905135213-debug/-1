@@ -313,6 +313,19 @@ const pages = {
         </div>
       </div>
 
+      <!-- 真实运营：手机浏览器中转站卡片 -->
+      <div class="card" style="margin-top:14px;background:linear-gradient(135deg, #fffcf5 0%, #fffbf2 100%);padding:16px;border-radius:16px;border:1px solid #ffe7ba;">
+        <div style="font-size:14px;font-weight:bold;color:#d46b08;display:flex;align-items:center;gap:6px;">
+          🌐 真实运营 H5 中转站模式 (已测试通过)
+        </div>
+        <p style="font-size:12px;color:#8c8c8c;margin:6px 0 12px;line-height:1.5;">
+          微信小程序由于学校域名拦截限制，在真实运营时需引导同学跳转手机浏览器打开中转页导入，免去账号密码泄露顾虑。
+        </p>
+        <a id="h5-import-link" href="./timetable-import.html" target="_blank" class="primary btn" style="display:block; text-align:center; text-decoration:none; padding:10px; font-weight:bold; background:linear-gradient(135deg, #b22222 0%, #d32f2f 100%); color:#fff; border-radius:12px; font-size:13px; box-shadow: 0 4px 10px rgba(178,34,34,0.15);">
+          🚀 打开央财课表 H5 导入中心
+        </a>
+      </div>
+
       <div class="url-bar-card" style="margin-top:14px;background:#fff;padding:14px;border-radius:16px;border:1px solid #f0f0f5;">
         <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:6px;">教务处课表系统网址</label>
         <div style="display:flex;gap:8px;">
@@ -2395,6 +2408,12 @@ async function loadTimetableImportPage() {
   const slotsContainer = screen.querySelector('#free-slots-summary-container');
   const jsonPreview = screen.querySelector('#json-export-preview');
   if (!container) return;
+
+  // 动态设置真实 H5 导入中转站的 Token
+  const h5ImportLink = screen.querySelector('#h5-import-link');
+  if (h5ImportLink && authSession && authSession.user) {
+    h5ImportLink.href = `./timetable-import.html?token=dev-token-${authSession.user.id}`;
+  }
 
   // 绑定 Mock Webview 内的登录点击事件
   const mockLoginDiv = screen.querySelector('#cufe-mock-login');

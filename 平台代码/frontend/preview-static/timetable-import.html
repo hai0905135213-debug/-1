@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中央财经大学 · 课表导入同步中心</title>
+  <style>
+    :root {
+      --primary-color: #b22222;
+      --bg-color: #f7f8fa;
+      --card-bg: #ffffff;
+      --text-color: #1a1a1a;
+      --muted-color: #666666;
+      --border-radius: 16px;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 480px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .header {
+      text-align: center;
+      margin: 20px 0 24px;
+    }
+
+    .logo-wrap {
+      width: 64px;
+      height: 64px;
+      background-color: var(--primary-color);
+      color: #fff;
+      font-size: 32px;
+      font-weight: bold;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      box-shadow: 0 4px 12px rgba(178, 34, 34, 0.2);
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #08091f;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted-color);
+      margin: 6px 0 0;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border: 1px solid #eef0f5;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-badge {
+      background-color: var(--primary-color);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 16px;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background-color: #f0f0f5;
+      color: #333;
+      border: 1px solid #e5e5ea;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      resize: none;
+      outline: none;
+      background-color: #f9f9fc;
+    }
+
+    textarea:focus {
+      border-color: var(--primary-color);
+      background-color: #fff;
+    }
+
+    .instruction-list {
+      padding-left: 20px;
+      margin: 8px 0;
+      font-size: 13px;
+      color: var(--muted-color);
+      line-height: 1.6;
+    }
+
+    #status-banner {
+      display: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .status-success {
+      background-color: #e6f7ff;
+      color: #1890ff;
+      border: 1px solid #91d5ff;
+    }
+
+    .status-error {
+      background-color: #fff2e8;
+      color: #ff4d4f;
+      border: 1px solid #ffbb96;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo-wrap">饭</div>
+      <h1 class="title">中央财经大学课表导入</h1>
+      <p class="subtitle">通过手机浏览器中转解析，安全导入您的真实课表</p>
+    </div>
+
+    <div id="status-banner"></div>
+
+    <!-- 步骤一：去教务处 -->
+    <div class="card">
+      <div class="card-title">
+        <span class="step-badge">1</span>
+        <span>打开央财教务处课表页面</span>
+      </div>
+      <p class="subtitle" style="margin-bottom: 14px;">请先点击下方按钮在浏览器中打开学校教务处课表查询页，并完成登录账号。</p>
+      <a href="https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default" target="_blank" class="btn">👉 点此去教务处登录 </a>
+    </div>
+
+    <!-- 步骤二：复制粘贴源码 -->
+    <div class="card">
+      <div class="card-title">
+        <span class="step-badge">2</span>
+        <span>复制并粘贴网页源码</span>
+      </div>
+      <p class="subtitle">登录进入教务处课表页面后：</p>
+      <ol class="instruction-list">
+        <li>在页面任意空白处右键，选择<b>“查看网页源代码”</b>（或按键盘 <code>Ctrl + U</code>）；</li>
+        <li>按 <code>Ctrl + A</code> 全选，<code>Ctrl + C</code> 复制全部代码；</li>
+        <li>或者在开发者工具（F12）中右键 <code>table#kbgrid_table_0</code>，选择 <b>Copy ➔ Copy outerHTML</b>。</li>
+      </ol>
+      <textarea id="html-input" placeholder="将复制的全部源代码粘贴在这里..." style="margin-top: 10px;"></textarea>
+    </div>
+
+    <!-- 确认提交 -->
+    <button id="btn-submit" class="btn" style="margin-top: 8px;">⚡ 一键同步到“饭饭之交”</button>
+    <a href="javascript:window.close();" class="btn btn-secondary" style="margin-top: 10px; text-align: center;">关闭此页</a>
+  </div>
+
+  <script>
+    // 从 URL 参数中解析用户 Token
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token') || 'dev-token-1'; // 默认测试账号小林
+
+    const btnSubmit = document.getElementById('btn-submit');
+    const htmlInput = document.getElementById('html-input');
+    const statusBanner = document.getElementById('status-banner');
+
+    function showStatus(text, isSuccess) {
+      statusBanner.textContent = text;
+      statusBanner.className = isSuccess ? 'status-success' : 'status-error';
+      statusBanner.style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+
+    btnSubmit.addEventListener('click', async () => {
+      const htmlText = htmlInput.value.trim();
+      if (!htmlText) {
+        showStatus('⚠️ 请先粘贴您从教务处复制的网页源码！', false);
+        return;
+      }
+
+      showStatus('⏳ 正在解析并上传中，请稍候...', true);
+
+      try {
+        // 使用 DOMParser 构建虚拟 DOM 节点
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        // 查找表格（支持 kbgrid_table_0 或普通 table）
+        const table = doc.querySelector('#kbgrid_table_0') || doc.querySelector('table');
+        if (!table) {
+          showStatus('❌ 解析失败！未在您粘贴的源码中找到课表表格，请确认粘贴的是完整的网页源码。', false);
+          return;
+        }
+
+        const rows = Array.from(table.querySelectorAll('tr'));
+        const grid = [];
+        for (let r = 0; r < rows.length; r++) {
+          grid[r] = new Array(12).fill(false);
+        }
+
+        const courses = [];
+
+        rows.forEach((tr, rowIndex) => {
+          const cells = Array.from(tr.querySelectorAll('td, th'));
+          let colIndex = 0;
+
+          cells.forEach(cell => {
+            while (grid[rowIndex] && grid[rowIndex][colIndex]) {
+              colIndex++;
+            }
+
+            const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
+            const colspan = parseInt(cell.getAttribute('colspan') || '1');
+
+            for (let r = 0; r < rowspan; r++) {
+              for (let c = 0; c < colspan; c++) {
+                if (grid[rowIndex + r]) {
+                  grid[rowIndex + r][colIndex + c] = true;
+                }
+              }
+            }
+
+            const div = cell.querySelector('div.timetable_con');
+            if (div) {
+              const dayOfWeek = colIndex - 1;
+              if (dayOfWeek >= 1 && dayOfWeek <= 7) {
+                // 课程名称
+                const titleEl = div.querySelector('.title');
+                const courseName = titleEl ? titleEl.textContent.trim().replace('★', '') : '未知课程';
+
+                // 节次
+                let startPeriod = 1;
+                let endPeriod = 2;
+                const timeSpan = div.querySelector('span[title*="节"], span[title*="周"]');
+                if (timeSpan) {
+                  const timeP = timeSpan.closest('p');
+                  const timeText = timeP ? timeP.textContent.trim() : '';
+                  const match = timeText.match(/\((\d+)-(\d+)节\)/);
+                  if (match) {
+                    startPeriod = parseInt(match[1]);
+                    endPeriod = parseInt(match[2]);
+                  }
+                }
+
+                // 地点
+                let location = "未安排地点";
+                const locSpan = div.querySelector('span[title*="地点"]');
+                if (locSpan) {
+                  const locP = locSpan.closest('p');
+                  if (locP) location = locP.textContent.trim();
+                }
+
+                // 教师
+                let teacher = "待定";
+                const teacherSpan = div.querySelector('span[title*="教师"]');
+                if (teacherSpan) {
+                  const teacherP = teacherSpan.closest('p');
+                  if (teacherP) teacher = teacherP.textContent.trim();
+                }
+
+                courses.push({
+                  courseName,
+                  dayOfWeek,
+                  startPeriod,
+                  endPeriod,
+                  location,
+                  teacher
+                });
+              }
+            }
+
+            colIndex += colspan;
+          });
+        });
+
+        if (courses.length === 0) {
+          showStatus('❌ 棋盘矩阵分析完成，但未提取出任何课程数据。请确认复制的内容包含课表正文。', false);
+          return;
+        }
+
+        // POST 数据提交到后台
+        const response = await fetch('http://127.0.0.1:3001/api/timetable/import', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ courses })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          showStatus(`🎉 课表同步成功！已成功载入 ${courses.length} 门课程！现在您可以关闭此窗口，返回饭饭之交 App 查看课表网格和空闲时段。`, true);
+          htmlInput.value = '';
+        } else {
+          showStatus('❌ 上传失败！服务器返回了错误。请确保本地后端服务开启中。', false);
+        }
+
+      } catch (err) {
+        showStatus('❌ 连接本地服务器 http://127.0.0.1:3001 失败，请确认后端已启动并允许跨域访问！', false);
+      }
+    });
+  </script>
+</body>
+</html>
