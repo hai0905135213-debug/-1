@@ -476,6 +476,11 @@ export function createUser({ nickname, studentNo, school }) {
   return getUser(userId);
 }
 
+// 功能：更新用户的学号
+export function updateUserStudentNo(userId, studentNo) {
+  db.prepare("UPDATE users SET student_no = ? WHERE id = ?").run(studentNo || "", Number(userId));
+}
+
 // ========== 资料 ==========
 
 // 功能：读取用户资料，taste_tags 和 personality_tags 以 JSON 数组返回

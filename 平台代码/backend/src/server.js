@@ -48,6 +48,7 @@ import {
   toggleSaveMeal,
   saveUserTimetable,
   getUserTimetable,
+  updateUserStudentNo,
   seedIfEmpty
 } from "./db.js";
 
@@ -343,21 +344,66 @@ async function handleProxyLogin(req, res) {
       { courseName: "形势与政策（2）", dayOfWeek: 3, startPeriod: 9, endPeriod: 10, location: "沙河校区千人礼堂", teacher: "肖宁" }
     ];
   } else {
-    // 默认测试课表
-    coursesToSave = [
-      { courseName: "微观经济学", dayOfWeek: 1, startPeriod: 1, endPeriod: 2, location: "学院楼 301", teacher: "刘教授" },
-      { courseName: "线性代数", dayOfWeek: 3, startPeriod: 1, endPeriod: 2, location: "教二楼 105", teacher: "王教授" },
-      { courseName: "思想道德与法治", dayOfWeek: 4, startPeriod: 1, endPeriod: 2, location: "大报告厅", teacher: "赵老师" },
-      { courseName: "计量经济学", dayOfWeek: 1, startPeriod: 3, endPeriod: 4, location: "实验楼 204", teacher: "陈老师" },
-      { courseName: "计算机设计 (C++)", dayOfWeek: 2, startPeriod: 3, endPeriod: 4, location: "实验楼 302", teacher: "李老师" },
-      { courseName: "体育 (羽毛球)", dayOfWeek: 4, startPeriod: 3, endPeriod: 4, location: "体育馆", teacher: "陈教练" }
+    // 动态根据学号生成随机且确定的模拟课表，模拟不同学生的不同课表
+    let hash = 0;
+    const sId = String(studentId);
+    for (let i = 0; i < sId.length; i++) {
+      hash = (hash << 5) - hash + sId.charCodeAt(i);
+      hash |= 0;
+    }
+    hash = Math.abs(hash);
+
+    const pool = [
+      { courseName: "微观经济学", location: "学院楼 301", teacher: "刘教授" },
+      { courseName: "线性代数", location: "教二楼 105", teacher: "王教授" },
+      { courseName: "思想道德与法治", location: "大报告厅", teacher: "赵老师" },
+      { courseName: "计量经济学", location: "实验楼 204", teacher: "陈老师" },
+      { courseName: "计算机设计 (C++)", location: "实验楼 302", teacher: "李老师" },
+      { courseName: "体育 (羽毛球)", location: "体育馆", teacher: "陈教练" },
+      { courseName: "综合英语（3）", location: "学院楼 208", teacher: "陈冰" },
+      { courseName: "会计学", location: "沙河西区 302M", teacher: "丁瑞玲" },
+      { courseName: "高等数学（2）", location: "沙河主教 107M", teacher: "刘书茂" },
+      { courseName: "大学体育（2）", location: "沙河体育场", teacher: "赵珊珊" },
+      { courseName: "金融市场学", location: "主教 402M", teacher: "方教授" },
+      { courseName: "公司理财", location: "实验楼 211", teacher: "郑老师" }
     ];
+
+    const selectedIndexes = [];
+    let tempHash = hash;
+    while (selectedIndexes.length < 6) {
+      const idx = tempHash % pool.length;
+      if (!selectedIndexes.includes(idx)) {
+        selectedIndexes.push(idx);
+      }
+      tempHash = Math.floor(tempHash / 10) || (tempHash + 7);
+    }
+
+    const days = [1, 2, 3, 4, 5];
+    const periods = [[1, 2], [3, 4], [5, 6], [7, 8]];
+
+    selectedIndexes.forEach((poolIdx, count) => {
+      const day = days[(hash + count * 2) % days.length];
+      const p = periods[(hash + count * 3) % periods.length];
+      const course = pool[poolIdx];
+      coursesToSave.push({
+        courseName: course.courseName,
+        dayOfWeek: day,
+        startPeriod: p[0],
+        endPeriod: p[1],
+        location: course.location,
+        teacher: course.teacher
+      });
+    });
   }
+
+  // 更新当前登录用户的学号绑定关系
+  updateUserStudentNo(user.id, studentId);
 
   const result = saveUserTimetable(user.id, coursesToSave);
   return sendJson(res, 200, {
     ok: true,
     message: "一键代理登录同步成功",
+    studentId,
     result
   });
 }
