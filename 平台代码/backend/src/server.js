@@ -285,32 +285,176 @@ function handleGetMyTimetable(req, res) {
 }
 
 let currentSessionCaptcha = "a4f2";
+const proxySessions = new Map();
 
-// 功能：生成模拟验证码图片
-function handleGetCaptcha(req, res) {
-  const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let captchaText = '';
-  for (let i = 0; i < 4; i++) {
-    captchaText += characters.charAt(Math.floor(Math.random() * characters.length));
+// 功能：代理抓取学校教务处登录验证码，并初始化 Session
+async function handleGetCaptcha(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  try {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
+    };
+
+    const indexRes = await fetch('https://xuanke.cufe.edu.cn/jwglxt/xtgl/login_slogin.html', { headers });
+    const setCookie = indexRes.headers.get('set-cookie');
+    
+    let jSessionId = '';
+    if (setCookie) {
+      const match = setCookie.match(/JSESSIONID=([^;]+)/);
+      if (match) jSessionId = match[1];
+    }
+
+    if (!jSessionId) {
+      jSessionId = Math.random().toString(36).substring(2, 15).toUpperCase();
+    }
+
+    const indexHtml = await indexRes.text();
+    let csrftoken = '';
+    const csrfMatch = indexHtml.match(/id="csrftoken"\s+name="csrftoken"\s+value="([^"]+)"/) || indexHtml.match(/name="csrftoken"\s+value="([^"]+)"/);
+    if (csrfMatch) {
+      csrftoken = csrfMatch[1];
+    }
+
+    const captchaRes = await fetch('https://xuanke.cufe.edu.cn/jwglxt/kaptcha', {
+      headers: {
+        ...headers,
+        'Cookie': `JSESSIONID=${jSessionId}`
+      }
+    });
+
+    const buffer = await captchaRes.arrayBuffer();
+    const base64Image = `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`;
+
+    proxySessions.set(user.id, { jSessionId, csrftoken });
+
+    return sendJson(res, 200, {
+      ok: true,
+      captchaImage: base64Image
+    });
+  } catch (err) {
+    console.error('代理获取验证码失败:', err);
+    return sendError(res, 500, "CAPTCHA_ERROR", "教务处服务器连接失败，请稍后重试");
   }
-  
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="36" viewBox="0 0 100 36">
-    <rect width="100%" height="100%" fill="#f3f4f6"/>
-    <text x="12" y="25" font-family="monospace" font-size="20" font-weight="bold" fill="#b22222" letter-spacing="4">${captchaText}</text>
-    <line x1="0" y1="10" x2="100" y2="30" stroke="#b22222" stroke-width="1.5" opacity="0.3"/>
-    <line x1="0" y1="28" x2="100" y2="5" stroke="#b22222" stroke-width="1.5" opacity="0.3"/>
-  </svg>`;
-  
-  const base64Svg = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
-  currentSessionCaptcha = captchaText.toLowerCase();
-
-  return sendJson(res, 200, {
-    ok: true,
-    captchaImage: base64Svg
-  });
 }
 
-// 功能：代理模拟登录教务处并解析抓取课表
+// RSA 加密密码函数
+function encryptPassword(password, modulusHex, exponentHex) {
+  const n = Buffer.from(modulusHex, 'hex').toString('base64url');
+  const e = Buffer.from(exponentHex, 'hex').toString('base64url');
+  
+  const jwk = {
+    kty: 'RSA',
+    n: n,
+    e: e
+  };
+  
+  const publicKey = crypto.createPublicKey({
+    key: jwk,
+    format: 'jwk'
+  });
+  
+  const encrypted = crypto.publicEncrypt({
+    key: publicKey,
+    padding: crypto.constants.RSA_PKCS1_PADDING
+  }, Buffer.from(password));
+  
+  return encrypted.toString('base64');
+}
+
+// 2D棋盘矩阵解析核心 (Cheerio版)
+function parseTimetableHtml(html) {
+  const $ = cheerio.load(html);
+  const table = $('#kbgrid_table_0');
+  if (table.length === 0) return [];
+
+  const rows = [];
+  table.find('tr').each((i, tr) => {
+    rows.push(tr);
+  });
+
+  const grid = [];
+  for (let r = 0; r < rows.length; r++) {
+    grid[r] = new Array(15).fill(false);
+  }
+
+  const parsedCourses = [];
+
+  rows.forEach((tr, rowIndex) => {
+    const cells = $(tr).find('td, th').toArray();
+    let colIndex = 0;
+
+    cells.forEach(cell => {
+      while (grid[rowIndex] && grid[rowIndex][colIndex]) {
+        colIndex++;
+      }
+
+      const rowspan = parseInt($(cell).attr('rowspan') || '1');
+      const colspan = parseInt($(cell).attr('colspan') || '1');
+
+      for (let r = 0; r < rowspan; r++) {
+        for (let c = 0; c < colspan; c++) {
+          if (grid[rowIndex + r]) {
+            grid[rowIndex + r][colIndex + c] = true;
+          }
+        }
+      }
+
+      const div = $(cell).find('div.timetable_con');
+      if (div.length > 0) {
+        const dayOfWeek = colIndex - 1;
+        if (dayOfWeek >= 1 && dayOfWeek <= 7) {
+          const titleEl = div.find('.title');
+          const courseName = titleEl ? titleEl.text().trim().replace(/[★○◆◇●]/g, '') : '';
+
+          let startPeriod = 1;
+          let endPeriod = 2;
+          const timeSpan = div.find('span[data-toggle="tooltip"][title*="节"], span[data-toggle="tooltip"][title*="周"]');
+          if (timeSpan.length > 0) {
+            const timeText = timeSpan.closest('p').text().trim();
+            const match = timeText.match(/\((\d+)-(\d+)节\)/);
+            if (match) {
+              startPeriod = parseInt(match[1]);
+              endPeriod = parseInt(match[2]);
+            }
+          }
+
+          let location = "未安排地点";
+          const locSpan = div.find('span[data-toggle="tooltip"][title*="地点"]');
+          if (locSpan.length > 0) {
+            location = locSpan.closest('p').text().trim().replace(/\s+/g, ' ');
+          }
+
+          let teacher = "待定";
+          const teacherSpan = div.find('span[data-toggle="tooltip"][title*="教师"]');
+          if (teacherSpan.length > 0) {
+            teacher = teacherSpan.closest('p').text().trim();
+          }
+
+          if (courseName) {
+            parsedCourses.push({
+              courseName,
+              dayOfWeek,
+              startPeriod,
+              endPeriod,
+              location,
+              teacher
+            });
+          }
+        }
+      }
+
+      colIndex += colspan;
+    });
+  });
+
+  return parsedCourses;
+}
+
+// 功能：代理去学校教务处网页模拟登录并解析拉取真实课表
 async function handleProxyLogin(req, res) {
   const user = requireUser(req, res);
   if (!user) return;
@@ -322,90 +466,87 @@ async function handleProxyLogin(req, res) {
     return sendError(res, 400, "BAD_REQUEST", "请输入学号、密码和验证码");
   }
 
-  if (captcha.toLowerCase() !== currentSessionCaptcha) {
-    return sendError(res, 400, "INVALID_CAPTCHA", "验证码错误，请重新输入");
+  const session = proxySessions.get(user.id);
+  if (!session) {
+    return sendError(res, 400, "SESSION_EXPIRED", "验证码会话已过期，请刷新验证码");
   }
+  const { jSessionId, csrftoken } = session;
 
-  // 模拟网络代理延时
-  await new Promise(resolve => setTimeout(resolve, 800));
+  try {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Cookie': `JSESSIONID=${jSessionId}`
+    };
 
-  // 如果学号是 2025310322，自动抓取并载入小林的真实课表
-  let coursesToSave = [];
-  if (studentId === "2025310322" || studentId.trim() === "2025310322") {
-    coursesToSave = [
-      { courseName: "综合英语（3）", dayOfWeek: 1, startPeriod: 1, endPeriod: 2, location: "沙河校区学院楼2号楼208语言实验室", teacher: "陈冰" },
-      { courseName: "会计学", dayOfWeek: 2, startPeriod: 1, endPeriod: 3, location: "沙河校区沙河西区302M", teacher: "丁瑞玲" },
-      { courseName: "高等数学（2）", dayOfWeek: 3, startPeriod: 1, endPeriod: 2, location: "沙河校区沙河主教107M", teacher: "刘书茂" },
-      { courseName: "大学体育（2）", dayOfWeek: 1, startPeriod: 3, endPeriod: 4, location: "沙河校区体育场", teacher: "赵珊珊" },
-      { courseName: "微观经济学", dayOfWeek: 3, startPeriod: 3, endPeriod: 5, location: "沙河校区沙河主教216M", teacher: "张苏" },
-      { courseName: "高等数学（2）", dayOfWeek: 5, startPeriod: 3, endPeriod: 5, location: "沙河校区沙河主教107M", teacher: "刘书茂" },
-      { courseName: "中国近现代史纲要", dayOfWeek: 1, startPeriod: 7, endPeriod: 9, location: "沙河校区沙河主教209M", teacher: "孙敏" },
-      { courseName: "Python程序设计", dayOfWeek: 2, startPeriod: 7, endPeriod: 8, location: "沙河校区学院楼6号楼111实验室", teacher: "曹怀虎" },
-      { courseName: "形势与政策（2）", dayOfWeek: 3, startPeriod: 9, endPeriod: 10, location: "沙河校区千人礼堂", teacher: "肖宁" }
-    ];
-  } else {
-    // 动态根据学号生成随机且确定的模拟课表，模拟不同学生的不同课表
-    let hash = 0;
-    const sId = String(studentId);
-    for (let i = 0; i < sId.length; i++) {
-      hash = (hash << 5) - hash + sId.charCodeAt(i);
-      hash |= 0;
-    }
-    hash = Math.abs(hash);
-
-    const pool = [
-      { courseName: "微观经济学", location: "学院楼 301", teacher: "刘教授" },
-      { courseName: "线性代数", location: "教二楼 105", teacher: "王教授" },
-      { courseName: "思想道德与法治", location: "大报告厅", teacher: "赵老师" },
-      { courseName: "计量经济学", location: "实验楼 204", teacher: "陈老师" },
-      { courseName: "计算机设计 (C++)", location: "实验楼 302", teacher: "李老师" },
-      { courseName: "体育 (羽毛球)", location: "体育馆", teacher: "陈教练" },
-      { courseName: "综合英语（3）", location: "学院楼 208", teacher: "陈冰" },
-      { courseName: "会计学", location: "沙河西区 302M", teacher: "丁瑞玲" },
-      { courseName: "高等数学（2）", location: "沙河主教 107M", teacher: "刘书茂" },
-      { courseName: "大学体育（2）", location: "沙河体育场", teacher: "赵珊珊" },
-      { courseName: "金融市场学", location: "主教 402M", teacher: "方教授" },
-      { courseName: "公司理财", location: "实验楼 211", teacher: "郑老师" }
-    ];
-
-    const selectedIndexes = [];
-    let tempHash = hash;
-    while (selectedIndexes.length < 6) {
-      const idx = tempHash % pool.length;
-      if (!selectedIndexes.includes(idx)) {
-        selectedIndexes.push(idx);
-      }
-      tempHash = Math.floor(tempHash / 10) || (tempHash + 7);
+    const keyRes = await fetch(`https://xuanke.cufe.edu.cn/jwglxt/xtgl/login_getPublicKey.html?time=${Date.now()}`, { headers });
+    const keys = await keyRes.json();
+    if (!keys || !keys.modulus || !keys.exponent) {
+      return sendError(res, 500, "PUBLIC_KEY_ERROR", "获取教务处登录公钥失败，请稍后重试");
     }
 
-    const days = [1, 2, 3, 4, 5];
-    const periods = [[1, 2], [3, 4], [5, 6], [7, 8]];
+    const encryptedPassword = encryptPassword(password, keys.modulus, keys.exponent);
 
-    selectedIndexes.forEach((poolIdx, count) => {
-      const day = days[(hash + count * 2) % days.length];
-      const p = periods[(hash + count * 3) % periods.length];
-      const course = pool[poolIdx];
-      coursesToSave.push({
-        courseName: course.courseName,
-        dayOfWeek: day,
-        startPeriod: p[0],
-        endPeriod: p[1],
-        location: course.location,
-        teacher: course.teacher
-      });
+    const loginPayload = new URLSearchParams({
+      csrftoken: csrftoken || "",
+      yhm: studentId,
+      mm: encryptedPassword,
+      yzm: captcha
     });
+
+    const loginRes = await fetch('https://xuanke.cufe.edu.cn/jwglxt/xtgl/login_slogin.html', {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Referer': 'https://xuanke.cufe.edu.cn/jwglxt/xtgl/login_slogin.html'
+      },
+      body: loginPayload
+    });
+
+    const loginHtml = await loginRes.text();
+
+    if (loginHtml.includes('验证码不正确')) {
+      return sendError(res, 400, "INVALID_CAPTCHA", "验证码错误，请重新输入");
+    }
+    if (loginHtml.includes('用户名或密码不正确') || loginHtml.includes('密码不正确')) {
+      return sendError(res, 400, "CREDENTIALS_ERROR", "学号或密码错误，请检查输入");
+    }
+    if (loginHtml.includes('error-tips') || (loginHtml.includes('tips') && loginHtml.includes('错误'))) {
+      const $ = cheerio.load(loginHtml);
+      const tipsText = $('#tips').text().trim() || $('#error-tips').text().trim() || '统一身份认证失败';
+      return sendError(res, 400, "LOGIN_FAILED", tipsText);
+    }
+
+    const timetableRes = await fetch('https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default', {
+      headers: {
+        ...headers,
+        'Referer': 'https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151'
+      }
+    });
+
+    const timetableHtml = await timetableRes.text();
+
+    const parsedCourses = parseTimetableHtml(timetableHtml);
+
+    if (parsedCourses.length === 0) {
+      return sendError(res, 400, "PARSING_FAILED", "登录成功，但未能在您的教务处页面中找到有效的课表网格数据");
+    }
+
+    updateUserStudentNo(user.id, studentId);
+    const result = saveUserTimetable(user.id, parsedCourses);
+
+    proxySessions.delete(user.id);
+
+    return sendJson(res, 200, {
+      ok: true,
+      message: `成功同步 ${parsedCourses.length} 门真实教务处课程！`,
+      courses: parsedCourses,
+      result
+    });
+  } catch (err) {
+    console.error('代理登录或解析课表失败:', err);
+    return sendError(res, 500, "PROXY_ERROR", "代理抓取错误: " + err.message);
   }
-
-  // 更新当前登录用户的学号绑定关系
-  updateUserStudentNo(user.id, studentId);
-
-  const result = saveUserTimetable(user.id, coursesToSave);
-  return sendJson(res, 200, {
-    ok: true,
-    message: "一键代理登录同步成功",
-    studentId,
-    result
-  });
 }
 
 // 功能：更新资料。包含口味偏好、性格标签、信用展示等字段。
