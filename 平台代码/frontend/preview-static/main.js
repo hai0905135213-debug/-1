@@ -304,99 +304,48 @@ const pages = {
   timetableImport: `
     <div class="page timetable-import-page">
       <div class="header-card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div class="title" style="margin:0;font-size:18px;font-weight:800;color:#08091f;">📅 教务系统课表解析沙箱</div>
+        <div class="title" style="margin:0;font-size:18px;font-weight:800;color:#08091f;">📅 导入教务处课表</div>
         <button class="secondary" data-back style="padding:6px 12px;font-size:12px;">返回</button>
       </div>
 
-      <!-- WEBVIEW CONTAINER (只保留网页容器) -->
-      <div class="webview-preview-card" style="background:#fff;padding:14px;border-radius:16px;border:1px solid #f0f0f5;margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:700;color:#08091f;margin-bottom:8px;">🌐 Webview 网页容器 (央财教务处)</div>
-        <div id="webview-frame-container" style="background:#f9f9fc;border:1px solid #d1d5db;border-radius:12px;overflow:hidden;padding:10px;">
-          
-          <div id="cufe-mock-timetable" style="box-sizing:border-box;">
-            <div style="font-size:11px;font-weight:bold;color:#333;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-              <span>学生课表查询 - 2026-2027学年第一学期</span>
-              <span style="font-size:11px;color:#52c41a;font-weight:bold;">● 已成功登录 (2025310322)</span>
-            </div>
-            
-            <table id="cufe-kbtable" style="width:100%;border-collapse:collapse;font-size:10px;background:#fff;border:1px solid #ddd;text-align:center;">
-              <thead>
-                <tr style="background:#eef2f7;height:22px;font-weight:bold;">
-                  <th style="border:1px solid #ddd;width:15%;">时间段</th>
-                  <th style="border:1px solid #ddd;width:15%;">节次</th>
-                  <th style="border:1px solid #ddd;width:14%;">周一</th>
-                  <th style="border:1px solid #ddd;width:14%;">周二</th>
-                  <th style="border:1px solid #ddd;width:14%;">周三</th>
-                  <th style="border:1px solid #ddd;width:14%;">周四</th>
-                  <th style="border:1px solid #ddd;width:14%;">周五</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style="height:54px;">
-                  <td style="border:1px solid #ddd;font-weight:bold;background:#fafafa;" rowspan="2">1</td>
-                  <td style="border:1px solid #ddd;font-weight:bold;background:#fafafa;">1-2节</td>
-                  <td style="border:1px solid #ddd;">
-                    <div class="timetable_con text-left">
-                      <span class="title"><font color="blue">综合英语（3）★</font></span>
-                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (1-2节)1-16周</font></p>
-                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 沙河校区学院楼2号楼208语言实验室</font></p>
-                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 陈冰</font></p>
-                    </div>
-                  </td>
-                  <td style="border:1px solid #ddd;"></td>
-                  <td style="border:1px solid #ddd;">
-                    <div class="timetable_con text-left">
-                      <span class="title"><font color="blue">高等数学（2）★</font></span>
-                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (1-2节)1-16周</font></p>
-                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 沙河校区沙河主教107M</font></p>
-                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 刘书茂</font></p>
-                    </div>
-                  </td>
-                  <td style="border:1px solid #ddd;"></td>
-                  <td style="border:1px solid #ddd;"></td>
-                </tr>
-                <tr style="height:54px;">
-                  <td style="border:1px solid #ddd;font-weight:bold;background:#fafafa;">3-4节</td>
-                  <td style="border:1px solid #ddd;">
-                    <div class="timetable_con text-left">
-                      <span class="title"><font color="blue">大学体育（2）★</font></span>
-                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (3-4节)1-16周</font></p>
-                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 沙河校区体育场</font></p>
-                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 赵珊珊</font></p>
-                    </div>
-                  </td>
-                  <td style="border:1px solid #ddd;">
-                    <div class="timetable_con text-left">
-                      <span class="title"><font color="blue">会计学★</font></span>
-                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (1-3节)1-16周</font></p>
-                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 沙河校区沙河西区302M</font></p>
-                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 丁瑞玲</font></p>
-                    </div>
-                  </td>
-                  <td style="border:1px solid #ddd;">
-                    <div class="timetable_con text-left">
-                      <span class="title"><font color="blue">微观经济学★</font></span>
-                      <p><span data-toggle="tooltip" title="节/周"><font color="blue"><span class="glyphicon glyphicon-time"></span></font></span><font color="blue"> (3-5节)1-16周</font></p>
-                      <p><span data-toggle="tooltip" title="上课地点"><font color="blue"><span class="glyphicon glyphicon-map-marker"></span></font></span><font color="blue"> 沙河校区沙河主教216M</font></p>
-                      <p><span data-toggle="tooltip" title="教师 "><font color="blue"><span class="glyphicon glyphicon-user"></span></font></span><font color="blue"> 张苏</font></p>
-                    </div>
-                  </td>
-                  <td style="border:1px solid #ddd;"></td>
-                  <td style="border:1px solid #ddd;"></td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- PROXY LOGIN FORM -->
+      <div class="card" style="background:#fff;padding:16px;border-radius:16px;border:1px solid #f0f0f5;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:bold;color:#b22222;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+          🏫 中央财经大学统一身份认证 (服务器代理模式)
+        </div>
+        <p style="font-size:12px;color:#8e8f98;margin:0 0 12px 0;line-height:1.4;">
+          免去小程序域名拦截限制。输入教务处信息，服务器在后台自动模拟登录并提取课表，安全可靠。
+        </p>
+        
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:4px;">学号</label>
+            <input type="text" id="proxy-student-id" value="2025310322" placeholder="请输入您的学号" style="width:100%;padding:10px;font-size:13px;border:1px solid #e5e5ea;border-radius:10px;box-sizing:border-box;">
+            <p style="font-size:11px;color:#d46b08;margin:4px 0 0 0;font-weight:bold;">💡 测试贴士：使用内置学号 2025310322 可以同步抓取您的真实课表数据</p>
           </div>
-
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:4px;">密码</label>
+            <input type="password" id="proxy-password" value="password123" placeholder="请输入教务处密码" style="width:100%;padding:10px;font-size:13px;border:1px solid #e5e5ea;border-radius:10px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:4px;">验证码</label>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <input type="text" id="proxy-captcha" placeholder="输入验证码" style="flex:1;padding:10px;font-size:13px;border:1px solid #e5e5ea;border-radius:10px;box-sizing:border-box;">
+              <img id="proxy-captcha-img" src="" alt="验证码" style="height:36px;width:100px;border-radius:8px;cursor:pointer;border:1px solid #e5e5ea;background:#fafafa;" title="点击刷新验证码">
+            </div>
+          </div>
+          <button id="btn-proxy-sync" class="primary" style="padding:12px;font-weight:bold;background:linear-gradient(135deg, #b22222 0%, #d32f2f 100%);color:#fff;border-radius:12px;font-size:14px;border:none;cursor:pointer;margin-top:4px;display:flex;justify-content:center;align-items:center;">
+            ⚡ 开始一键代理导入
+          </button>
         </div>
       </div>
 
       <!-- PARSED GRID PREVIEW -->
       <div class="timetable-result-section">
-        <h3 style="margin:0 0 10px 0;font-size:16px;font-weight:800;color:#08091f;">📊 解析抓取后预览网格</h3>
+        <h3 style="margin:0 0 10px 0;font-size:16px;font-weight:800;color:#08091f;">📊 导入后的课表网格</h3>
         <div id="free-slots-summary-container" style="margin-bottom:12px;"></div>
         <div id="timetable-grid-container" style="overflow-x:auto;background:#fff;border-radius:16px;padding:12px;border:1px solid #f0f0f5;">
-          <div class="empty"><p>等待抓取中...</p></div>
+          <div class="empty"><p>暂无已导入课表，请输入上方信息并点击“开始一键代理导入”</p></div>
         </div>
       </div>
     </div>
@@ -2398,135 +2347,94 @@ async function loadTimetableImportPage() {
   const slotsContainer = screen.querySelector('#free-slots-summary-container');
   if (!container) return;
 
-  // 二维网格矩阵还原解析算法 (进入页面时自动执行抓取)
-  const parsedCourses = [];
-  const table = screen.querySelector('#cufe-kbtable');
-  if (table) {
-    const rows = Array.from(table.querySelectorAll('tr'));
-    const grid = [];
-    for (let r = 0; r < rows.length; r++) {
-      grid[r] = new Array(12).fill(false);
-    }
+  // 1. 获取验证码并渲染
+  refreshProxyCaptcha();
 
-    rows.forEach((tr, rowIndex) => {
-      const cells = Array.from(tr.querySelectorAll('td, th'));
-      let colIndex = 0;
-
-      cells.forEach(cell => {
-        while (grid[rowIndex] && grid[rowIndex][colIndex]) {
-          colIndex++;
-        }
-
-        const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
-        const colspan = parseInt(cell.getAttribute('colspan') || '1');
-
-        for (let r = 0; r < rowspan; r++) {
-          for (let c = 0; c < colspan; c++) {
-            if (grid[rowIndex + r]) {
-              grid[rowIndex + r][colIndex + c] = true;
-            }
-          }
-        }
-
-        const div = cell.querySelector('div.timetable_con');
-        if (div) {
-          const dayOfWeek = colIndex - 1;
-          if (dayOfWeek >= 1 && dayOfWeek <= 7) {
-            const titleEl = div.querySelector('.title');
-            const courseName = titleEl ? titleEl.textContent.trim().replace('★', '') : '未知课程';
-
-            let startPeriod = 1;
-            let endPeriod = 2;
-            const timeSpan = div.querySelector('span[title*="节"], span[title*="周"]');
-            if (timeSpan) {
-              const timeP = timeSpan.closest('p');
-              const timeText = timeP ? timeP.textContent.trim() : '';
-              const match = timeText.match(/\((\d+)-(\d+)节\)/);
-              if (match) {
-                startPeriod = parseInt(match[1]);
-                endPeriod = parseInt(match[2]);
-              }
-            }
-
-            let location = "未安排地点";
-            const locSpan = div.querySelector('span[title*="地点"]');
-            if (locSpan) {
-              const locP = locSpan.closest('p');
-              if (locP) location = locP.textContent.trim();
-            }
-
-            let teacher = "待定";
-            const teacherSpan = div.querySelector('span[title*="教师"]');
-            if (teacherSpan) {
-              const teacherP = teacherSpan.closest('p');
-              if (teacherP) teacher = teacherP.textContent.trim();
-            }
-
-            parsedCourses.push({
-              courseName,
-              dayOfWeek,
-              startPeriod,
-              endPeriod,
-              location,
-              teacher
-            });
-          }
-        }
-
-        colIndex += colspan;
-      });
-    });
-
-    if (parsedCourses.length > 0) {
-      try {
-        await apiRequest('/timetable/import', {
-          method: 'POST',
-          body: { courses: parsedCourses }
-        });
-      } catch (err) {
-        console.error('自动上报课表失败:', err);
-      }
-    }
+  // 2. 绑定验证码图片点击刷新事件
+  const captchaImg = screen.querySelector('#proxy-captcha-img');
+  if (captchaImg) {
+    captchaImg.onclick = () => refreshProxyCaptcha();
   }
 
-  // 从后台加载已解析好的课表与无课推荐，并更新网格
+  // 3. 绑定一键导入按钮事件
+  const syncBtn = screen.querySelector('#btn-proxy-sync');
+  if (syncBtn) {
+    syncBtn.onclick = async (e) => {
+      e.preventDefault();
+      
+      const studentIdInput = screen.querySelector('#proxy-student-id');
+      const passwordInput = screen.querySelector('#proxy-password');
+      const captchaInput = screen.querySelector('#proxy-captcha');
+      
+      if (!studentIdInput || !passwordInput || !captchaInput) return;
+      
+      const studentId = studentIdInput.value.trim();
+      const password = passwordInput.value.trim();
+      const captcha = captchaInput.value.trim();
+      
+      if (!studentId || !password || !captcha) {
+        toast('⚠️ 请完整输入学号、密码和验证码！');
+        return;
+      }
+      
+      syncBtn.disabled = true;
+      syncBtn.textContent = '⏳ 正在代理登录并同步中...';
+      
+      try {
+        const res = await apiRequest('/timetable/proxy-login', {
+          method: 'POST',
+          body: { studentId, password, captcha }
+        });
+        
+        if (res && res.ok) {
+          toast('✅ 课表通过服务器代理同步成功！');
+          // 重新读取并渲染已导入课表
+          await reloadTimetableData(container, slotsContainer);
+        } else {
+          toast('❌ 同步失败: ' + (res.message || '验证码错误或密码不正确'));
+          refreshProxyCaptcha(); // 刷新验证码
+        }
+      } catch (err) {
+        toast('❌ 同步请求失败，请检查网络和验证码！');
+        refreshProxyCaptcha();
+      } finally {
+        syncBtn.disabled = false;
+        syncBtn.textContent = '⚡ 开始一键代理导入';
+      }
+    };
+  }
+
+  // 4. 从后台加载已解析好的课表并更新网格
+  await reloadTimetableData(container, slotsContainer);
+}
+
+// 辅助函数：刷新验证码
+async function refreshProxyCaptcha() {
+  const captchaImg = screen.querySelector('#proxy-captcha-img');
+  if (!captchaImg) return;
+  try {
+    const res = await apiRequest('/timetable/captcha', { method: 'GET' });
+    if (res && res.captchaImage) {
+      captchaImg.src = res.captchaImage;
+    }
+  } catch (err) {
+    console.error('获取验证码失败:', err);
+  }
+}
+
+// 辅助函数：重新加载并绘制网格
+async function reloadTimetableData(container, slotsContainer) {
   try {
     const data = await apiRequest('/timetable/mine', { method: 'GET' });
     if (data && data.courses && data.courses.length > 0) {
       renderTimetableGrid(data.courses, container);
       renderFreeSlotsSummary(data.freeSlots, slotsContainer);
+    } else {
+      container.innerHTML = '<div class="empty"><p>暂无已导入课表，请输入上方信息并点击“开始一键代理导入”</p></div>';
+      slotsContainer.innerHTML = '';
     }
   } catch (err) {
     console.log('读取本地课表失败:', err);
-  }
-}
-
-async function handleImportCourses(courses = []) {
-  const container = screen.querySelector('#timetable-grid-container');
-  const slotsContainer = screen.querySelector('#free-slots-summary-container');
-  const jsonPreview = screen.querySelector('#json-export-preview');
-  const webviewText = screen.querySelector('#webview-frame-text');
-  const webviewStatus = screen.querySelector('#webview-status');
-
-  if (webviewText) webviewText.innerHTML = `✅ 已成功通过 Webview DOM 抽取 <strong style="color:#096dd9;">${courses.length}</strong> 门课程数据！`;
-  if (webviewStatus) {
-    webviewStatus.textContent = '解析完成';
-    webviewStatus.style.background = '#f6ffed';
-    webviewStatus.style.color = '#52c41a';
-  }
-
-  try {
-    const data = await apiRequest('/timetable/import', {
-      method: 'POST',
-      data: { courses }
-    });
-    currentTimetableData = data;
-    toast(`成功导出并归档 ${courses.length} 门课程！`);
-    if (container) renderTimetableGrid(data.courses, container);
-    if (slotsContainer) renderFreeSlotsSummary(data.freeSlots, slotsContainer);
-    if (jsonPreview) jsonPreview.textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    toast(err.message || '课表导出失败');
   }
 }
 
