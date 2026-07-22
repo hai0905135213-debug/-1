@@ -2451,8 +2451,8 @@ async function loadTimetableImportPage() {
 
   // 动态设置真实 H5 导入中转站的 Token
   const h5ImportLink = screen.querySelector('#h5-import-link');
-  if (h5ImportLink && authSession && authSession.user) {
-    h5ImportLink.href = `./timetable-import.html?token=dev-token-${authSession.user.id}`;
+  if (h5ImportLink && authSession && authSession.token) {
+    h5ImportLink.href = `./timetable-import.html?token=${authSession.token}`;
   }
 
   // 绑定 Mock Webview 内的登录点击事件
