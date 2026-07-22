@@ -327,11 +327,83 @@ const pages = {
 
       <div class="webview-preview-card" style="margin-top:14px;background:#fff;padding:14px;border-radius:16px;border:1px solid #f0f0f5;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-size:13px;font-weight:700;color:#08091f;">🌐 Webview 网页容器预览 (央财教务处)</span>
-          <span class="status-tag" id="webview-status" style="font-size:11px;background:#e6f7ff;color:#1890ff;padding:2px 8px;border-radius:6px;">已就绪</span>
+          <span style="font-size:13px;font-weight:700;color:#08091f;">🌐 Webview 网页容器 (央财统一身份认证)</span>
+          <span class="status-tag" id="webview-status" style="font-size:11px;background:#fff2e8;color:#fa541c;padding:2px 8px;border-radius:6px;font-weight:bold;">未登录</span>
         </div>
-        <div id="webview-frame-container" style="height:120px;background:#f9f9fc;border:1px dashed #d1d5db;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8e8f98;font-size:13px;text-align:center;padding:12px;">
-          <p id="webview-frame-text">已连接中央财经大学教务系统 (xuanke.cufe.edu.cn)。登录后自动抓取表格。</p>
+        <div id="webview-frame-container" style="height:220px;background:#f9f9fc;border:1px solid #d1d5db;border-radius:12px;overflow:hidden;position:relative;">
+          
+          <div id="cufe-mock-login" style="padding:16px;height:100%;box-sizing:border-box;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+            <div style="font-size:14px;font-weight:bold;color:#b22222;text-align:center;margin-bottom:10px;">中央财经大学统一身份认证 (MOCK)</div>
+            <div style="display:flex;flex-direction:column;gap:8px;max-width:240px;width:100%;">
+              <input type="text" id="cufe-username" value="2026001" placeholder="用户名 / 学号" style="padding:6px 10px;font-size:12px;border:1px solid #ccc;border-radius:6px;width:100%;box-sizing:border-box;">
+              <input type="password" id="cufe-password" value="password" placeholder="密码" style="padding:6px 10px;font-size:12px;border:1px solid #ccc;border-radius:6px;width:100%;box-sizing:border-box;">
+              <button id="btn-cufe-login" class="primary full-width" style="padding:6px;font-size:12px;background:#b22222;border-color:#b22222;color:#fff;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">确认登录 (Sign In)</button>
+            </div>
+            <div style="font-size:10px;color:#8e8f98;text-align:center;margin-top:10px;">提示：点击“确认登录”进入教务系统课表页以完成 DOM 解析测试</div>
+          </div>
+
+          <div id="cufe-mock-timetable" style="display:none;padding:10px;height:100%;box-sizing:border-box;overflow-y:auto;background:#fafafa;">
+            <div style="font-size:12px;font-weight:bold;color:#333;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+              <span>学生课表查询 - 2026-2027学年第一学期</span>
+              <span style="font-size:11px;color:#52c41a;font-weight:bold;">● 已成功登录 (2026001)</span>
+            </div>
+            
+            <table id="cufe-kbtable" style="width:100%;border-collapse:collapse;font-size:10px;background:#fff;border:1px solid #ddd;text-align:center;">
+              <thead>
+                <tr style="background:#eef2f7;height:22px;font-weight:bold;">
+                  <th style="border:1px solid #ddd;width:15%;">节次</th>
+                  <th style="border:1px solid #ddd;width:17%;">周一</th>
+                  <th style="border:1px solid #ddd;width:17%;">周二</th>
+                  <th style="border:1px solid #ddd;width:17%;">周三</th>
+                  <th style="border:1px solid #ddd;width:17%;">周四</th>
+                  <th style="border:1px solid #ddd;width:17%;">周五</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="height:44px;">
+                  <td style="border:1px solid #ddd;font-weight:bold;background:#fafafa;">1-2节</td>
+                  <td style="border:1px solid #ddd;" class="kbcontent">
+                    <div class="kb-course" style="font-weight:bold;color:#b22222;">微观经济学</div>
+                    <div class="kb-teacher" style="color:#666;">刘教授</div>
+                    <div class="kb-loc" style="color:#888;">学院楼 301</div>
+                  </td>
+                  <td style="border:1px solid #ddd;" class="kbcontent"></td>
+                  <td style="border:1px solid #ddd;" class="kbcontent">
+                    <div class="kb-course" style="font-weight:bold;color:#b22222;">线性代数</div>
+                    <div class="kb-teacher" style="color:#666;">王教授</div>
+                    <div class="kb-loc" style="color:#888;">教二楼 105</div>
+                  </td>
+                  <td style="border:1px solid #ddd;" class="kbcontent">
+                    <div class="kb-course" style="font-weight:bold;color:#b22222;">思想道德与法治</div>
+                    <div class="kb-teacher" style="color:#666;">赵老师</div>
+                    <div class="kb-loc" style="color:#888;">大报告厅</div>
+                  </td>
+                  <td style="border:1px solid #ddd;" class="kbcontent"></td>
+                </tr>
+                <tr style="height:44px;">
+                  <td style="border:1px solid #ddd;font-weight:bold;background:#fafafa;">3-4节</td>
+                  <td style="border:1px solid #ddd;" class="kbcontent">
+                    <div class="kb-course" style="font-weight:bold;color:#b22222;">计量经济学</div>
+                    <div class="kb-teacher" style="color:#666;">陈老师</div>
+                    <div class="kb-loc" style="color:#888;">实验楼 204</div>
+                  </td>
+                  <td style="border:1px solid #ddd;" class="kbcontent">
+                    <div class="kb-course" style="font-weight:bold;color:#b22222;">计算机设计 (C++)</div>
+                    <div class="kb-teacher" style="color:#666;">李老师</div>
+                    <div class="kb-loc" style="color:#888;">实验楼 302</div>
+                  </td>
+                  <td style="border:1px solid #ddd;" class="kbcontent"></td>
+                  <td style="border:1px solid #ddd;" class="kbcontent">
+                    <div class="kb-course" style="font-weight:bold;color:#b22222;">体育 (羽毛球)</div>
+                    <div class="kb-teacher" style="color:#666;">陈教练</div>
+                    <div class="kb-loc" style="color:#888;">体育馆</div>
+                  </td>
+                  <td style="border:1px solid #ddd;" class="kbcontent"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
         </div>
       </div>
 
@@ -869,7 +941,48 @@ function bindPageActions() {
   const fetchTimetableBtn = screen.querySelector('[data-fetch-timetable]')
   if (fetchTimetableBtn) {
     fetchTimetableBtn.addEventListener('click', () => {
-      handleImportCourses(SAMPLE_TIMETABLE_COURSES)
+      const mockTimetableDiv = screen.querySelector('#cufe-mock-timetable');
+      if (!mockTimetableDiv || mockTimetableDiv.style.display !== 'block') {
+        toast('⚠️ 请先在下方 Webview 容器中完成统一身份认证登录！');
+        return;
+      }
+
+      // 真实 DOM 提取逻辑模拟
+      const parsedCourses = [];
+      const cells = screen.querySelectorAll('#cufe-kbtable tbody td.kbcontent');
+      
+      cells.forEach((cell) => {
+        const courseNameEl = cell.querySelector('.kb-course');
+        const teacherEl = cell.querySelector('.kb-teacher');
+        const locEl = cell.querySelector('.kb-loc');
+        
+        if (courseNameEl && courseNameEl.textContent.trim()) {
+          const parentRow = cell.closest('tr');
+          const rowIndex = Array.from(parentRow.parentNode.children).indexOf(parentRow);
+          const tds = Array.from(parentRow.querySelectorAll('td'));
+          const cellIndex = tds.indexOf(cell);
+          
+          // cellIndex 1=周一, 2=周二...
+          const dayOfWeek = cellIndex; 
+          const startPeriod = rowIndex === 0 ? 1 : 3;
+          const endPeriod = rowIndex === 0 ? 2 : 4;
+          
+          parsedCourses.push({
+            courseName: courseNameEl.textContent.trim(),
+            dayOfWeek: dayOfWeek,
+            startPeriod: startPeriod,
+            endPeriod: endPeriod,
+            location: locEl ? locEl.textContent.trim() : '未分配教室',
+            teacher: teacherEl ? teacherEl.textContent.trim() : '教师未定'
+          });
+        }
+      });
+
+      if (parsedCourses.length > 0) {
+        handleImportCourses(parsedCourses);
+      } else {
+        toast('未在表格中解析出有效课程');
+      }
     })
   }
 
@@ -2253,6 +2366,26 @@ async function loadTimetableImportPage() {
   const slotsContainer = screen.querySelector('#free-slots-summary-container');
   const jsonPreview = screen.querySelector('#json-export-preview');
   if (!container) return;
+
+  // 绑定 Mock Webview 内的登录点击事件
+  const mockLoginDiv = screen.querySelector('#cufe-mock-login');
+  const mockTimetableDiv = screen.querySelector('#cufe-mock-timetable');
+  const loginBtn = screen.querySelector('#btn-cufe-login');
+  const webviewStatus = screen.querySelector('#webview-status');
+
+  if (loginBtn && mockLoginDiv && mockTimetableDiv) {
+    loginBtn.onclick = (e) => {
+      e.preventDefault();
+      mockLoginDiv.style.display = 'none';
+      mockTimetableDiv.style.display = 'block';
+      if (webviewStatus) {
+        webviewStatus.textContent = '已登录课表页';
+        webviewStatus.style.background = '#e6f7ff';
+        webviewStatus.style.color = '#1890ff';
+      }
+      toast('登录成功！正方教务课表页面渲染完毕。');
+    };
+  }
 
   try {
     const data = await apiRequest('/timetable/mine', { method: 'GET' });
