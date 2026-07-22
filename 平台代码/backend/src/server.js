@@ -1,5 +1,7 @@
 import http from "node:http";
 import { URL } from "node:url";
+import crypto from "node:crypto";
+import * as cheerio from "cheerio";
 import {
   getUser,
   getUserByStudentNo,
@@ -343,8 +345,10 @@ async function handleGetCaptcha(req, res) {
 
 // RSA 加密密码函数
 function encryptPassword(password, modulusHex, exponentHex) {
-  const n = Buffer.from(modulusHex, 'hex').toString('base64url');
-  const e = Buffer.from(exponentHex, 'hex').toString('base64url');
+  const modHexEven = modulusHex.length % 2 !== 0 ? '0' + modulusHex : modulusHex;
+  const expHexEven = exponentHex.length % 2 !== 0 ? '0' + exponentHex : exponentHex;
+  const n = Buffer.from(modHexEven, 'hex').toString('base64url');
+  const e = Buffer.from(expHexEven, 'hex').toString('base64url');
   
   const jwk = {
     kty: 'RSA',
@@ -517,9 +521,20 @@ async function handleProxyLogin(req, res) {
       return sendError(res, 400, "LOGIN_FAILED", tipsText);
     }
 
+    // 登录成功后，部分教务系统会更新 JSESSIONID，需要提取最新的 Cookie 供查询课表使用
+    let activeCookie = `JSESSIONID=${jSessionId}`;
+    const loginSetCookie = loginRes.headers.get('set-cookie');
+    if (loginSetCookie) {
+      const match = loginSetCookie.match(/JSESSIONID=([^;]+)/);
+      if (match) {
+        activeCookie = `JSESSIONID=${match[1]}`;
+      }
+    }
+
     const timetableRes = await fetch('https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default', {
       headers: {
-        ...headers,
+        'User-Agent': headers['User-Agent'],
+        'Cookie': activeCookie,
         'Referer': 'https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151'
       }
     });

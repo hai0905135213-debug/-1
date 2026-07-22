@@ -22,6 +22,18 @@
     </view>
 
     <view class="profile-panel">
+      <view class="section-title">我的课表</view>
+      <view class="timetable-sync-card" @tap="goTimetable">
+        <view class="sync-left">
+          <text class="sync-icon">📅</text>
+          <view class="sync-text">
+            <text class="sync-title">教务处课表同步</text>
+            <text class="sync-desc">{{ hasTimetable ? '已同步真实课表数据' : '导入课表自动识别无课有空时段' }}</text>
+          </view>
+        </view>
+        <text class="sync-arrow">👉</text>
+      </view>
+
       <view class="section-title">我的饭局</view>
       <view class="empty-block">
         <view class="empty-illustration">🍽</view>
@@ -51,18 +63,22 @@
 </template>
 
 <script>
+import { timetableApi } from '../../services/api'
+
 export default {
   data() {
     return {
       tabs: ['去过', '想去', '动态', '收藏'],
       activeTab: '去过',
       currentUser: null,
-      currentProfile: null
+      currentProfile: null,
+      hasTimetable: false
     }
   },
   onShow() {
     this.currentUser = uni.getStorageSync('currentUser') || null
     this.currentProfile = uni.getStorageSync('currentProfile') || null
+    this.checkTimetable()
   },
   computed: {
     tasteLabel() {
@@ -71,6 +87,22 @@ export default {
     }
   },
   methods: {
+    async checkTimetable() {
+      if (!this.currentUser) return
+      try {
+        const data = await timetableApi.mine()
+        this.hasTimetable = data && data.courses && data.courses.length > 0
+      } catch (err) {
+        console.error(err)
+      }
+    },
+    goTimetable() {
+      if (!this.currentUser) {
+        uni.navigateTo({ url: '/pages/login/index' })
+        return
+      }
+      uni.navigateTo({ url: '/pages/timetable-import/index' })
+    },
     goLogin() {
       uni.navigateTo({ url: '/pages/login/index' })
     },
@@ -174,6 +206,50 @@ export default {
   font-size: 40rpx;
   font-weight: 900;
   margin-bottom: 28rpx;
+}
+
+.timetable-sync-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 2rpx solid #08091f;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 36rpx;
+}
+
+.sync-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.sync-icon {
+  font-size: 40rpx;
+}
+
+.sync-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sync-title {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #08091f;
+}
+
+.sync-desc {
+  font-size: 22rpx;
+  color: #94959f;
+  margin-top: 4rpx;
+}
+
+.sync-arrow {
+  font-size: 28rpx;
+  color: #08091f;
+  font-weight: 800;
 }
 
 .empty-block,

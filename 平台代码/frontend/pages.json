@@ -19,6 +19,12 @@
       }
     },
     {
+      "path": "pages/timetable-import/index",
+      "style": {
+        "navigationBarTitleText": "导入教务处课表"
+      }
+    },
+    {
       "path": "pages/create-review/index",
       "style": {
         "navigationBarTitleText": "发布评价"

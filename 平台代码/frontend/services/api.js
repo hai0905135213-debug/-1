@@ -101,3 +101,10 @@ export const restaurantApi = {
   },
   detail: (id) => request(`/restaurants/${id}`)
 }
+
+export const timetableApi = {
+  import: (data) => request('/timetable/import', { method: 'POST', data }),
+  mine: () => request('/timetable/mine'),
+  captcha: () => request('/timetable/captcha'),
+  proxyLogin: (data) => request('/timetable/proxy-login', { method: 'POST', data })
+}
