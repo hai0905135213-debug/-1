@@ -1606,9 +1606,63 @@ async function loadPreviewMealDetail(id) {
 
     const joinButton = screen.querySelector('[data-join]')
     if (joinButton) {
-      const joined = Boolean(meal.participants?.some((item) => item.id === authSession?.user?.id))
+      const joined = Boolean(meal.participants?.some((item) => (item.userId || item.id) === authSession?.user?.id))
       joinButton.textContent = joined ? '已加入' : '想去/加入'
       joinButton.disabled = joined
+    }
+
+    // 收藏状态
+    if (authSession?.token) {
+      try {
+        const savedData = await apiRequest('/profile/saved')
+        const savedItems = savedData.items || []
+        const isSaved = savedItems.some(s => s.mealId === meal.id)
+        const saveBtn = screen.querySelector('[data-save-meal]')
+        if (saveBtn) {
+          saveBtn.textContent = isSaved ? '★ 已收藏' : '☆ 收藏'
+          saveBtn.classList.toggle('saved', isSaved)
+        }
+      } catch (e) { /* 收藏状态不影响主流程 */ }
+    }
+
+    // 举报按钮：只有参与者和非发起人能举报
+    const reportBtn = screen.querySelector('[data-report-meal]')
+    if (reportBtn) {
+      const uid = authSession?.user?.id
+      const canReport = uid && meal.participants?.some(p => (p.userId || p.id) === uid) && uid !== meal.creatorId
+      reportBtn.style.display = canReport ? '' : 'none'
+    }
+
+    // 绑定管理按钮事件
+    const cancelBtn = screen.querySelector('[data-cancel-meal]')
+    if (cancelBtn) {
+      const clone = cancelBtn.cloneNode(true)
+      cancelBtn.parentNode.replaceChild(clone, cancelBtn)
+      clone.addEventListener('click', handleCancelMeal)
+    }
+    const finishBtn = screen.querySelector('[data-finish-meal]')
+    if (finishBtn) {
+      const clone = finishBtn.cloneNode(true)
+      finishBtn.parentNode.replaceChild(clone, finishBtn)
+      clone.addEventListener('click', handleFinishMeal)
+    }
+    const saveBtn = screen.querySelector('[data-save-meal]')
+    if (saveBtn) {
+      const clone = saveBtn.cloneNode(true)
+      saveBtn.parentNode.replaceChild(clone, saveBtn)
+      clone.addEventListener('click', handleSaveMeal)
+    }
+    if (reportBtn) {
+      const clone = reportBtn.cloneNode(true)
+      reportBtn.parentNode.replaceChild(clone, reportBtn)
+      clone.addEventListener('click', handleReportMeal)
+    }
+
+    // 饭局已结束/取消时隐藏底部操作栏
+    const bottomActions = screen.querySelector('.bottom-actions')
+    if (bottomActions) {
+      const isOver = meal.status === 'cancelled' || meal.status === 'finished'
+      bottomActions.style.display = isOver ? 'none' : ''
     }
   } catch (error) {
     target.innerHTML = `<div class="empty"><p>${error.message}</p></div>`
@@ -1616,6 +1670,13 @@ async function loadPreviewMealDetail(id) {
 }
 
 function renderMealDetail(meal) {
+  const uid = authSession?.user?.id
+  const isCreator = uid && uid === meal.creatorId
+  const isParticipant = uid && meal.participants?.some(p => (p.userId || p.id) === uid)
+  const canCancel = isCreator && (meal.status === 'open' || meal.status === 'matched')
+  const canFinish = isCreator && meal.status === 'matched'
+  const canReport = uid && isParticipant && !isCreator
+
   return `
     <div style="position:relative"><img class="hero" src="${getMealImage(meal.foodType)}"><button class="icon-btn dark" data-back style="position:absolute;left:16px;top:18px">‹</button><button class="icon-btn dark" data-toast="已复制分享链接" style="position:absolute;right:16px;top:18px">↗</button></div>
     <div class="detail-panel">
@@ -1623,12 +1684,20 @@ function renderMealDetail(meal) {
       <span class="tag">值得一起去吃</span><span class="tag">${meal.foodType || '校园饭局'}</span>
       <p>${meal.foodType || '约饭'} ｜ ${meal.place} ｜ ${formatBudget(meal)}</p>
       <hr>
-      <p><strong>${meal.status === 'open' ? '可加入' : '已结束'} ${formatMealTime(meal.mealTime)}</strong><br><span class="muted">${meal.currentPeople || 1}/${meal.maxPeople} 人 · ${meal.chatMode || 'balanced'}</span></p>
+      <p><strong>${meal.status === 'open' ? '可加入' : meal.status === 'matched' ? '已成局' : meal.status === 'finished' ? '已完成' : '已取消'} ${formatMealTime(meal.mealTime)}</strong><br><span class="muted">${meal.currentPeople || 1}/${meal.maxPeople} 人 · ${meal.chatMode || 'balanced'}</span></p>
       <p><strong>${meal.place} ›</strong><br><span class="muted">${meal.campus || '主校区'} · 发起人 ${meal.creator?.nickname || '同学'}</span></p>
       <div class="section-title">推荐吃法</div>
       <div class="dishes"><div class="dish"><img src="${getMealImage(meal.foodType)}">${meal.foodType || '随便吃点'}</div><div class="dish"><img src="${img.noodle}">招牌主食</div><div class="dish"><img src="${img.salad}">饭后散步</div></div>
       <div class="section-title">饭搭子评价</div>
       <div class="quote">${meal.reviews?.[0]?.content || meal.description || '还没有评价，加入后可以回来补一条真实体验。'}</div>
+      ${(canCancel || canFinish || uid || canReport) ? `
+      <div class="meal-actions-row">
+        ${canCancel ? '<button class="meal-action-btn danger" data-cancel-meal>✕ 取消饭局</button>' : ''}
+        ${canFinish ? '<button class="meal-action-btn" data-finish-meal>✓ 标记完成</button>' : ''}
+        ${uid ? '<button class="meal-action-btn" data-save-meal>☆ 收藏</button>' : ''}
+        ${canReport ? '<button class="meal-action-btn warn" data-report-meal>⚠ 举报</button>' : ''}
+      </div>
+      ` : ''}
     </div>
   `
 }
@@ -2082,6 +2151,65 @@ async function handleJoinOrLeaveClick() {
   } catch (error) {
     toast(error.message)
     loadPreviewMealDetail(activeMealId)
+  }
+}
+
+async function handleCancelMeal() {
+  if (!confirm('确定要取消这个饭局吗？取消后无法恢复。')) return
+  try {
+    await apiRequest(`/meals/${activeMealId}/cancel`, { method: 'POST' })
+    toast('饭局已取消')
+    loadPreviewMealDetail(activeMealId)
+  } catch (error) {
+    toast(error.message)
+  }
+}
+
+async function handleFinishMeal() {
+  if (!confirm('标记完成后，其他参与者将可以互相评价。确定吗？')) return
+  try {
+    await apiRequest(`/meals/${activeMealId}/finish`, { method: 'POST' })
+    toast('饭局已完成')
+    loadPreviewMealDetail(activeMealId)
+  } catch (error) {
+    toast(error.message)
+  }
+}
+
+async function handleSaveMeal() {
+  try {
+    const res = await apiRequest(`/meals/${activeMealId}/save`, { method: 'POST' })
+    const saved = res.saved
+    const saveBtn = screen.querySelector('[data-save-meal]')
+    if (saveBtn) {
+      saveBtn.textContent = saved ? '★ 已收藏' : '☆ 收藏'
+      saveBtn.classList.toggle('saved', saved)
+    }
+    toast(saved ? '已收藏饭局' : '已取消收藏')
+  } catch (error) {
+    toast(error.message)
+  }
+}
+
+async function handleReportMeal() {
+  const reason = prompt('请简要说明举报原因：')
+  if (!reason || !reason.trim()) return
+
+  try {
+    // 从当前饭局详情中获取发起人 ID 作为举报对象
+    const data = await apiRequest(`/meals/${activeMealId}`)
+    const meal = data.meal
+    await apiRequest(`/meals/${activeMealId}/reports`, {
+      method: 'POST',
+      data: {
+        targetUserId: meal.creatorId,
+        reason: reason.trim(),
+        detail: ''
+      }
+    })
+    toast('举报已提交，我们会尽快处理')
+  } catch (error) {
+    toast(error.message)
   }
 }
 

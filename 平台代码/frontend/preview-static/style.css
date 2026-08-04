@@ -1745,3 +1745,53 @@ button:disabled {
 .free-slot-tag:hover {
   transform: translateY(-1px);
 }
+
+/* ===== 饭局详情页管理操作按钮行 ===== */
+.meal-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f3;
+}
+
+.meal-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  background: #f7f7f8;
+  color: #5f6069;
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.meal-action-btn:active {
+  transform: scale(0.97);
+  background: #eeeef2;
+}
+
+.meal-action-btn.danger {
+  color: #e6506e;
+  background: #fff0f3;
+  border-color: #ffd4de;
+}
+
+.meal-action-btn.warn {
+  color: #e6782f;
+  background: #fff8f0;
+  border-color: #ffe4cc;
+}
+
+.meal-action-btn.saved {
+  color: #e6782f;
+  background: #fff7e6;
+  border-color: #ffd591;
+}

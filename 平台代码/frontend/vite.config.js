@@ -17,6 +17,7 @@ function miniProgramPreviewTransform() {
         .replace(/<\/text>/g, '</span>')
         .replace(/<image\b/g, '<img')
         .replace(/<\/image>/g, '</img>')
+        .replace(/<scroll-view\b([^>]*?)scroll-x([^>]*?)class="([^"]*)"([^>]*)>/g, '<div$1$2class="$3 preview-scroll" data-scroll-x="true"$4>')
         .replace(/<scroll-view\b([^>]*)scroll-x([^>]*)>/g, '<div$1$2 class="preview-scroll" data-scroll-x="true">')
         .replace(/<scroll-view\b/g, '<div')
         .replace(/<\/scroll-view>/g, '</div>')
