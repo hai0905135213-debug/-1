@@ -320,12 +320,12 @@ const pages = {
         <div style="display:flex;flex-direction:column;gap:12px;">
           <div>
             <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:4px;">学号</label>
-            <input type="text" id="proxy-student-id" value="2025310322" placeholder="请输入您的学号" style="width:100%;padding:10px;font-size:13px;border:1px solid #e5e5ea;border-radius:10px;box-sizing:border-box;">
-            <p style="font-size:11px;color:#d46b08;margin:4px 0 0 0;font-weight:bold;">💡 测试贴士：使用内置学号 2025310322 可以同步抓取您的真实课表数据</p>
+            <input type="text" id="proxy-student-id" value="${authSession?.user?.studentNo || ''}" placeholder="请输入您的教务处学号" style="width:100%;padding:10px;font-size:13px;border:1px solid #e5e5ea;border-radius:10px;box-sizing:border-box;">
+            <p style="font-size:11px;color:#d46b08;margin:4px 0 0 0;font-weight:bold;">💡 请填写自己的教务处学号、密码和当前验证码</p>
           </div>
           <div>
             <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:4px;">密码</label>
-            <input type="password" id="proxy-password" value="password123" placeholder="请输入教务处密码" style="width:100%;padding:10px;font-size:13px;border:1px solid #e5e5ea;border-radius:10px;box-sizing:border-box;">
+            <input type="password" id="proxy-password" value="" placeholder="请输入教务处密码" style="width:100%;padding:10px;font-size:13px;border:1px solid #e5e5ea;border-radius:10px;box-sizing:border-box;">
           </div>
           <div>
             <label style="font-size:12px;font-weight:700;color:#5a5b6a;display:block;margin-bottom:4px;">验证码</label>
@@ -363,6 +363,47 @@ const pages = {
     </div>
   `
 }
+
+pages.timetableImport = `
+  <div class="page timetable-import-page">
+    <div class="header-card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="title" style="margin:0;font-size:18px;font-weight:800;color:#08091f;">📅 上传 PDF 课表</div>
+      <button class="secondary" data-back style="padding:6px 12px;font-size:12px;">返回</button>
+    </div>
+
+    <div class="card" style="background:#fff;padding:16px;border-radius:16px;border:1px solid #f0f0f5;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:bold;color:#b22222;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+        📄 PDF 扫描导入
+      </div>
+      <p style="font-size:12px;color:#8e8f98;margin:0 0 14px 0;line-height:1.5;">
+        选择教务处导出的文字版 PDF，系统会自动识别课程、保存课表，并刷新下面的空闲时间分析。图片扫描件后续再接 OCR。
+      </p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <label for="timetable-pdf-file" style="display:flex;gap:12px;align-items:center;padding:14px;border:1px dashed #d8d9e3;border-radius:14px;background:#fafafa;cursor:pointer;">
+          <span style="width:48px;height:48px;border-radius:12px;background:#08091f;color:#ffea35;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;">PDF</span>
+          <span style="flex:1;min-width:0;">
+            <strong id="selected-pdf-name" style="display:block;font-size:14px;color:#08091f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">选择课表 PDF</strong>
+            <small style="display:block;margin-top:4px;color:#8e8f98;font-size:12px;">支持 8MB 以内文件，推荐教务处导出的文字版 PDF</small>
+          </span>
+          <span style="font-size:18px;color:#08091f;">＋</span>
+          <input id="timetable-pdf-file" type="file" accept="application/pdf,.pdf" style="display:none;">
+        </label>
+        <div id="pdf-import-status" style="min-height:18px;font-size:12px;color:#8e8f98;"></div>
+        <button id="btn-pdf-import" class="primary" style="padding:12px;font-weight:bold;background:#08091f;color:#ffea35;border-radius:12px;font-size:14px;border:none;cursor:pointer;margin-top:4px;display:flex;justify-content:center;align-items:center;">
+          ⚡ 上传并扫描课表
+        </button>
+      </div>
+    </div>
+
+    <div class="timetable-result-section">
+      <h3 style="margin:0 0 10px 0;font-size:16px;font-weight:800;color:#08091f;">📊 导入后的课表网格</h3>
+      <div id="free-slots-summary-container" style="margin-bottom:12px;"></div>
+      <div id="timetable-grid-container" style="overflow-x:auto;background:#fff;border-radius:16px;padding:12px;border:1px solid #f0f0f5;">
+        <div class="empty"><p>暂无已导入课表，请先上传 PDF 课表。</p></div>
+      </div>
+    </div>
+  </div>
+`
 
 const screen = document.querySelector('#screen')
 const buttons = document.querySelectorAll('.tabbar button')
@@ -2476,7 +2517,7 @@ async function loadTimetableImportPage() {
   if (!container) return;
 
   // 1. 获取验证码并渲染
-  refreshProxyCaptcha();
+  await refreshProxyCaptcha();
 
   // 2. 绑定验证码图片点击刷新事件
   const captchaImg = screen.querySelector('#proxy-captcha-img');
@@ -2511,7 +2552,7 @@ async function loadTimetableImportPage() {
       try {
         const res = await apiRequest('/timetable/proxy-login', {
           method: 'POST',
-          body: { studentId, password, captcha }
+          data: { studentId, password, captcha }
         });
         
         if (res && res.ok) {
@@ -2544,10 +2585,13 @@ async function refreshProxyCaptcha() {
     const res = await apiRequest('/timetable/captcha', { method: 'GET' });
     if (res && res.captchaImage) {
       captchaImg.src = res.captchaImage;
+      return true;
     }
   } catch (err) {
-    console.error('获取验证码失败:', err);
+    console.error('Failed to load timetable captcha', err);
+    toast(err.message || '验证码加载失败，请先确认已登录并检查后端服务');
   }
+  return false;
 }
 
 // 辅助函数：重新加载并绘制网格
@@ -2621,6 +2665,74 @@ function renderFreeSlotsSummary(freeSlots = [], container) {
       `).join('')}
     </div>
   `;
+}
+
+async function loadTimetableImportPage() {
+  const container = screen.querySelector('#timetable-grid-container');
+  const slotsContainer = screen.querySelector('#free-slots-summary-container');
+  const fileInput = screen.querySelector('#timetable-pdf-file');
+  const fileNameLabel = screen.querySelector('#selected-pdf-name');
+  const status = screen.querySelector('#pdf-import-status');
+  const importBtn = screen.querySelector('#btn-pdf-import');
+  if (!container) return;
+
+  if (fileInput && fileNameLabel) {
+    fileInput.onchange = () => {
+      const file = fileInput.files?.[0];
+      fileNameLabel.textContent = file ? file.name : '选择课表 PDF';
+      if (status) status.textContent = file ? '已选择文件，点击下方按钮开始扫描。' : '';
+    };
+  }
+
+  if (importBtn) {
+    importBtn.onclick = async (event) => {
+      event.preventDefault();
+      const file = fileInput?.files?.[0];
+      if (!file) {
+        toast('请先选择 PDF 课表');
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        toast('PDF 文件不能超过 8MB');
+        return;
+      }
+
+      importBtn.disabled = true;
+      importBtn.textContent = '⏳ 正在扫描并导入...';
+      if (status) status.textContent = '正在读取 PDF 并交给后端识别。';
+
+      try {
+        const pdfBase64 = await readFileAsBase64(file);
+        const result = await apiRequest('/timetable/pdf-import', {
+          method: 'POST',
+          data: { fileName: file.name, pdfBase64 }
+        });
+        toast(result.message || '课表导入成功');
+        if (status) status.textContent = result.message || '课表导入成功。';
+        await reloadTimetableData(container, slotsContainer);
+      } catch (err) {
+        toast(err.message || 'PDF 导入失败');
+        if (status) status.textContent = err.message || 'PDF 导入失败，请换文字版 PDF 再试。';
+      } finally {
+        importBtn.disabled = false;
+        importBtn.textContent = '⚡ 上传并扫描课表';
+      }
+    };
+  }
+
+  await reloadTimetableData(container, slotsContainer);
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
 }
 
 buttons.forEach((button) => {

@@ -1,43 +1,26 @@
 <template>
   <view class="page timetable-page">
     <view class="section">
-      <view class="page-title">📅 导入教务处课表</view>
-      <view class="muted" style="margin-top: 8rpx;">免去小程序域名拦截限制。输入教务处信息，服务器在后台自动模拟登录并提取课表，安全可靠。</view>
+      <view class="page-title">📅 上传 PDF 课表</view>
+      <view class="muted" style="margin-top: 8rpx;">选择教务处导出的文字版 PDF，系统会自动识别课程并保存到你的课表。</view>
     </view>
 
-    <!-- PROXY LOGIN FORM -->
     <view class="card login-card">
       <view class="card-subtitle">
-        🏫 中央财经大学统一身份认证 (服务器代理)
+        📄 PDF 扫描导入
       </view>
       
       <view class="form-container">
-        <view class="field">
-          <text class="label">学号</text>
-          <input class="input" v-model="studentId" placeholder="请输入您的学号" />
-          <text class="tip">💡 测试贴士：使用内置学号 2025310322 可以同步抓取真实课表数据</text>
-        </view>
-        <view class="field">
-          <text class="label">密码</text>
-          <input class="input" type="password" v-model="password" placeholder="请输入教务处密码" />
-        </view>
-        <view class="field">
-          <text class="label">验证码</text>
-          <view class="captcha-row">
-            <input class="input captcha-input" v-model="captchaInput" placeholder="输入验证码" />
-            <image 
-              v-if="captchaSrc"
-              :src="captchaSrc" 
-              class="captcha-img" 
-              @tap="fetchCaptcha"
-              title="点击刷新验证码"
-            ></image>
-            <view v-else class="captcha-placeholder" @tap="fetchCaptcha">加载中...</view>
+        <view class="pdf-upload-box" @tap="choosePdf">
+          <view class="pdf-icon">PDF</view>
+          <view class="pdf-copy">
+            <text class="pdf-title">{{ selectedPdfName || '选择课表 PDF' }}</text>
+            <text class="pdf-desc">支持 8MB 以内的文字版 PDF；图片扫描件后续再接 OCR。</text>
           </view>
         </view>
         
-        <button class="button-primary sync-btn" @tap="startSync" :disabled="syncing">
-          {{ syncing ? '⏳ 正在代理登录并同步中...' : '⚡ 开始一键代理导入' }}
+        <button class="button-primary sync-btn" @tap="importPdf" :disabled="syncing || !selectedPdf">
+          {{ syncing ? '⏳ 正在识别并导入...' : '⚡ 上传并扫描课表' }}
         </button>
       </view>
     </view>
@@ -88,7 +71,7 @@
 
       <view v-else class="empty-block card">
         <view class="empty-illustration small">☕</view>
-        <view class="empty-text">暂无已导入课表，请输入上方信息并点击“开始一键代理导入”</view>
+        <view class="empty-text">暂无已导入课表，请先上传 PDF 课表。</view>
       </view>
     </view>
   </view>
@@ -100,17 +83,14 @@ import { timetableApi } from '../../services/api'
 export default {
   data() {
     return {
-      studentId: '2025310322',
-      password: 'password123',
-      captchaInput: '',
-      captchaSrc: '',
+      selectedPdf: null,
+      selectedPdfName: '',
       syncing: false,
       courses: [],
       freeSlots: []
     }
   },
   onShow() {
-    this.fetchCaptcha()
     this.loadTimetable()
   },
   computed: {
@@ -137,17 +117,6 @@ export default {
     }
   },
   methods: {
-    async fetchCaptcha() {
-      try {
-        const data = await timetableApi.captcha()
-        if (data && data.captchaImage) {
-          this.captchaSrc = data.captchaImage
-          this.captchaInput = ''
-        }
-      } catch (err) {
-        uni.showToast({ title: '加载验证码失败: ' + (err.message || '网络连接异常'), icon: 'none' })
-      }
-    },
     async loadTimetable() {
       try {
         const data = await timetableApi.mine()
@@ -159,28 +128,78 @@ export default {
         console.error('获取课表失败:', err)
       }
     },
-    async startSync() {
-      if (!this.studentId.trim() || !this.password.trim() || !this.captchaInput.trim()) {
-        uni.showToast({ title: '请填写完整学号、密码和验证码', icon: 'none' })
+    async choosePdf() {
+      try {
+        const file = await this.pickPdfFile()
+        if (!file) return
+        this.selectedPdf = file
+        this.selectedPdfName = file.name || '课表.pdf'
+      } catch (err) {
+        uni.showToast({ title: err.message || '选择 PDF 失败', icon: 'none' })
+      }
+    },
+    pickPdfFile() {
+      return new Promise((resolve, reject) => {
+        if (typeof wx !== 'undefined' && wx.chooseMessageFile) {
+          wx.chooseMessageFile({
+            count: 1,
+            type: 'file',
+            extension: ['pdf'],
+            success: res => resolve(res.tempFiles?.[0]),
+            fail: reject
+          })
+          return
+        }
+        if (uni.chooseFile) {
+          uni.chooseFile({
+            count: 1,
+            extension: ['.pdf'],
+            success: res => resolve(res.tempFiles?.[0]),
+            fail: reject
+          })
+          return
+        }
+        reject(new Error('当前端暂不支持文件选择'))
+      })
+    },
+    readPdfBase64(file) {
+      return new Promise((resolve, reject) => {
+        const filePath = file.path || file.tempFilePath
+        const fs = typeof wx !== 'undefined' && wx.getFileSystemManager
+          ? wx.getFileSystemManager()
+          : null
+        if (!fs || !filePath) {
+          reject(new Error('当前端暂不支持读取文件，请先用本地预览页测试'))
+          return
+        }
+        fs.readFile({
+          filePath,
+          encoding: 'base64',
+          success: res => resolve(res.data),
+          fail: reject
+        })
+      })
+    },
+    async importPdf() {
+      if (!this.selectedPdf) {
+        uni.showToast({ title: '请先选择 PDF', icon: 'none' })
         return
       }
       this.syncing = true
       try {
-        const res = await timetableApi.proxyLogin({
-          studentId: this.studentId.trim(),
-          password: this.password.trim(),
-          captcha: this.captchaInput.trim()
+        const pdfBase64 = await this.readPdfBase64(this.selectedPdf)
+        const res = await timetableApi.pdfImport({
+          fileName: this.selectedPdfName,
+          pdfBase64
         })
         if (res && res.ok) {
-          uni.showToast({ title: '同步成功', icon: 'success' })
+          uni.showToast({ title: '导入成功', icon: 'success' })
           this.loadTimetable()
         } else {
-          uni.showToast({ title: res.message || '同步失败，请检查验证码或密码', icon: 'none' })
-          this.fetchCaptcha()
+          uni.showToast({ title: res.message || '导入失败', icon: 'none' })
         }
       } catch (err) {
-        uni.showToast({ title: err.message || '同步请求出错，请重试', icon: 'none' })
-        this.fetchCaptcha()
+        uni.showToast({ title: err.message || 'PDF 导入失败', icon: 'none' })
       } finally {
         this.syncing = false
       }
@@ -211,6 +230,52 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
+}
+
+.pdf-upload-box {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx;
+  border: 2rpx dashed #d8d9e3;
+  border-radius: 24rpx;
+  background: #fafafa;
+}
+
+.pdf-icon {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 20rpx;
+  background: #08091f;
+  color: #ffea35;
+  font-size: 28rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.pdf-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #08091f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #8e8f98;
+  line-height: 1.5;
 }
 
 .tip {

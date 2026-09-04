@@ -2,6 +2,7 @@ import http from "node:http";
 import { URL } from "node:url";
 import crypto from "node:crypto";
 import * as cheerio from "cheerio";
+import { PDFParse } from "pdf-parse";
 import {
   getUser,
   getUserByStudentNo,
@@ -94,6 +95,10 @@ const server = http.createServer(async (req, res) => {
 
     if (method === "POST" && path === "/api/timetable/import") {
       return handleImportTimetable(req, res);
+    }
+
+    if (method === "POST" && path === "/api/timetable/pdf-import") {
+      return handleImportTimetablePdf(req, res);
     }
 
     if (method === "GET" && path === "/api/timetable/mine") {
@@ -277,6 +282,205 @@ async function handleImportTimetable(req, res) {
   return sendJson(res, 200, result);
 }
 
+async function handleImportTimetablePdf(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const body = await readBody(req);
+  const fileName = String(body.fileName || "timetable.pdf").trim();
+  const pdfBase64 = String(body.pdfBase64 || "").replace(/^data:application\/pdf;base64,/i, "");
+
+  if (!pdfBase64) {
+    return sendError(res, 400, "PDF_REQUIRED", "请上传课表 PDF 文件");
+  }
+
+  const fileSize = Buffer.byteLength(pdfBase64, "base64");
+  if (fileSize > 8 * 1024 * 1024) {
+    return sendError(res, 413, "PDF_TOO_LARGE", "PDF 文件不能超过 8MB");
+  }
+
+  let text = "";
+  let parser = null;
+  try {
+    parser = new PDFParse({ data: Buffer.from(pdfBase64, "base64") });
+    const result = await parser.getText();
+    text = String(result.text || "");
+  } catch (err) {
+    console.error("PDF timetable parse failed", err);
+    return sendError(res, 400, "PDF_PARSE_FAILED", "PDF 解析失败，请确认文件是教务处导出的 PDF");
+  } finally {
+    if (parser && typeof parser.destroy === "function") {
+      await parser.destroy();
+    }
+  }
+
+  if (!text.trim()) {
+    return sendError(res, 422, "PDF_TEXT_EMPTY", "这个 PDF 没有可提取文字，可能是图片扫描件；请导出文字版 PDF，或后续接 OCR");
+  }
+
+  const courses = parseTimetableText(text);
+  if (courses.length === 0) {
+    return sendError(res, 422, "TIMETABLE_NOT_FOUND", "PDF 已读取，但没有识别到课程；请确认上传的是课表 PDF");
+  }
+
+  const result = saveUserTimetable(user.id, courses);
+  return sendJson(res, 200, {
+    ok: true,
+    message: `成功从 PDF 导入 ${courses.length} 门课程`,
+    fileName,
+    courses,
+    freeSlots: result.freeSlots,
+    importedAt: result.importedAt,
+    textPreview: text.slice(0, 500)
+  });
+}
+
+function parseTimetableText(rawText) {
+  const normalized = String(rawText || "")
+    .replace(/\r/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/[－—–~～至]/g, "-");
+
+  const lines = normalized
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  const courses = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const course = parseTimetableLine(lines[index]);
+    if (course) courses.push(course);
+  }
+
+  return dedupeCourses(courses);
+}
+
+function parseTimetableLine(line) {
+  const dayOfWeek = parseDayOfWeek(line);
+  const periods = parsePeriods(line);
+  if (!dayOfWeek || !periods) return null;
+
+  const courseName = parseCourseName(line);
+  if (!courseName) return null;
+
+  return {
+    courseName,
+    dayOfWeek,
+    startPeriod: periods.startPeriod,
+    endPeriod: periods.endPeriod,
+    location: parseLocation(line),
+    teacher: parseTeacher(line)
+  };
+}
+
+function parseDayOfWeek(text) {
+  const compact = text.replace(/\s+/g, "");
+  const match = compact.match(/(?:周|星期|礼拜)([一二三四五六日天1-7])/);
+  if (match) return dayTokenToNumber(match[1]);
+
+  const englishMatch = compact.match(/\b(mon|monday|tue|tuesday|wed|wednesday|thu|thursday|fri|friday|sat|saturday|sun|sunday)\b/i);
+  if (!englishMatch) return null;
+  return {
+    mon: 1,
+    monday: 1,
+    tue: 2,
+    tuesday: 2,
+    wed: 3,
+    wednesday: 3,
+    thu: 4,
+    thursday: 4,
+    fri: 5,
+    friday: 5,
+    sat: 6,
+    saturday: 6,
+    sun: 7,
+    sunday: 7
+  }[englishMatch[1].toLowerCase()] || null;
+}
+
+function dayTokenToNumber(token) {
+  return { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 日: 7, 天: 7 }[token] || Number(token) || null;
+}
+
+function parsePeriods(text) {
+  const compact = text.replace(/\s+/g, "");
+  const range = compact.match(/第?(\d{1,2})-(\d{1,2})节/);
+  if (range) {
+    return { startPeriod: Number(range[1]), endPeriod: Number(range[2]) };
+  }
+
+  const single = compact.match(/第?(\d{1,2})节/);
+  if (single) {
+    const period = Number(single[1]);
+    return { startPeriod: period, endPeriod: period };
+  }
+
+  const bracketRange = compact.match(/\[(\d{1,2})-(\d{1,2})\]/);
+  if (bracketRange) {
+    return { startPeriod: Number(bracketRange[1]), endPeriod: Number(bracketRange[2]) };
+  }
+
+  return null;
+}
+
+function parseCourseName(line) {
+  const candidates = [line]
+    .map(text => text
+      .replace(/(?:周|星期|礼拜)[一二三四五六日天1-7]/g, " ")
+      .replace(/\b(?:mon|monday|tue|tuesday|wed|wednesday|thu|thursday|fri|friday|sat|saturday|sun|sunday)\b/gi, " ")
+      .replace(/第?\d{1,2}-\d{1,2}节/g, " ")
+      .replace(/第?\d{1,2}节/g, " ")
+      .replace(/\[\d{1,2}-\d{1,2}\]/g, " ")
+      .replace(/教师[:：]?\S+/g, " ")
+      .replace(/老师[:：]?\S+/g, " ")
+      .replace(/Teacher[:：]?\S+/gi, " ")
+      .replace(/地点[:：]?\S+/g, " ")
+      .replace(/教室[:：]?\S+/g, " ")
+      .replace(/\bRoom[A-Za-z0-9-]+\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim())
+    .filter(Boolean);
+
+  return candidates
+    .map(text => text.split(/[，,;；|]/).map(part => part.trim()).find(part => part.length >= 2))
+    .find(Boolean) || "";
+}
+
+function parseLocation(text) {
+  const locationMatch = text.match(/(?:地点|教室)[:：]?\s*([^\s,，;；|]+)/);
+  if (locationMatch) return locationMatch[1];
+
+  const roomMatch = text.match(/\b(Room[A-Za-z0-9-]+)\b/i);
+  if (roomMatch) return roomMatch[1];
+
+  const buildingMatch = text.match(/((?:沙河|学院南路|主教|教[一二三四五六七八九十\d]+|教学楼|实验楼|综合楼|楼|室|馆)[^\s,，;；|]*)/);
+  return buildingMatch ? buildingMatch[1] : "";
+}
+
+function parseTeacher(text) {
+  const teacherMatch = text.match(/(?:教师|老师)[:：]?\s*([^\s,，;；|]+)/);
+  if (teacherMatch) return teacherMatch[1];
+
+  const englishTeacherMatch = text.match(/\bTeacher[:：]?([^\s,，;；|]+)/i);
+  return englishTeacherMatch ? englishTeacherMatch[1] : "";
+}
+
+function dedupeCourses(courses) {
+  const seen = new Set();
+  return courses.filter(course => {
+    const key = [
+      course.courseName,
+      course.dayOfWeek,
+      course.startPeriod,
+      course.endPeriod,
+      course.location
+    ].join("|");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // 功能：读取当前用户的课表及无课时段分析。
 function handleGetMyTimetable(req, res) {
   const user = requireUser(req, res);
@@ -288,6 +492,47 @@ function handleGetMyTimetable(req, res) {
 
 let currentSessionCaptcha = "a4f2";
 const proxySessions = new Map();
+
+function splitSetCookieHeader(setCookie) {
+  return String(setCookie || "")
+    .split(/,(?=\s*[^;,=\s]+=)/)
+    .map(part => part.trim())
+    .filter(Boolean);
+}
+
+function extractCookieHeader(setCookie) {
+  return splitSetCookieHeader(setCookie)
+    .map(cookie => cookie.split(";")[0].trim())
+    .filter(Boolean)
+    .join("; ");
+}
+
+function mergeCookieHeader(cookieHeader, setCookie) {
+  const cookies = new Map();
+  String(cookieHeader || "").split(";").forEach(part => {
+    const [name, ...valueParts] = part.trim().split("=");
+    if (name && valueParts.length > 0) cookies.set(name, valueParts.join("="));
+  });
+  splitSetCookieHeader(setCookie).forEach(cookie => {
+    const [pair] = cookie.split(";");
+    const [name, ...valueParts] = pair.trim().split("=");
+    if (name && valueParts.length > 0) cookies.set(name, valueParts.join("="));
+  });
+  return Array.from(cookies.entries()).map(([name, value]) => `${name}=${value}`).join("; ");
+}
+
+function getInputValue(html, inputName) {
+  const escapedName = inputName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patterns = [
+    new RegExp(`<input[^>]*(?:id|name)=["']?${escapedName}["']?[^>]*value=["']?([^"'\\s>]*)`, "i"),
+    new RegExp(`<input[^>]*value=["']?([^"'\\s>]*)[^>]*(?:id|name)=["']?${escapedName}["']?`, "i")
+  ];
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match) return match[1] || "";
+  }
+  return "";
+}
 
 // 功能：代理抓取学校教务处登录验证码，并初始化 Session
 async function handleGetCaptcha(req, res) {
@@ -303,10 +548,11 @@ async function handleGetCaptcha(req, res) {
 
     const indexRes = await fetch('https://xuanke.cufe.edu.cn/jwglxt/xtgl/login_slogin.html', { headers });
     const setCookie = indexRes.headers.get('set-cookie');
+    const cookieHeader = extractCookieHeader(setCookie);
     
     let jSessionId = '';
-    if (setCookie) {
-      const match = setCookie.match(/JSESSIONID=([^;]+)/);
+    if (cookieHeader) {
+      const match = cookieHeader.match(/JSESSIONID=([^;]+)/);
       if (match) jSessionId = match[1];
     }
 
@@ -320,18 +566,19 @@ async function handleGetCaptcha(req, res) {
     if (csrfMatch) {
       csrftoken = csrfMatch[1];
     }
+    const passwordEncrypted = getInputValue(indexHtml, "mmsfjm") !== "0";
 
     const captchaRes = await fetch('https://xuanke.cufe.edu.cn/jwglxt/kaptcha', {
       headers: {
         ...headers,
-        'Cookie': `JSESSIONID=${jSessionId}`
+        'Cookie': cookieHeader || `JSESSIONID=${jSessionId}`
       }
     });
 
     const buffer = await captchaRes.arrayBuffer();
     const base64Image = `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`;
 
-    proxySessions.set(user.id, { jSessionId, csrftoken });
+    proxySessions.set(user.id, { cookieHeader: cookieHeader || `JSESSIONID=${jSessionId}`, jSessionId, csrftoken, passwordEncrypted });
 
     return sendJson(res, 200, {
       ok: true,
@@ -344,11 +591,19 @@ async function handleGetCaptcha(req, res) {
 }
 
 // RSA 加密密码函数
-function encryptPassword(password, modulusHex, exponentHex) {
-  const modHexEven = modulusHex.length % 2 !== 0 ? '0' + modulusHex : modulusHex;
-  const expHexEven = exponentHex.length % 2 !== 0 ? '0' + exponentHex : exponentHex;
-  const n = Buffer.from(modHexEven, 'hex').toString('base64url');
-  const e = Buffer.from(expHexEven, 'hex').toString('base64url');
+function normalizeRsaPart(value) {
+  const input = String(value || "").trim();
+  if (!input) return "";
+  if (/^[0-9a-f]+$/i.test(input)) {
+    const evenHex = input.length % 2 !== 0 ? `0${input}` : input;
+    return Buffer.from(evenHex, "hex").toString("base64url");
+  }
+  return Buffer.from(input.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("base64url");
+}
+
+function encryptPassword(password, modulus, exponent) {
+  const n = normalizeRsaPart(modulus);
+  const e = normalizeRsaPart(exponent);
   
   const jwk = {
     kty: 'RSA',
@@ -474,14 +729,17 @@ async function handleProxyLogin(req, res) {
   if (!session) {
     return sendError(res, 400, "SESSION_EXPIRED", "验证码会话已过期，请刷新验证码");
   }
-  const { jSessionId, csrftoken } = session;
+  const { jSessionId, csrftoken, passwordEncrypted } = session;
+  let activeCookie = session.cookieHeader || `JSESSIONID=${jSessionId}`;
 
   try {
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Cookie': `JSESSIONID=${jSessionId}`
+      'Cookie': activeCookie
     };
 
+    let encodedPassword = password;
+    if (passwordEncrypted) {
     const keyRes = await fetch(`https://xuanke.cufe.edu.cn/jwglxt/xtgl/login_getPublicKey.html?time=${Date.now()}`, { headers });
     const keys = await keyRes.json();
     if (!keys || !keys.modulus || !keys.exponent) {
@@ -489,11 +747,13 @@ async function handleProxyLogin(req, res) {
     }
 
     const encryptedPassword = encryptPassword(password, keys.modulus, keys.exponent);
+    encodedPassword = encryptedPassword;
+    }
 
     const loginPayload = new URLSearchParams({
       csrftoken: csrftoken || "",
       yhm: studentId,
-      mm: encryptedPassword,
+      mm: encodedPassword,
       yzm: captcha
     });
 
@@ -508,6 +768,24 @@ async function handleProxyLogin(req, res) {
     });
 
     const loginHtml = await loginRes.text();
+    const loginPage = cheerio.load(loginHtml);
+    const loginTips = [
+      loginPage("#tips").text(),
+      loginPage("#error-tips").text(),
+      loginPage(".error-tips").text(),
+      loginPage(".tips").text()
+    ].map(text => text.trim()).filter(Boolean).join(" ");
+    const loginFailureText = loginTips || loginHtml;
+
+    if (/验证码.*(错误|不正确|不匹配)|请输入验证码/.test(loginFailureText)) {
+      return sendError(res, 400, "INVALID_CAPTCHA", "验证码错误，请重新输入");
+    }
+    if (/(用户名|学号|密码).*(错误|不正确)|密码错误|账号不存在|用户不存在/.test(loginFailureText)) {
+      return sendError(res, 400, "CREDENTIALS_ERROR", "学号或密码错误，请检查输入");
+    }
+    if (loginTips) {
+      return sendError(res, 400, "LOGIN_FAILED", loginTips);
+    }
 
     if (loginHtml.includes('验证码不正确')) {
       return sendError(res, 400, "INVALID_CAPTCHA", "验证码错误，请重新输入");
@@ -522,13 +800,9 @@ async function handleProxyLogin(req, res) {
     }
 
     // 登录成功后，部分教务系统会更新 JSESSIONID，需要提取最新的 Cookie 供查询课表使用
-    let activeCookie = `JSESSIONID=${jSessionId}`;
     const loginSetCookie = loginRes.headers.get('set-cookie');
     if (loginSetCookie) {
-      const match = loginSetCookie.match(/JSESSIONID=([^;]+)/);
-      if (match) {
-        activeCookie = `JSESSIONID=${match[1]}`;
-      }
+      activeCookie = mergeCookieHeader(activeCookie, loginSetCookie);
     }
 
     const timetableRes = await fetch('https://xuanke.cufe.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default', {
