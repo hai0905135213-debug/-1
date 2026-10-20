@@ -1,116 +1,105 @@
 <template>
-  <view class="page">
-    <view class="section">
-      <view class="section-title">我的饭局</view>
-      <view class="muted">查看我发起的和我加入的饭局。</view>
-    </view>
-
-    <view class="tabs">
-      <button :class="activeTab === 'hosted' ? 'pill active' : 'pill'" @tap="activeTab = 'hosted'">我发起的</button>
-      <button :class="activeTab === 'joined' ? 'pill active' : 'pill'" @tap="activeTab = 'joined'">我加入的</button>
-    </view>
-
-    <view v-if="loading" class="muted empty">加载中...</view>
-    <view v-else-if="visibleMeals.length === 0" class="empty">
-      {{ activeTab === 'hosted' ? '还没有发起饭局' : '还没有加入饭局' }}
-    </view>
-
-    <view class="card" v-for="meal in visibleMeals" :key="meal.id" @tap="goDetail(meal.id)">
-      <view class="meal-title">{{ meal.title }}</view>
-      <view class="muted">{{ meal.time }} · {{ meal.statusText }} · {{ meal.people }}</view>
-      <view class="muted">{{ meal.place }} · {{ meal.budget }}</view>
-    </view>
-  </view>
+  <view class="page"
+    ><text class="heading">我的饭局</text
+    ><view class="tabs"
+      ><text
+        v-for="tab in tabs"
+        :key="tab.code"
+        :class="{ active: current === tab.code }"
+        @tap="current = tab.code"
+        >{{ tab.name }}</text
+      ></view
+    ><view
+      class="card"
+      v-for="meal in data[current]"
+      :key="meal.id"
+      @tap="open(meal.id)"
+      ><text class="name">{{ meal.title }}</text
+      ><text>{{ meal.place }}</text
+      ><text
+        >{{ meal.currentPeople }}/{{ meal.maxPeople }}人 ·
+        {{ labels[meal.status] }}
+        {{
+          meal.pendingCount ? " · " + meal.pendingCount + "个待审批" : ""
+        }}</text
+      ></view
+    ><text v-if="!data[current]?.length" class="muted">这里还没有饭局</text
+    ><text class="error">{{ error }}</text></view
+  >
 </template>
-
 <script>
-import { authApi, mealApi } from '../../services/api'
-
-function formatBudget(meal) {
-  if (meal.budgetMin && meal.budgetMax) return `¥${meal.budgetMin}-${meal.budgetMax}/人`
-  if (meal.budgetMax) return `¥${meal.budgetMax}/人`
-  return '预算随意'
-}
-
-function formatTime(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '时间待定'
-  return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-}
-
-function normalizeMeal(meal) {
-  return {
-    ...meal,
-    time: formatTime(meal.mealTime),
-    people: `${meal.joinedCount || 0}/${meal.maxPeople} 人`,
-    budget: formatBudget(meal),
-    statusText: meal.status === 'open' ? '待成局' : '已成局'
-  }
-}
-
+import { mealApi } from "../../services/api";
 export default {
   data() {
     return {
-      loading: false,
-      activeTab: 'hosted',
-      hostedMeals: [],
-      joinedMeals: []
-    }
-  },
-  computed: {
-    visibleMeals() {
-      return this.activeTab === 'hosted' ? this.hostedMeals : this.joinedMeals
-    }
+      current: "created",
+      data: { created: [], pending: [], joined: [], ended: [] },
+      error: "",
+      tabs: [
+        { code: "created", name: "我发起的" },
+        { code: "pending", name: "待审批" },
+        { code: "joined", name: "已加入" },
+        { code: "ended", name: "已结束" },
+      ],
+      labels: {
+        open: "招募中",
+        matched: "已成局",
+        finished: "已完成",
+        cancelled: "已取消",
+      },
+    };
   },
   onShow() {
-    this.loadMyMeals()
+    this.load();
   },
   methods: {
-    async loadMyMeals() {
-      if (!authApi.token()) {
-        uni.navigateTo({ url: '/pages/login/index' })
-        return
-      }
-
-      this.loading = true
+    async load() {
       try {
-        const result = await mealApi.mine()
-        this.hostedMeals = (result.created || []).map(normalizeMeal)
-        this.joinedMeals = (result.joined || []).map(normalizeMeal)
-      } catch (error) {
-        uni.showToast({ title: error.message || '我的饭局加载失败', icon: 'none' })
-      } finally {
-        this.loading = false
+        this.data = await mealApi.mine();
+      } catch (e) {
+        this.error = e.message;
       }
     },
-    goDetail(id) {
-      uni.navigateTo({ url: `/pages/meal-detail/index?id=${id}` })
-    }
-  }
-}
+    open(id) {
+      uni.navigateTo({ url: "/pages/meal-detail/index?id=" + id });
+    },
+  },
+};
 </script>
-
 <style scoped>
+.page {
+  padding: 36rpx;
+}
+.heading {
+  font-size: 40rpx;
+  font-weight: 800;
+}
 .tabs {
   display: flex;
-  gap: 16rpx;
-  margin-bottom: 20rpx;
+  justify-content: space-between;
+  margin: 32rpx 0;
+  font-size: 25rpx;
 }
-
-.tabs .pill {
-  flex: 1;
+.active {
+  border-bottom: 6rpx solid #ffe388;
 }
-
-.meal-title {
-  font-size: 30rpx;
-  font-weight: 800;
-  margin-bottom: 10rpx;
+.card {
+  background: #faf7ef;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  margin: 22rpx 0;
 }
-
-.empty {
-  padding: 58rpx 0;
-  text-align: center;
-  color: #94959f;
-  font-size: 28rpx;
+.card text {
+  display: block;
+  margin: 10rpx 0;
+}
+.name {
+  font-weight: 700;
+}
+.muted {
+  color: #888;
+}
+.error {
+  color: #b33;
 }
 </style>

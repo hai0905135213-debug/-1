@@ -3,7 +3,7 @@
     {
       "path": "pages/home/index",
       "style": {
-        "navigationBarTitleText": "饭搭子"
+        "navigationBarTitleText": "饭饭之交"
       }
     },
     {
@@ -12,6 +12,10 @@
         "navigationBarTitleText": "登录"
       }
     },
+    { "path": "pages/restaurant-detail/index", "style": { "navigationBarTitleText": "餐厅详情" } },
+    { "path": "pages/team-applications/index", "style": { "navigationBarTitleText": "报名审批" } },
+    { "path": "pages/notifications/index", "style": { "navigationBarTitleText": "消息" } },
+    { "path": "pages/admin/index", "style": { "navigationBarTitleText": "体验管理" } },
     {
       "path": "pages/edit-profile/index",
       "style": {

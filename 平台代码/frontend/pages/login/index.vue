@@ -1,109 +1,77 @@
 <template>
-  <view class="page login-page">
-    <view class="login-hero">
-      <view class="mascot">饭</view>
-      <view>
-        <view class="page-title">登录饭搭子</view>
-        <view class="muted">先让平台知道你是谁，再开始约饭。</view>
-      </view>
-    </view>
-
-    <view class="form-panel">
-      <view class="field">
-        <text class="label">昵称</text>
-        <input class="input" v-model="form.nickname" placeholder="例如：小林" />
-      </view>
-      <view class="field">
-        <text class="label">学号</text>
-        <input class="input" v-model="form.studentNo" placeholder="例如：2026001" />
-      </view>
-      <view class="field">
-        <text class="label">学校</text>
-        <input class="input" v-model="form.school" placeholder="例如：示例大学" />
-      </view>
-
-      <button class="button-primary" @tap="login">{{ loading ? '登录中...' : '登录 / 注册' }}</button>
-      <button class="button-secondary demo-btn" @tap="useDemo">使用示例账号</button>
-    </view>
-  </view>
+  <view class="page"
+    ><text class="heading">一起好好吃饭</text
+    ><text class="muted">登录后可以收藏餐厅；组队需管理员通过体验资格。</text
+    ><button @tap="wechat" :disabled="busy">微信登录</button
+    ><view v-if="devLogin"
+      ><input v-model="nickname" placeholder="本地测试昵称" /><button
+        @tap="dev"
+        :disabled="busy"
+      >
+        开发环境登录
+      </button></view
+    ><text v-if="error" class="error">{{ error }}</text></view
+  >
 </template>
-
 <script>
-import { authApi } from '../../services/api'
-
+import { authApi } from "../../services/api";
 export default {
   data() {
     return {
-      loading: false,
-      form: {
-        nickname: '',
-        studentNo: '',
-        school: '示例大学'
-      }
-    }
+      nickname: "",
+      busy: false,
+      error: "",
+      devLogin:
+        import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_LOGIN === "true",
+    };
   },
   methods: {
-    useDemo() {
-      this.form = {
-        nickname: '小林',
-        studentNo: '2026001',
-        school: '示例大学'
-      }
-      this.login()
-    },
-    async login() {
-      if (!this.form.nickname.trim()) {
-        uni.showToast({ title: '昵称不能为空', icon: 'none' })
-        return
-      }
-
-      this.loading = true
+    async run(login) {
+      this.busy = true;
+      this.error = "";
       try {
-        await authApi.login(this.form)
-        uni.showToast({ title: '登录成功', icon: 'success' })
-        setTimeout(() => {
-          uni.switchTab({ url: '/pages/profile/index' })
-        }, 400)
-      } catch (error) {
-        uni.showToast({ title: error.message || '登录失败', icon: 'none' })
+        await login();
+        uni.switchTab({ url: "/pages/profile/index" });
+      } catch (e) {
+        this.error = e.message || e.errMsg || "登录失败";
       } finally {
-        this.loading = false
+        this.busy = false;
       }
-    }
-  }
-}
+    },
+    wechat() {
+      this.run(() => authApi.wechat());
+    },
+    dev() {
+      this.run(() => authApi.login({ nickname: this.nickname }));
+    },
+  },
+};
 </script>
-
 <style scoped>
-.login-page {
-  padding-top: 88rpx;
+.page {
+  padding: 100rpx 40rpx;
 }
-
-.login-hero {
-  display: flex;
-  align-items: center;
-  gap: 22rpx;
-  margin-bottom: 56rpx;
+.heading {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 800;
 }
-
-.mascot {
-  width: 112rpx;
-  height: 112rpx;
-  border-radius: 56rpx;
-  background: #fff4a8;
-  color: #08091f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 42rpx;
-  font-weight: 900;
+.muted {
+  display: block;
+  color: #888;
+  margin: 30rpx 0;
+  line-height: 1.7;
 }
-
-.form-panel {
-  padding-top: 10rpx;
+.page button {
+  margin: 24rpx 0;
+  background: #ffe388;
+  border-radius: 40rpx;
 }
-
-.demo-btn {
-  margin-top: 22rpx;
+.page input {
+  padding: 24rpx;
+  background: #f5f5f5;
+}
+.error {
+  color: #b33;
 }
 </style>

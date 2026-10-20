@@ -1,0 +1,13 @@
+/* 沿用原版配色、卡片和排版，只补新增原生控件及状态。 */
+[hidden] { display: none !important; }
+.form select, .detail-info select { width: 100%; padding: 12px; border: 1px solid #e5e5ea; border-radius: 12px; background: white; color: #08091f; font: inherit; box-sizing: border-box; }
+.form input[type="datetime-local"] { min-height: 44px; }
+.detail-panel textarea { display: block; width: 100%; box-sizing: border-box; border: 1px solid #e5e5ea; border-radius: 12px; padding: 12px; font: inherit; }
+.quote { overflow-wrap: anywhere; margin-bottom: 12px; }
+.quote p { white-space: pre-wrap; }
+.quote button, #access-panel button { margin: 4px; }
+.filter-options label { display: inline-flex; align-items: center; gap: 5px; padding: 6px; }
+.filter-options input[type="checkbox"] { width: auto; }
+.modal-body { overflow-y: auto; max-height: 55vh; }
+.meal-actions-row { flex-wrap: wrap; }
+.home-restaurant-card img { background: #f5f0e9; }

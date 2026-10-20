@@ -2,6 +2,7 @@ import http from "node:http";
 import { URL } from "node:url";
 import crypto from "node:crypto";
 import * as cheerio from "cheerio";
+import { handleTeams, sessionUser } from './teams.js';
 import {
   getUser,
   getUserByStudentNo,
@@ -58,7 +59,7 @@ const PORT = Number(process.env.PORT || 3001);
 const HOST = process.env.HOST || "127.0.0.1";
 
 // 功能：首次启动写入种子数据，之后重启数据持久保留
-seedIfEmpty();
+if (process.env.SEED_DEMO === 'true' && process.env.NODE_ENV !== 'production') seedIfEmpty();
 
 const server = http.createServer(async (req, res) => {
   const requestUrl = new URL(req.url, `http://${req.headers.host}`);
@@ -70,11 +71,17 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    if ((path === '/api/timetable/captcha' || path === '/api/timetable/proxy-login') && process.env.ENABLE_TIMETABLE_PROXY !== 'true') {
+      return sendError(res, 503, 'FEATURE_DISABLED', '教务代理暂未开放');
+    }
+    const teamResponse = await handleTeams(req, requestUrl, readBody);
+    if (teamResponse !== undefined) return sendJson(res, 200, teamResponse);
     if (method === "GET" && path === "/api/health") {
       return sendJson(res, 200, {
         ok: true,
         service: "fanfan-backend",
-        version: "0.2.0",
+        version: "0.3.0",
+        features: ['approval-teams', 'session-auth', 'restaurant-catalog'],
         storage: "sqlite",
         timestamp: new Date().toISOString()
       });
@@ -220,12 +227,12 @@ const server = http.createServer(async (req, res) => {
     return sendError(res, 404, "NOT_FOUND", "接口不存在");
   } catch (error) {
     console.error(error);
-    return sendError(res, 500, "INTERNAL_ERROR", "服务器内部错误");
+    return sendError(res, error.status || 500, error.code || 'INTERNAL_ERROR', error.status ? error.message : '服务器内部错误');
   }
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Fanfan backend is running at http://${HOST}:${PORT}`);
+  console.log(`Fanfan backend is running at http://${HOST}:${server.address().port}`);
   console.log(`Storage: SQLite (data/fanfan.db)`);
 });
 
@@ -847,7 +854,9 @@ function handleRestaurantList(requestUrl, res) {
   const pageSize = requestUrl.searchParams.get("pageSize") || 12;
 
   // 有独立餐厅仓时会返回真实清洗数据以及两个校区距离；否则保留旧演示数据的兼容逻辑。
-  const result = listRestaurantCatalog({ campus, foodType, keyword, page, pageSize, minPrice, maxPrice, sortBy });
+  const result = listRestaurantCatalog({ campus, foodType, keyword, page, pageSize, minPrice, maxPrice, sortBy,
+    cuisines: requestUrl.searchParams.getAll('cuisine'), tags: requestUrl.searchParams.getAll('tag'),
+    maxDistance: requestUrl.searchParams.has('maxDistance') ? requestUrl.searchParams.get('maxDistance') : undefined });
   return sendJson(res, 200, result);
 }
 
@@ -855,7 +864,9 @@ function handleRestaurantList(requestUrl, res) {
 function handleRestaurantDetail(id, requestUrl, res) {
   const campus = requestUrl.searchParams.get("campus") || "cufe_shahe";
   // 优先读清洗后的餐厅仓；找不到时才兼容旧演示餐厅。
-  const restaurant = getRestaurantCatalogItem(id, campus) || getRestaurant(id);
+  const poiId = requestUrl.searchParams.get('poiId') || undefined;
+  const restaurant = getRestaurantCatalogItem(id, campus, poiId) || (/^\d+$/.test(id) ? getRestaurant(id) : null);
+  if(poiId && restaurant?.selectedCandidate?.poiId!==poiId) return sendError(res,404,'POI_NOT_FOUND','分店不存在');
   if (!restaurant) {
     return sendError(res, 404, "RESTAURANT_NOT_FOUND", "餐厅不存在");
   }
@@ -894,10 +905,7 @@ function handlePostList(req, requestUrl, res) {
   const posts = listPosts({ category });
 
   // 尝试读取当前用户 ID（若有携带 Token），但不强求 401 拦截，方便展示
-  const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
-  const tokenUserId = token?.replace(/^dev-token-/, "");
-  const userId = req.headers["x-user-id"] || tokenUserId;
-  const currentUser = userId ? getUser(userId) : null;
+  const currentUser = sessionUser(req);
 
   const items = posts.map((post) => {
     const joinedAvatars = getPostParticipantAvatars(post.id);
@@ -922,10 +930,7 @@ function handlePostDetail(req, postId, res) {
     return sendError(res, 404, "POST_NOT_FOUND", "找人帖不存在");
   }
 
-  const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
-  const tokenUserId = token?.replace(/^dev-token-/, "");
-  const userId = req.headers["x-user-id"] || tokenUserId;
-  const currentUser = userId ? getUser(userId) : null;
+  const currentUser = sessionUser(req);
 
   const joinedAvatars = getPostParticipantAvatars(post.id);
   const joined = currentUser ? isUserJoinedPost(post.id, currentUser.id) : false;
@@ -1032,10 +1037,7 @@ function handleLeavePost(req, res, postId) {
 // ========== 辅助函数 ==========
 
 function requireUser(req, res) {
-  const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
-  const tokenUserId = token?.replace(/^dev-token-/, "");
-  const userId = req.headers["x-user-id"] || tokenUserId;
-  const user = getUser(userId);
+  const user = sessionUser(req);
 
   if (!user) {
     sendError(res, 401, "UNAUTHORIZED", "请先登录，并携带 Authorization: Bearer <token>");
@@ -1046,14 +1048,19 @@ function requireUser(req, res) {
 
 async function readBody(req) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > 1024 * 1024) { const error = new Error('请求内容过大'); Object.assign(error,{status:413,code:'BODY_TOO_LARGE'}); throw error; }
+    chunks.push(chunk);
+  }
   const raw = Buffer.concat(chunks).toString("utf8");
   if (!raw) return {};
 
   try {
     return JSON.parse(raw);
   } catch {
-    return {};
+    const error = new Error('JSON格式无效'); Object.assign(error,{status:400,code:'INVALID_JSON'}); throw error;
   }
 }
 

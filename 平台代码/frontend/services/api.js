@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:3001/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3001/api'
 
 function getToken() {
   try {
@@ -20,13 +20,14 @@ function clearAuthSession() {
   uni.removeStorageSync('currentProfile')
 }
 
-function request(path, options = {}) {
+export function request(path, options = {}) {
   const token = getToken()
 
   return new Promise((resolve, reject) => {
     uni.request({
       url: `${API_BASE_URL}${path}`,
       method: options.method || 'GET',
+      timeout: 15000,
       data: options.data || {},
       header: {
         'content-type': 'application/json',
@@ -39,6 +40,11 @@ function request(path, options = {}) {
           return
         }
 
+        if (res.statusCode === 401) {
+          clearAuthSession()
+          // 微信登录本身失败时留在登录页，其余受保护操作引导重新登录。
+          if (!path.startsWith('/auth/')) uni.navigateTo({ url: '/pages/login/index' })
+        }
         reject(res.data?.error || { message: '请求失败' })
       },
       fail: reject
@@ -52,7 +58,14 @@ export const authApi = {
     setAuthSession(result)
     return result
   },
-  logout: () => clearAuthSession(),
+  wechat: async () => {
+    const credential = await new Promise((resolve, reject) => uni.login({ provider: 'weixin', success: resolve, fail: reject }))
+    const result = await request('/auth/wechat', { method: 'POST', data: { code: credential.code } })
+    setAuthSession(result)
+    return result
+  },
+  me: () => request('/auth/me'),
+  logout: async () => { try { await request('/auth/logout', { method: 'POST' }) } finally { clearAuthSession() } },
   token: getToken
 }
 

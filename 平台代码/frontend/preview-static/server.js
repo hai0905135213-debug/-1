@@ -7,14 +7,24 @@ const port = Number(process.env.PORT || 5173)
 const types = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8'
+  '.js': 'application/javascript; charset=utf-8',
+  '.svg': 'image/svg+xml'
 }
 
 const server = http.createServer((req, res) => {
-  const requestPath = req.url === '/' ? '/index.html' : req.url.split('?')[0]
-  const filePath = path.join(root, requestPath)
+  res.setHeader('Cache-Control', 'no-store')
+  let requestPath
+  try {
+    requestPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
+  } catch {
+    res.writeHead(400)
+    res.end('Invalid path')
+    return
+  }
+  if (requestPath === '/') requestPath = '/index.html'
+  const filePath = path.resolve(root, '.' + requestPath)
 
-  if (!filePath.startsWith(root)) {
+  if (!filePath.startsWith(root + path.sep)) {
     res.writeHead(403)
     res.end('Forbidden')
     return

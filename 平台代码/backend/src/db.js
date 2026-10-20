@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = join(__dirname, "..", "data");
+const DATA_DIR = process.env.DATA_DIR || join(__dirname, "..", "data");
 
 if (!existsSync(DATA_DIR)) {
   mkdirSync(DATA_DIR, { recursive: true });
@@ -13,10 +13,11 @@ if (!existsSync(DATA_DIR)) {
 const DB_PATH = join(DATA_DIR, "fanfan.db");
 // 餐厅清洗库独立维护，不和用户、饭局等业务数据混在一起。
 // 后端只读它；聊天清洗和高德补全仍在项目根目录的 database/ 下完成。
-const RESTAURANT_WAREHOUSE_PATH = join(__dirname, "..", "..", "..", "database", "data", "restaurants.db");
+const RESTAURANT_WAREHOUSE_PATH = process.env.RESTAURANT_DB_PATH || join(__dirname, "..", "..", "..", "database", "data", "restaurants.db");
 
 // 功能：初始化 SQLite 数据库连接，开启 WAL 模式提升并发读性能
 const db = new Database(DB_PATH);
+export { db };
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
@@ -65,15 +66,17 @@ function splitRestaurantTags(...values) {
   return values
     .flatMap((value) => String(value || "").split(/[、,，/｜|;；\s]+/))
     .map(compactRestaurantTag)
-    .filter(Boolean);
+    .filter(value => value && !['餐饮服务','餐饮相关场所','餐饮相关','中餐厅'].includes(value));
 }
 
 function buildRestaurantTags(row, selectedCandidate) {
-  const tags = splitRestaurantTags(row.cuisine, row.recommended_dishes, row.optional_dishes, row.amap_category, selectedCandidate?.category);
+  const confirmedCuisine = /推测|待核验|待确认/.test(row.cuisine || '') ? '' : row.cuisine;
+  const tags = splitRestaurantTags(confirmedCuisine, row.amap_category, selectedCandidate?.category);
   if (/沙河/.test(`${row.location_hint || ""} ${row.full_address || ""} ${selectedCandidate?.address || ""}`)) tags.push("近沙河");
   if (/学院南路|南路/.test(`${row.location_hint || ""} ${row.full_address || ""} ${selectedCandidate?.address || ""}`)) tags.push("近学院南路");
   if (/聚|约|多人|团建|宴请/.test(`${row.party_size || ""} ${row.booking_note || ""}`)) tags.push("适合聚餐");
-  if (/清真/.test(`${row.cuisine || ""} ${row.name || ""} ${row.raw_messages || ""}`)) tags.push("清真");
+  // 饮食要求只依据店名明确标识，不从聊天上下文推断。
+  if (/清真/.test(row.name || '')) tags.push('清真');
   if (row.sentiment === "positive" || Number(row.positive_count) > Number(row.caution_count || 0)) tags.push("群友推荐");
   return [...new Set(tags)].slice(0, 8);
 }
@@ -230,7 +233,7 @@ function initTables() {
 
   upgradeProfilesTable();
   upgradeMealsTable();
-  seedNewTablesIfEmpty();
+  if (process.env.SEED_DEMO === 'true' && process.env.NODE_ENV !== 'production' && db.prepare('SELECT id FROM users WHERE id=3').get()) seedNewTablesIfEmpty();
 }
 
 function upgradeProfilesTable() {
@@ -819,9 +822,9 @@ export function listRestaurants({ campus, foodType, keyword, minPrice, maxPrice,
 // 功能：读取独立餐厅仓并转换为前端列表格式。
 // campus 不是筛掉餐厅，而是选择按哪个校区的距离排序和展示。
 // 目前餐厅数量较小（百级），在内存中先合并候选分店和距离数据可读性更好；后续数据很大时再改成 SQL 分页聚合。
-export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pageSize = 12, restaurantId, sortBy } = {}) {
+export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pageSize = 12, restaurantId, sortBy, cuisines = [], tags: requestedTags = [], maxDistance, poiId } = {}) {
   if (!restaurantWarehouse) {
-    const legacyItems = listRestaurants({ foodType, keyword });
+    const legacyItems = listRestaurants({ foodType, keyword }).filter(item => !restaurantId || String(item.id) === String(restaurantId));
     const safePage = Math.max(1, Number(page) || 1);
     const safePageSize = Math.min(30, Math.max(1, Number(pageSize) || 12));
     const start = (safePage - 1) * safePageSize;
@@ -885,12 +888,14 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
     const candidates = candidatesByRestaurantId.get(row.id) || [];
     // 用户选校区时优先展示离该校区近的分店；没有选择时优先高德匹配分较高的候选。
     const orderedCandidates = [...candidates].sort((a, b) => {
-      if (campus && Number.isFinite(a.distanceKm[campus]) && Number.isFinite(b.distanceKm[campus])) {
-        return a.distanceKm[campus] - b.distanceKm[campus];
-      }
+      const distance = candidate => {const values = Object.values(candidate.distanceKm).filter(Number.isFinite);return campus ? candidate.distanceKm[campus] : values.length ? Math.min(...values) : undefined;};
+      const distanceA = distance(a), distanceB = distance(b);
+      if (Number.isFinite(distanceA) && Number.isFinite(distanceB)) return distanceA-distanceB;
+      if (Number.isFinite(distanceA)) return -1;
+      if (Number.isFinite(distanceB)) return 1;
       return b.score - a.score || a.rank - b.rank;
     });
-    const selected = orderedCandidates[0] || null;
+    const selected = poiId ? candidates.find(candidate => candidate.poiId === poiId) || null : orderedCandidates[0] || null;
     const tags = buildRestaurantTags(row, selected);
     return {
       id: row.id,
@@ -910,6 +915,7 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
       poiStatus: row.poi_status,
       candidateCount: candidates.length,
       selectedCandidate: selected,
+      candidates,
       _searchText: [
         row.name,
         row.cuisine,
@@ -920,12 +926,11 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
         row.party_size,
         row.booking_note,
         row.sentiment,
-        row.cleaning_note,
-        row.raw_messages,
         row.amap_category,
         selected?.name,
         selected?.address,
         selected?.category,
+        ...candidates.flatMap(candidate => [candidate.name, candidate.address, candidate.category]),
         ...tags
       ].filter(Boolean).join(" ")
     };
@@ -933,16 +938,23 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
 
   // 如果已选校区，距离未知的餐厅放列表末尾；否则按群内提及次数排序。
   const keywordTerms = getRestaurantKeywordTerms(keyword);
-  const filteredItems = keywordTerms.length > 0
+  let filteredItems = keywordTerms.length > 0
     ? items.filter((item) => keywordTerms.some((term) => item._searchText.includes(term)))
     : items;
+  const distanceFor = item => {
+    const values = Object.values(item.distanceKm || {}).filter(Number.isFinite);
+    return campus ? item.distanceKm[campus] : values.length ? Math.min(...values) : undefined;
+  };
+  if (cuisines.length) filteredItems = filteredItems.filter(item => cuisines.some(value => String(item.cuisine).includes(value)));
+  if (requestedTags.length) filteredItems = filteredItems.filter(item => requestedTags.some(value => item.tags.includes(value)));
+  if (maxDistance !== undefined) filteredItems = filteredItems.filter(item => Number.isFinite(distanceFor(item)) && distanceFor(item) <= Number(maxDistance));
 
   filteredItems.sort((a, b) => {
     // 首页点到“群内最热”时，按群聊提及次数排序；其他情况优先按所选校区距离。
     if (sortBy === "mention-desc") return b.mentionCount - a.mentionCount || a.name.localeCompare(b.name, "zh-CN");
-    if (campus) {
-      const distanceA = a.distanceKm[campus];
-      const distanceB = b.distanceKm[campus];
+    if (campus || sortBy === 'distance-asc') {
+      const distanceA = distanceFor(a);
+      const distanceB = distanceFor(b);
       if (Number.isFinite(distanceA) && Number.isFinite(distanceB)) return distanceA - distanceB;
       if (Number.isFinite(distanceA)) return -1;
       if (Number.isFinite(distanceB)) return 1;
@@ -964,8 +976,8 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
 
 // 功能：餐厅详情页使用。这里查的是独立餐厅仓的字符串 ID（例如 M001），
 // 和旧演示库使用的数字 ID 不冲突。
-export function getRestaurantCatalogItem(id, campus) {
-  const result = listRestaurantCatalog({ restaurantId: id, campus, page: 1, pageSize: 1 });
+export function getRestaurantCatalogItem(id, campus, poiId) {
+  const result = listRestaurantCatalog({ restaurantId: id, campus, poiId, page: 1, pageSize: 1 });
   return result.items[0] || null;
 }
 

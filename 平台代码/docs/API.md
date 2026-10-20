@@ -1,5 +1,47 @@
 # 饭饭之交后端接口文档
 
+## 2026-10-20 审批组队版本更新
+
+本节优先于后文历史MVP描述。接口错误为 `{ error: { code, message } }`。登录后使用 `Authorization: Bearer <token>`，不再接受 `dev-token-*` 或 `X-User-Id` 冒充登录。会话7天到期，可通过退出撤销。
+
+| 接口 | 用途 |
+| --- | --- |
+| `POST /api/auth/wechat` | `{code}` 换取微信身份与本应用会话；后端需AppID及AppSecret |
+| `POST /api/auth/login` | `{nickname}` 仅明确启用的本地开发环境可用 |
+| `GET /api/auth/me` | 返回当前用户及 `accessStatus / isAdmin` |
+| `POST /api/auth/logout` | 撤销当前会话 |
+| `GET /api/restaurants/facets` | 有效菜系、场景标签和距离选项 |
+| `GET /api/restaurants` | 支持 `page/pageSize/campus/keyword/sortBy/cuisine/tag/maxDistance`；多菜系及标签重复传同名参数 |
+| `GET /api/restaurants/:id` | 支持 `campus/poiId`，返回所有候选及选定分店 |
+| `POST /api/meals` | 发布预约饭局；新增 `deadline/restaurantId/poiId/meetingNote/topicTags` |
+| `POST /api/meals/:id/apply` | 报名进入待审批，支持可选200字 `note` |
+| `POST /api/meals/:id/join` | 兼容旧调用，语义同申请，不直接成为队员 |
+| `POST /api/meals/:id/withdraw` | 撤回待审批申请 |
+| `GET /api/meals/:id/applications` | 仅发起人可看申请与公开资料 |
+| `POST /api/meals/:id/applications/:applicationId/approve` | 发起人审批通过，事务内分配名额 |
+| `POST /api/meals/:id/applications/:applicationId/reject` | 发起人拒绝，申请者本场不可重报 |
+| `POST /api/meals/:id/leave` | 普通成员在就餐开始前退出 |
+| `POST /api/meals/:id/cancel` | 发起人取消饭局并通知 |
+| `POST /api/meals/:id/finish` | 就餐开始且至少两名成员时，发起人标记完成 |
+| `GET /api/meals/:id/messages?after=0` | 仅正式成员可读，最多30条，返回 `items/nextCursor/hasMore` |
+| `POST /api/meals/:id/messages` | 正式成员在活跃饭局内提交 `{content}`，1–500字 |
+| `GET /api/meals/mine` | `created/pending/joined/ended` 四组 |
+| `POST /api/meals/:id/reviews` | 完成后对其他正式队员评价，同一对用户每场仅一次 |
+| `GET /api/notifications?before=ID` | 当前用户消息，最多30条，含未读数 |
+| `POST /api/notifications/read` | 标记当前用户全部已读 |
+| `GET /api/admin/users` | 仅管理员读取体验资格列表 |
+| `POST /api/admin/users/:id/access` | `{status: approved/pending/blocked}`；仅管理员 |
+| `GET /api/admin/reports` | 仅管理员读取举报 |
+| `POST /api/admin/reports/:id` | `{status: resolved/dismissed}`；仅管理员 |
+
+餐厅ID统一视为字符串；候选POI及地址在发布饭局时保存快照。报名状态为 `pending/approved/rejected/withdrawn/closed`，饭局状态仍为 `open/matched/cancelled/finished`。待审批不占名额，发起人计入人数，满员关闭其余申请。
+
+餐厅分页返回 `{items,total,hasMore}`，校区为 `cufe_shahe/cufe_nanlu`，排序为 `mention-desc/distance-asc`，距离单位km且为直线距离。未选校区时按两个校区中的较近距离处理。价格和评分无可靠数据时不提供模拟值。
+
+`meetingNote` 只向正式成员返回；队内留言对退出者撤销访问。帖子新增 `mealId`，报名统一进入对应饭局；未关联历史帖子返回 `MEAL_LINK_REQUIRED`。
+
+后文为历史接口说明，实际运行和新规则以本节及 `小程序开发与验收.md` 为准。
+
 本接口文档对应 `平台代码/backend`，当前为 MVP 联调版。服务默认运行在：
 
 ```text

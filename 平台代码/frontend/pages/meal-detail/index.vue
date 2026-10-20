@@ -1,398 +1,356 @@
 <template>
-  <view class="page-flush detail-page">
-    <view class="hero">
-      <image class="hero-image food-image" :src="meal.heroImage" mode="aspectFill" />
-      <view class="hero-nav">
-        <view class="icon-button dark" @tap="goBack">‹</view>
-        <view class="icon-button dark" @tap="shareMeal">↗</view>
-      </view>
-      <view class="hero-quote">
-        <image class="hero-avatar" :src="meal.hostAvatar" mode="aspectFill" />
-        <view>
-          <view class="hero-user">{{ meal.hostName }} <text class="gold">v</text></view>
-          <view class="hero-text">“{{ meal.hostQuote }}”</view>
-        </view>
-      </view>
+  <view v-if="meal" class="page"
+    ><text class="heading">{{ meal.title }}</text
+    ><text class="badge"
+      >{{ statusName(meal.status) }} · {{ meal.currentPeople }}/{{
+        meal.maxPeople
+      }}人</text
+    ><text class="line">{{ meal.place }}</text
+    ><text class="line">就餐：{{ timeText(meal.mealTime) }}</text
+    ><text class="line">报名截止：{{ timeText(meal.deadline) }}</text
+    ><text class="line"
+      >预算：每人 {{ meal.budgetMin }}–{{ meal.budgetMax }} 元</text
+    ><text class="line">{{ meal.description }}</text
+    ><view class="tags"
+      ><text v-for="tag in meal.topicTags" :key="tag">{{ tag }} </text></view
+    ><text class="line"
+      >队友：{{ meal.participants.map((p) => p.nickname).join("、") }}</text
+    ><text v-if="meal.joined" class="line"
+      >集合说明：{{ meal.meetingNote || "发起人尚未补充" }}</text
+    >
+    <view class="actions">
+      <template v-if="isHost"
+        ><button v-if="active" @tap="goApplications">
+          管理申请（{{ meal.pendingCount }}）</button
+        ><button v-if="active" @tap="confirmAction('cancel', '确定取消饭局？')">
+          取消饭局</button
+        ><button
+          v-if="active && Date.now() >= Date.parse(meal.mealTime)"
+          @tap="confirmAction('finish', '确认已完成就餐？')"
+        >
+          标记完成
+        </button></template
+      >
+      <template v-else
+        ><button
+          v-if="meal.applicationStatus === 'pending'"
+          @tap="act('withdraw')"
+        >
+          撤回申请</button
+        ><button
+          v-else-if="meal.joined && active"
+          @tap="confirmAction('leave', '确定退出饭局？')"
+        >
+          退出饭局</button
+        ><button
+          v-else-if="
+            meal.status === 'open' && meal.applicationStatus !== 'rejected'
+          "
+          class="primary"
+          @tap="apply"
+        >
+          申请加入</button
+        ><text v-if="meal.applicationStatus === 'rejected'"
+          >本场申请未通过</text
+        ></template
+      >
+      <button v-if="isHost && active" @tap="publishPost">发到找人帖子</button
+      ><button @tap="act('save')">收藏 / 取消收藏</button
+      ><button v-if="!isHost" @tap="report">举报问题</button>
     </view>
-
-    <view class="detail-panel">
-      <view class="detail-title">{{ meal.title }}</view>
-      <view class="badge-row">
-        <text class="tag">值得一起去吃</text>
-        <text class="tag">第 {{ meal.rank }} 校园饭局</text>
-      </view>
-      <view class="meta-line">{{ meal.category }} ｜ {{ meal.location }} ｜ {{ meal.budget }}</view>
-
-      <view class="info-block">
-        <view>
-          <view class="info-main">{{ meal.statusText }}</view>
-          <view class="muted">{{ meal.time }} · {{ meal.people }}</view>
-        </view>
-        <view class="side-link">详情›</view>
-      </view>
-
-      <view class="info-block">
-        <view>
-          <view class="info-main">{{ meal.address }}›</view>
-          <view class="muted">距离你 {{ meal.distance }} 步行 {{ meal.walkTime }}</view>
-        </view>
-        <view class="quick-actions">
-          <view class="icon-button" @tap="openMap">⌖</view>
-          <view class="icon-button yellow" @tap="callHost">☎</view>
-        </view>
-      </view>
-
-      <view class="section">
-        <view class="top-row">
-          <view class="section-title">推荐吃法</view>
-          <view class="muted">查看全部›</view>
-        </view>
-        <scroll-view scroll-x class="dish-scroll">
-          <view class="dish-card" v-for="dish in dishes" :key="dish.id">
-            <image class="dish-image food-image" :src="dish.image" mode="aspectFill" />
-            <view class="dish-count">{{ dish.count }} 人推荐</view>
-            <view class="dish-name">{{ dish.name }}</view>
-          </view>
-        </scroll-view>
-      </view>
-
-      <view class="section">
-        <view class="section-title">饭搭子评价</view>
-        <view class="review-card">
-          <image class="review-avatar" :src="meal.hostAvatar" mode="aspectFill" />
-          <view>
-            <view class="review-name">{{ meal.hostName }} <text class="tag">推荐官</text></view>
-            <view class="tag">值得专程去吃</view>
-            <view class="review-text">{{ meal.review }}</view>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view class="bottom-actions">
-      <button class="button-secondary action-btn" @tap="reviewMeal">评价</button>
-      <button class="button-primary action-btn" :disabled="isActionBtnDisabled" @tap="handleJoinOrLeave">{{ getActionButtonText }}</button>
-    </view>
-  </view>
+    <view v-if="meal.joined" class="message-area"
+      ><text class="section">队内留言</text
+      ><view v-for="message in messages" :key="message.id" class="message"
+        ><text class="muted"
+          >{{ message.nickname }} · {{ timeText(message.created_at) }}</text
+        ><text>{{ message.content }}</text></view
+      ><button v-if="moreMessages" size="mini" @tap="loadMessages">
+        加载后续留言</button
+      ><view v-if="active">
+        <textarea
+          v-model="messageText"
+          maxlength="500"
+          placeholder="集合、点菜或到达时间（最多500字）"
+        /><button :disabled="sending" @tap="sendMessage">发送留言</button></view
+      ><text v-else class="muted">饭局已结束，留言只读。</text></view
+    >
+    <view v-if="meal.status === 'finished' && meal.joined"
+      ><text class="section">评价队友</text
+      ><picker
+        :range="reviewTargets"
+        range-key="nickname"
+        @change="reviewIndex = Number($event.detail.value)"
+        ><view class="field"
+          >{{
+            reviewTargets[reviewIndex]?.nickname || "没有可评价成员"
+          }}
+          ⌄</view
+        ></picker
+      ><picker
+        :range="[1, 2, 3, 4, 5]"
+        :value="rating - 1"
+        @change="rating = Number($event.detail.value) + 1"
+        ><view class="field">{{ rating }} 星 ⌄</view></picker
+      ><textarea
+        v-model="reviewContent"
+        maxlength="500"
+        placeholder="就餐体验"
+      /><button @tap="review">提交评价</button></view
+    >
+    <text class="error">{{ error }}</text></view
+  ><view v-else class="page" @tap="load">{{ error || "加载中…" }}</view>
 </template>
-
 <script>
-import { authApi, mealApi } from '../../services/api'
-
-function formatBudget(meal) {
-  if (meal.budgetMin && meal.budgetMax) return `¥${meal.budgetMin}-${meal.budgetMax}/人`
-  if (meal.budgetMax) return `¥${meal.budgetMax}/人`
-  return '预算随意'
-}
-
-function formatTime(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '时间待定'
-  return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-}
-
+import { mealApi, request } from "../../services/api";
+import { teamApi } from "../../services/team";
+import { localTime } from "../../services/time";
 export default {
   data() {
     return {
-      meal: {
-        id: '',
-        title: '一食堂牛肉面饭局',
-        category: '米粉面馆',
-        location: '一食堂二楼',
-        budget: '¥20/人',
-        rank: 2,
-        statusText: '可加入 今天 18:20',
-        time: '今晚饭点',
-        people: '2/4 人',
-        address: '一食堂二楼靠窗区域',
-        distance: '300m',
-        walkTime: '4 分钟',
-        hostName: '小君毛吃东西',
-        hostQuote: '这家出餐快，适合下课后轻松约一顿。',
-        review: '面汤稳定，排队不算久。第一次和饭搭子见面选这里比较稳，聊天或者安静吃都不尴尬。',
-        hostAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
-        heroImage: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1000&q=80'
-      },
-      joined: false,
-      isCreator: false,
-      dishes: [
-        {
-          id: 1,
-          name: '番茄牛肉面',
-          count: 5,
-          image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=400&q=80'
-        },
-        {
-          id: 2,
-          name: '炸猪排',
-          count: 2,
-          image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=400&q=80'
-        },
-        {
-          id: 3,
-          name: '辣肉臊子',
-          count: 1,
-          image: 'https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=400&q=80'
-        }
-      ]
-    }
+      id: "",
+      meal: null,
+      currentUser: null,
+      error: "",
+      messages: [],
+      cursor: 0,
+      moreMessages: false,
+      messageText: "",
+      sending: false,
+      poll: null,
+      reviewIndex: 0,
+      rating: 5,
+      reviewContent: "",
+    };
   },
   computed: {
-    getActionButtonText() {
-      if (this.isCreator) return '我是发起人'
-      return this.joined ? '退出饭局' : '想去/加入'
+    isHost() {
+      return this.meal?.creatorId === this.currentUser?.id;
     },
-    isActionBtnDisabled() {
-      return this.isCreator
-    }
+    active() {
+      return ["open", "matched"].includes(this.meal?.status);
+    },
+    reviewTargets() {
+      return (this.meal?.participants || []).filter(
+        (p) => p.id !== this.currentUser?.id,
+      );
+    },
   },
-  onLoad(query) {
-    this.meal.id = query.id || ''
-    this.loadMeal()
+  onLoad(q) {
+    this.id = q.id;
+  },
+  onShow() {
+    this.currentUser = uni.getStorageSync("currentUser") || null;
+    this.load();
+    this.poll = setInterval(() => this.refreshMessages(), 5000);
+  },
+  onHide() {
+    clearInterval(this.poll);
+  },
+  onUnload() {
+    clearInterval(this.poll);
   },
   methods: {
-    async loadMeal() {
+    statusName(s) {
+      return (
+        {
+          open: "招募中",
+          matched: "已成局",
+          cancelled: "已取消",
+          finished: "已完成",
+        }[s] || s
+      );
+    },
+    timeText: localTime,
+    async load() {
       try {
-        const result = await mealApi.detail(this.meal.id || 1)
-        const meal = result.meal
-        const currentUser = uni.getStorageSync('currentUser') || null
-        this.joined = (meal.participants || []).some((item) => item.userId === currentUser?.id)
-        this.isCreator = meal.creatorId === currentUser?.id
-        this.meal = {
-          ...this.meal,
-          id: meal.id,
-          title: meal.title,
-          category: meal.foodType || '饭局',
-          location: meal.place,
-          budget: formatBudget(meal),
-          statusText: meal.status === 'open' ? '可加入' : '已成局',
-          time: formatTime(meal.mealTime),
-          people: `${meal.joinedCount}/${meal.maxPeople} 人`,
-          address: meal.place,
-          hostName: meal.creator?.nickname || '同学',
-          hostQuote: meal.description || '等一个合适饭搭子一起吃。',
-          review: meal.reviews?.[0]?.content || '暂时还没有评价，吃完这顿可以来写第一条。'
-        }
-      } catch (error) {
-        uni.showToast({ title: error.message || '详情加载失败', icon: 'none' })
+        this.meal = (await mealApi.detail(this.id)).meal;
+        this.error = "";
+        if (this.meal.joined) await this.loadMessages();
+      } catch (e) {
+        this.error = e.message;
       }
     },
-    goBack() {
-      uni.navigateBack()
-    },
-    async handleJoinOrLeave() {
-      if (!authApi.token()) {
-        uni.navigateTo({ url: '/pages/login/index' })
-        return
-      }
-
-      if (this.joined) {
-        try {
-          await mealApi.leave(this.meal.id)
-          await this.loadMeal()
-          uni.showToast({ title: '已退出饭局', icon: 'success' })
-        } catch (error) {
-          uni.showToast({ title: error.message || '退出失败', icon: 'none' })
-        }
-      } else {
-        try {
-          await mealApi.join(this.meal.id)
-          await this.loadMeal()
-          uni.showToast({ title: '已加入饭局', icon: 'success' })
-        } catch (error) {
-          uni.showToast({ title: error.message || '加入失败', icon: 'none' })
-        }
+    async apply() {
+      try {
+        await teamApi.apply(this.id);
+        uni.showToast({ title: "已申请，等待审批", icon: "none" });
+        await this.load();
+      } catch (e) {
+        this.error = e.message;
       }
     },
-    reviewMeal() {
-      uni.navigateTo({ url: `/pages/create-review/index?mealId=${this.meal.id || 1}&targetUserId=1` })
+    async publishPost() {
+      try {
+        await request("/posts", {
+          method: "POST",
+          data: {
+            mealId: this.id,
+            content: this.meal.description || this.meal.title,
+          },
+        });
+        uni.showToast({ title: "已发到找人" });
+      } catch (e) {
+        this.error = e.message;
+      }
     },
-    shareMeal() {
-      uni.showToast({ title: '已复制分享链接', icon: 'success' })
+    async act(action) {
+      try {
+        await teamApi.action(this.id, action);
+        await this.load();
+      } catch (e) {
+        this.error = e.message;
+      }
     },
-    openMap() {
-      uni.showToast({ title: '地图导航下一步接入', icon: 'none' })
+    confirmAction(action, content) {
+      uni.showModal({
+        title: "确认操作",
+        content,
+        success: (r) => {
+          if (r.confirm) this.act(action);
+        },
+      });
     },
-    callHost() {
-      uni.showToast({ title: '联系发起人下一步接入', icon: 'none' })
-    }
-  }
-}
+    goApplications() {
+      uni.navigateTo({ url: "/pages/team-applications/index?id=" + this.id });
+    },
+    async refreshMessages() {
+      try {
+        const latest = (await mealApi.detail(this.id)).meal;
+        this.meal = latest;
+        if (!latest.joined) {
+          this.messages = [];
+          this.cursor = 0;
+          return;
+        }
+        if (this.active) await this.loadMessages();
+      } catch {}
+    },
+    async loadMessages() {
+      if (!this.meal?.joined) return;
+      try {
+        const result = await teamApi.messages(this.id, this.cursor);
+        this.messages.push(
+          ...result.items.filter(
+            (x) => !this.messages.some((m) => m.id === x.id),
+          ),
+        );
+        this.cursor = result.nextCursor;
+        this.moreMessages = result.hasMore;
+      } catch (e) {
+        this.messages = [];
+        this.error = e.message;
+      }
+    },
+    async sendMessage() {
+      if (this.sending) return;
+      this.sending = true;
+      try {
+        await teamApi.message(this.id, this.messageText);
+        this.messageText = "";
+        await this.loadMessages();
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.sending = false;
+      }
+    },
+    async review() {
+      try {
+        await mealApi.review(this.id, {
+          targetUserId: this.reviewTargets[this.reviewIndex]?.id,
+          rating: this.rating,
+          content: this.reviewContent,
+        });
+        uni.showToast({ title: "评价已提交" });
+      } catch (e) {
+        this.error = e.message;
+      }
+    },
+    report() {
+      uni.showModal({
+        title: "举报原因",
+        editable: true,
+        placeholderText: "描述问题",
+        success: async (r) => {
+          if (!r.confirm) return;
+          try {
+            await request(`/meals/${this.id}/reports`, {
+              method: "POST",
+              data: { targetUserId: this.meal.creatorId, reason: r.content },
+            });
+            uni.showToast({ title: "已提交管理员" });
+          } catch (e) {
+            this.error = e.message;
+          }
+        },
+      });
+    },
+  },
+};
 </script>
-
 <style scoped>
-.hero {
-  position: relative;
-  height: 520rpx;
+.page {
+  padding: 36rpx 32rpx;
 }
-
-.hero-image {
-  width: 100%;
-  height: 520rpx;
-}
-
-.hero::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 220rpx;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
-}
-
-.hero-nav {
-  position: absolute;
-  left: 28rpx;
-  right: 28rpx;
-  top: 58rpx;
-  display: flex;
-  justify-content: space-between;
-  z-index: 2;
-}
-
-.hero-quote {
-  position: absolute;
-  left: 30rpx;
-  right: 30rpx;
-  bottom: 58rpx;
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  color: #ffffff;
-  z-index: 2;
-}
-
-.hero-avatar {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 36rpx;
-}
-
-.hero-user {
-  font-size: 30rpx;
+.heading {
+  display: block;
+  font-size: 42rpx;
   font-weight: 800;
-}
-
-.hero-text {
-  margin-top: 8rpx;
-  font-size: 28rpx;
-}
-
-.gold {
-  color: #ffe733;
-}
-
-.detail-panel {
-  position: relative;
-  margin-top: -28rpx;
-  padding: 42rpx 30rpx 160rpx;
-  background: #ffffff;
-  border-radius: 28rpx 28rpx 0 0;
-  z-index: 3;
-}
-
-.detail-title {
-  font-size: 46rpx;
-  font-weight: 900;
   margin-bottom: 20rpx;
 }
-
-.badge-row {
-  margin-bottom: 30rpx;
+.badge {
+  background: #fff0bc;
+  padding: 10rpx 20rpx;
+  border-radius: 20rpx;
 }
-
-.meta-line {
+.line {
+  display: block;
+  margin: 24rpx 0;
+  line-height: 1.7;
+}
+.actions button {
+  margin: 18rpx 0;
+}
+.primary {
+  background: #ffe388;
+}
+.section {
+  display: block;
   font-size: 32rpx;
-  color: #08091f;
-  margin-bottom: 30rpx;
+  font-weight: 700;
+  margin: 36rpx 0 20rpx;
 }
-
-.info-block {
-  display: flex;
-  justify-content: space-between;
-  gap: 24rpx;
-  padding: 24rpx 0;
-  border-top: 1rpx solid #f0f0f3;
-}
-
-.info-main {
-  font-size: 30rpx;
-  font-weight: 800;
-  margin-bottom: 8rpx;
-}
-
-.side-link {
-  color: #94959f;
-  font-size: 28rpx;
-}
-
-.quick-actions {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.dish-scroll {
-  white-space: nowrap;
-}
-
-.dish-card {
-  display: inline-block;
-  width: 210rpx;
-  margin-right: 22rpx;
-  vertical-align: top;
-}
-
-.dish-image {
-  width: 210rpx;
-  height: 150rpx;
+.message {
+  background: #faf7ef;
+  padding: 20rpx;
   border-radius: 16rpx;
+  margin: 14rpx 0;
 }
-
-.dish-count {
-  margin-top: -44rpx;
-  height: 44rpx;
-  line-height: 44rpx;
-  padding-left: 14rpx;
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.42);
-  border-radius: 0 0 16rpx 16rpx;
+.message text {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.muted {
+  color: #888;
   font-size: 24rpx;
-  position: relative;
 }
-
-.dish-name {
-  margin-top: 14rpx;
-  font-size: 28rpx;
+.page textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: 150rpx;
+  padding: 22rpx;
+  background: #f5f5f7;
+  margin: 20rpx 0;
 }
-
-.review-card {
-  display: flex;
-  gap: 18rpx;
+.field {
+  padding: 20rpx;
+  background: #f7f7f7;
+  margin: 16rpx 0;
 }
-
-.review-avatar {
-  width: 82rpx;
-  height: 82rpx;
-  border-radius: 41rpx;
-  flex-shrink: 0;
-}
-
-.review-name {
-  font-size: 32rpx;
-  font-weight: 900;
-  margin-bottom: 10rpx;
-}
-
-.review-text {
-  margin-top: 16rpx;
-  font-size: 29rpx;
-  line-height: 1.6;
-  color: #44454e;
-}
-
-.action-btn {
-  flex: 1;
+.error {
+  display: block;
+  color: #b33;
+  margin: 24rpx 0;
 }
 </style>

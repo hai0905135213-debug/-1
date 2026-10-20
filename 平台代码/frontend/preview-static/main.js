@@ -158,7 +158,7 @@ const pages = {
             <button class="edit" data-switch-account style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); cursor:pointer;">切换账号</button>
           </div>
         </div>
-        <h2>${authSession ? `${authSession.user.nickname}，今天吃什么？` : '发现属于你的校园美食'}</h2>
+        <h2>${authSession ? `${escapePreviewText(authSession.user.nickname)}，今天吃什么？` : '发现属于你的校园美食'}</h2>
         <button class="quiet" data-go-edit>${getTasteLabel()}</button>
       </div>
       <div class="profile-panel">
@@ -2007,7 +2007,11 @@ function toast(message) {
 
 function getTasteLabel() {
   const tags = authSession?.profile?.tasteTags || []
-  return tags.length ? `${tags.join('、')} ＋` : '你的口味标签 ＋'
+  return tags.length ? `${escapePreviewText(tags.join('、'))} ＋` : '你的口味标签 ＋'
+}
+
+function escapePreviewText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 }
 
 function getUserInitial() {
@@ -2629,4 +2633,4 @@ buttons.forEach((button) => {
   })
 })
 
-render('home')
+// 由 integration.js 接好新版接口后初始化，避免旧请求覆盖新页面。
