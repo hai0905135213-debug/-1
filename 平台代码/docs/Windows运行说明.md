@@ -78,6 +78,14 @@ npm run build
 
 微信登录的 AppID/AppSecret 在后端 .env 配置，AppSecret不得写进前端或提交Git。开发者工具导入成功不等于微信登录和真机业务已验收。
 
+## 常见日志：连接被拒绝、游客模式和卡片参数
+
+- `http://127.0.0.1:3001/api/... ERR_CONNECTION_REFUSED`：请求的是Windows本机，不是Mac，也不是你的云服务器。确认Windows后端窗口仍在运行，再打开 `http://127.0.0.1:3001/api/health`，应返回 `ok:true`。前端监听窗口不能代替后端服务。
+- 首次只做本地数据联调，可在另一个frontend目录的PowerShell执行 `cd ..\backend`、`npm.cmd ci`、`$env:ENABLE_DEV_LOGIN="true"`、`node src/server.js`。这使用默认本地3001端口和开发登录，不读取.env；需要真实微信登录或自定义配置时，按前文环境文件方式启动。
+- `游客模式 / 无AppID关联`：先核对源码manifest的`mp-weixin.appid`及导入项目的AppID。未配置真实微信身份之前使用开发环境登录，不把游客模拟返回当作真实微信登录通过。
+- `Missing required prop: post`及`undefined.author`：已补组件空参数防护。拉取最新代码后重新运行`npm.cmd run dev`；不要直接改dist。
+- 开发构建后可在frontend运行 `node scripts/check-mp-output.mjs dist/dev/mp-weixin` 做产物级回归。这不是微信设备测试。
+
 ## 本次同步注意事项（2026-10-22）
 
 - 本地业务库不随Git同步；Windows首次启动会新建业务库。餐厅仓已在仓库内，用户、资格、饭局和收藏不会从Mac自动迁移。

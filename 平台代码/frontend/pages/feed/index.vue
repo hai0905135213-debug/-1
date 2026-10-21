@@ -22,9 +22,9 @@
       ><text class="state-title">动态暂时没有加载出来</text
       ><text>{{ error }}</text
       ><button class="button-quiet" @tap="load">重新加载</button></view
-    ><PostCard v-for="p in filtered" :key="p.id" :post="p" @open="open" /><view
-      v-if="!loading && !error && !filtered.length"
-      class="state-box"
+    ><view v-for="p in filtered" :key="p.id"
+      ><PostCard v-if="p && p.id != null" :post="p" @open="open" /></view
+    ><view v-if="!loading && !error && !filtered.length" class="state-box"
       ><text class="state-title">第一顿饭，从你开始</text
       ><text>还没有真实动态。发起饭局后，可以在详情页发布到找人。</text
       ><button class="button-primary" @tap="create">发起一场饭局</button></view
@@ -54,7 +54,7 @@ export default {
     },
   },
   onShow() {
-    uni.hideTabBar({ animation: false, fail:()=>{} });
+    uni.hideTabBar({ animation: false, fail: () => {} });
     this.load();
   },
   onPullDownRefresh() {

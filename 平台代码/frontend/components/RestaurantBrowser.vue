@@ -2,6 +2,7 @@
   <view>
     <view v-if="showSearch" class="search-row"
       ><input
+        class="search-input"
         v-model="keyword"
         placeholder="搜索餐厅、菜系、推荐菜"
         @input="scheduleSearch"
@@ -78,7 +79,8 @@
     <view v-if="loading && !items.length" class="skeleton-list"
       ><view v-for="n in 3" :key="n" class="skeleton-card"
         ><view class="skeleton-image" /><view class="skeleton-lines"
-          ><view /><view /><view /></view></view
+          ><view class="skeleton-line" /><view class="skeleton-line" /><view
+            class="skeleton-line skeleton-line-short" /></view></view
     ></view>
     <view
       v-for="item in items"
@@ -324,7 +326,7 @@ export default {
   border-radius: 44rpx;
   margin-bottom: 36rpx;
 }
-.search-row input {
+.search-input {
   flex: 1;
   min-width: 0;
 }
@@ -363,13 +365,6 @@ export default {
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 7rpx 22rpx rgba(8, 9, 31, 0.04);
-}
-.restaurant image {
-  width: 190rpx;
-  height: 190rpx;
-  border-radius: 20rpx;
-  background: #f7f2e8;
-  flex-shrink: 0;
 }
 .info {
   min-width: 0;
@@ -512,14 +507,14 @@ export default {
   padding: 25rpx 0;
   flex: 1;
 }
-.skeleton-lines view {
+.skeleton-line {
   height: 20rpx;
   border-radius: 8rpx;
   background: #f3f3f6;
   width: 80%;
   margin: 0 0 20rpx;
 }
-.skeleton-lines view:last-child {
+.skeleton-line-short {
   width: 50%;
 }
 </style>

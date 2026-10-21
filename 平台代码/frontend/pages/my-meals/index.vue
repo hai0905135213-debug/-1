@@ -9,12 +9,9 @@
         @tap="current = tab.code"
         >{{ tab.name }}</text
       ></view
-    ><MealCard
-      v-for="meal in data[current]"
-      :key="meal.id"
-      :meal="meal"
-      @open="open"
-    />
+    ><view v-for="meal in data[current]" :key="meal.id"
+      ><MealCard v-if="meal && meal.id != null" :meal="meal" @open="open"
+    /></view>
     <view v-if="!data[current]?.length" class="state-box"
       ><text class="state-title">这里还没有饭局</text
       ><text>从“找人”发现同学发起的饭局，或发布自己想吃的那顿饭。</text></view

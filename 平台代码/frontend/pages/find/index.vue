@@ -29,23 +29,23 @@
       ><text class="state-title">暂时没连上</text><text>{{ error }}</text
       ><button class="button-quiet" @tap="load">重新加载</button></view
     ><view v-else-if="mode === 'meals'"
-      ><MealCard
-        v-for="meal in filteredMeals"
-        :key="meal.id"
-        :meal="meal"
-        @open="open"
-      /><view v-if="!filteredMeals.length" class="state-box"
+      ><view v-for="meal in filteredMeals" :key="meal.id"
+        ><MealCard
+          v-if="meal && meal.id != null"
+          :meal="meal"
+          @open="open" /></view
+      ><view v-if="!filteredMeals.length" class="state-box"
         ><text class="state-title">还没有合适的饭局</text
         ><text>可以换个关键词，或发起自己想吃的那顿饭。</text
         ><button class="button-quiet" @tap="create">发起饭局</button></view
       ></view
     ><view v-else
-      ><PostCard
-        v-for="post in filteredPosts"
-        :key="post.id"
-        :post="post"
-        @open="open"
-      /><view v-if="!filteredPosts.length" class="state-box"
+      ><view v-for="post in filteredPosts" :key="post.id"
+        ><PostCard
+          v-if="post && post.id != null"
+          :post="post"
+          @open="open" /></view
+      ><view v-if="!filteredPosts.length" class="state-box"
         ><text class="state-title">这里还没有找人帖子</text
         ><text>发布饭局后，可以从详情页分享到找人。</text></view
       ></view

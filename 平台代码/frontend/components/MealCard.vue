@@ -1,5 +1,8 @@
 <template>
-  <view class="meal-card" @tap="$emit('open', meal.id)"
+  <view
+    v-if="meal && meal.id != null"
+    class="meal-card"
+    @tap="$emit('open', meal.id)"
     ><view class="meal-card-top"
       ><view class="meal-author"
         ><view class="avatar-initial">{{
@@ -36,7 +39,7 @@
 <script>
 import { localTime } from "../services/time";
 export default {
-  props: { meal: { type: Object, required: true } },
+  props: { meal: { type: Object, default: null } },
   emits: ["open"],
   data() {
     return {
@@ -51,6 +54,7 @@ export default {
   computed: {
     budget() {
       const m = this.meal;
+      if (!m) return "预算待确认";
       return Number.isFinite(m.budgetMin) && Number.isFinite(m.budgetMax)
         ? `每人 ¥${m.budgetMin}–${m.budgetMax}`
         : "预算待确认";

@@ -1,5 +1,5 @@
 <template>
-  <view class="post-card"
+  <view v-if="post && post.id != null" class="post-card"
     ><view class="post-header"
       ><view class="avatar">{{ (post.author?.nickname || "饭")[0] }}</view
       ><view class="author-copy"
@@ -34,7 +34,8 @@
 <script>
 import { localTime } from "../services/time";
 export default {
-  props: { post: { type: Object, required: true } },
+  // 微信组件创建和uP参数同步可能分开，首次渲染允许参数尚未就绪。
+  props: { post: { type: Object, default: null } },
   emits: ["open"],
   methods: { timeText: localTime },
 };
