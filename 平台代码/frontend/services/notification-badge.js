@@ -11,8 +11,9 @@ export async function refreshUnread() {
       uni.setTabBarBadge({
         index: 4,
         text: count > 99 ? "99+" : String(count),
+        fail: () => {},
       });
-    else uni.removeTabBarBadge({ index: 4 });
+    else uni.removeTabBarBadge({ index: 4, fail: () => {} });
     uni.$emit("notifications:unread", count);
     return count;
   } catch {

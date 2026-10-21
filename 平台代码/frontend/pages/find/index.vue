@@ -1,61 +1,136 @@
 <template>
-  <view class="page"
-    ><view class="top"
-      ><text class="heading">找个饭搭子</text
-      ><text @tap="mine">我的报名 ›</text></view
-    ><view class="tabs"
-      ><text :class="{ active: mode === 'meals' }" @tap="mode = 'meals'"
+  <view class="find-page"
+    ><view class="find-top"
+      ><text class="page-title">找人</text
+      ><text class="muted">发现值得一起吃的饭搭子</text></view
+    ><view class="find-search"
+      ><text class="search-mark">⌕</text
+      ><input v-model="keyword" placeholder="搜索饭局、地点或找人帖子" /></view
+    ><view class="find-tabs"
+      ><text :class="{ selected: mode === 'meals' }" @tap="mode = 'meals'"
         >预约组队</text
-      ><text :class="{ active: mode === 'posts' }" @tap="mode = 'posts'"
+      ><text :class="{ selected: mode === 'posts' }" @tap="mode = 'posts'"
         >找人帖子</text
-      ></view
-    ><view v-if="mode === 'meals'"
-      ><view
-        v-for="meal in meals"
+      ><text class="mine-link" @tap="mine">我的报名 ›</text></view
+    ><scroll-view scroll-x class="category-scroll"
+      ><view class="category-row"
+        ><view
+          v-for="c in categories"
+          :key="c"
+          :class="['pill', { active: category === c }]"
+          @tap="category = c"
+          >{{ c }}</view
+        ></view
+      ></scroll-view
+    ><view v-if="chatMode === 'quiet'" class="quiet-filter" @tap="chatMode = ''"
+      >安静吃饭 · 点击清除 ×</view
+    ><view v-if="loading" class="state-box">正在找好饭局…</view
+    ><view v-else-if="error" class="state-box"
+      ><text class="state-title">暂时没连上</text><text>{{ error }}</text
+      ><button class="button-quiet" @tap="load">重新加载</button></view
+    ><view v-else-if="mode === 'meals'"
+      ><MealCard
+        v-for="meal in filteredMeals"
         :key="meal.id"
-        class="card"
-        @tap="open(meal.id)"
-        ><text class="name">{{ meal.title }}</text
-        ><text>{{ meal.place }}</text
-        ><text class="muted"
-          >{{ timeText(meal.mealTime) }} · {{ meal.currentPeople }}/{{
-            meal.maxPeople
-          }}人</text
-        ><text class="badge">报名后由发起人审批</text></view
+        :meal="meal"
+        @open="open"
+      /><view v-if="!filteredMeals.length" class="state-box"
+        ><text class="state-title">还没有合适的饭局</text
+        ><text>可以换个关键词，或发起自己想吃的那顿饭。</text
+        ><button class="button-quiet" @tap="create">发起饭局</button></view
       ></view
     ><view v-else
-      ><view
-        v-for="post in posts"
+      ><PostCard
+        v-for="post in filteredPosts"
         :key="post.id"
-        class="card"
-        @tap="post.mealId ? open(post.mealId) : null"
-        ><text class="name">{{ post.author?.nickname || "同学" }}</text
-        ><text>{{ post.content }}</text
-        ><text class="muted">{{
-          post.mealId ? "查看关联饭局并申请 ›" : "历史帖子，未关联预约饭局"
-        }}</text></view
+        :post="post"
+        @open="open"
+      /><view v-if="!filteredPosts.length" class="state-box"
+        ><text class="state-title">这里还没有找人帖子</text
+        ><text>发布饭局后，可以从详情页分享到找人。</text></view
       ></view
-    ><button @tap="create">发起我的饭局</button
-    ><text class="error">{{ error }}</text></view
-  >
+    ><view class="find-fab" @tap="create">＋</view><AppTabBar active="find"
+  /></view>
 </template>
 <script>
 import { mealApi, postApi } from "../../services/api";
-import { localTime } from '../../services/time';
+import MealCard from "../../components/MealCard.vue";
+import PostCard from "../../components/PostCard.vue";
+import AppTabBar from "../../components/AppTabBar.vue";
 export default {
+  components: { MealCard, PostCard, AppTabBar },
   data() {
-    return { meals: [], posts: [], mode: "meals", error: "" };
+    return {
+      meals: [],
+      posts: [],
+      mode: "meals",
+      chatMode: "",
+      keyword: "",
+      category: "全部",
+      loading: false,
+      error: "",
+      categories: ["全部", "约饭", "探店", "夜宵", "拼桌", "咖啡"],
+    };
   },
-  async onShow() {
-    try {
-      this.meals = (await mealApi.list({ onlyAvailable: "true" })).items;
-      this.posts = (await postApi.list()).items;
-    } catch (e) {
-      this.error = e.message;
+  computed: {
+    filteredMeals() {
+      const key = this.keyword.trim().toLowerCase();
+      return this.meals.filter(
+        (m) =>
+          (!this.chatMode || m.chatMode === this.chatMode) &&
+          (!key ||
+            [m.title, m.place, ...(m.topicTags || [])]
+              .join(" ")
+              .toLowerCase()
+              .includes(key)) &&
+          (this.category === "全部" ||
+            this.category === "约饭" ||
+            (m.topicTags || []).includes(this.category)),
+      );
+    },
+    filteredPosts() {
+      const key = this.keyword.trim().toLowerCase();
+      return this.posts.filter(
+        (p) =>
+          (this.category === "全部" || p.category === this.category) &&
+          (!key ||
+            [p.content, p.author?.nickname, p.meal?.title, p.meal?.place]
+              .join(" ")
+              .toLowerCase()
+              .includes(key)),
+      );
+    },
+  },
+  onShow() {
+    uni.hideTabBar({ animation: false, fail: () => {} });
+    if (uni.getStorageSync("findChatMode") === "quiet") {
+      this.chatMode = "quiet";
+      this.mode = "meals";
+      uni.removeStorageSync("findChatMode");
     }
+    this.load();
+  },
+  onPullDownRefresh() {
+    this.load().finally(() => uni.stopPullDownRefresh());
   },
   methods: {
-    timeText: localTime,
+    async load() {
+      if (this.loading) return;
+      this.loading = true;
+      this.error = "";
+      try {
+        const [m, p] = await Promise.all([
+          mealApi.list({ onlyAvailable: "true" }),
+          postApi.list(),
+        ]);
+        this.meals = m.items;
+        this.posts = p.items;
+      } catch (e) {
+        this.error = e.message || "检查后端连接后重试";
+      } finally {
+        this.loading = false;
+      }
+    },
     open(id) {
       uni.navigateTo({ url: "/pages/meal-detail/index?id=" + id });
     },
@@ -69,51 +144,92 @@ export default {
 };
 </script>
 <style scoped>
-.page {
-  padding: 50rpx 32rpx;
+.find-page {
+  padding: 46rpx 36rpx calc(180rpx + env(safe-area-inset-bottom));
+  min-height: 100vh;
+  box-sizing: border-box;
 }
-.top,
-.tabs {
+.find-top {
   display: flex;
-  justify-content: space-between;
+  align-items: baseline;
+  gap: 24rpx;
+  margin-bottom: 35rpx;
+}
+.find-top .muted {
+  font-size: 23rpx;
+}
+.find-search {
+  display: flex;
   align-items: center;
-  margin-bottom: 28rpx;
+  gap: 18rpx;
+  border-radius: 28rpx;
+  background: #f5f5f8;
+  padding: 19rpx 24rpx;
 }
-.heading {
-  font-size: 40rpx;
-  font-weight: 800;
+.find-search input {
+  font-size: 26rpx;
+  flex: 1;
 }
-.tabs {
-  justify-content: flex-start;
+.search-mark {
+  font-size: 34rpx;
+  color: #8e8f98;
+}
+.find-tabs {
+  display: flex;
+  align-items: center;
   gap: 32rpx;
+  margin: 34rpx 0 24rpx;
+  font-size: 28rpx;
+  color: #8e8f98;
 }
-.active {
-  border-bottom: 6rpx solid #ffe388;
+.find-tabs .selected {
+  color: #08091f;
+  font-weight: 800;
+  border-bottom: 6rpx solid #ffe733;
+  padding-bottom: 10rpx;
 }
-.card {
-  padding: 26rpx;
-  border-radius: 20rpx;
-  background: #faf7ef;
-  margin: 24rpx 0;
+.mine-link {
+  margin-left: auto;
+  font-size: 23rpx;
+  color: #737581;
 }
-.card text {
-  display: block;
-  margin: 12rpx 0;
-  line-height: 1.6;
+.category-scroll {
+  white-space: nowrap;
+  margin-bottom: 26rpx;
 }
-.name {
-  font-size: 30rpx;
-  font-weight: 700;
+.category-row {
+  display: flex;
+  gap: 16rpx;
+  padding-bottom: 8rpx;
 }
-.muted {
+.category-row .pill {
+  min-width: 100rpx;
+  padding: 0 22rpx;
   font-size: 24rpx;
-  color: #888;
+  height: 60rpx;
+  flex-shrink: 0;
 }
-.badge {
-  color: #a56c1f;
+.find-fab {
+  position: fixed;
+  right: 34rpx;
+  bottom: calc(180rpx + env(safe-area-inset-bottom));
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+  background: #ffe733;
+  border: 6rpx solid #fff;
+  box-shadow: 0 10rpx 30rpx rgba(8, 9, 31, 0.13);
+  font-size: 48rpx;
+  text-align: center;
+  line-height: 90rpx;
+  z-index: 30;
+}
+.quiet-filter {
+  padding: 18rpx 24rpx;
+  background: #fff9dc;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
   font-size: 24rpx;
-}
-.error {
-  color: #b33;
+  color: #8d7738;
 }
 </style>

@@ -12,11 +12,11 @@ export default {
   props: { src: { type: String, default: '' } },
   emits: ['error'],
   data() { return { failed: false } },
-  computed: { source() { return this.failed || !this.src ? '/static/restaurant-placeholder.svg' : this.src } },
+  computed: { source() { return this.failed || !this.src ? '/static/restaurant-placeholder.png' : this.src } },
   watch: { src() { this.failed = false } },
   methods: { fallback() { if (!this.failed) { this.failed = true; this.$emit('error') } } }
 }
 </script>
 <style scoped>
-.cover { width:190rpx; height:190rpx; flex-shrink:0; object-fit:cover; border-radius:20rpx; background:#f7f2e8; }
+.cover { display:block;width:204rpx; height:188rpx; flex-shrink:0; object-fit:cover; border-radius:0; background:#f1f2f5; }
 </style>

@@ -2,6 +2,7 @@ page {
   background: #ffffff;
   color: #08091f;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 28rpx;
 }
 
 button {
@@ -105,7 +106,7 @@ button::after {
 }
 
 .button-quiet:active {
-  background: #eeeeF2;
+  background: #eeeef2;
 }
 
 .icon-button {
@@ -117,7 +118,7 @@ button::after {
   border-radius: 36rpx;
   background: #ffffff;
   color: #08091f;
-  border: 2rpx solid #eeeeF2;
+  border: 2rpx solid #eeeef2;
   font-size: 34rpx;
   font-weight: 900;
   box-shadow: 0 8rpx 24rpx rgba(8, 9, 31, 0.08);
@@ -150,7 +151,7 @@ button::after {
   height: 66rpx;
   border-radius: 33rpx;
   background: #ffffff;
-  border: 2rpx solid #eeeeF2;
+  border: 2rpx solid #eeeef2;
   color: #08091f;
   font-size: 34rpx;
   font-weight: 900;
@@ -169,7 +170,7 @@ button::after {
   height: 92rpx;
   border-radius: 46rpx;
   background: #ffffff;
-  border: 8rpx solid #eeeeF2;
+  border: 8rpx solid #eeeef2;
   color: #08091f;
   font-size: 48rpx;
   font-weight: 900;
@@ -287,4 +288,35 @@ button::after {
   border-top: 1rpx solid #f0f0f3;
   box-sizing: border-box;
   z-index: 20;
+}
+
+/* 还原原网页的白底、深色标题和黄色操作，加载/空态与真实内容明确区分。 */
+.state-box {
+  padding: 58rpx 28rpx;
+  text-align: center;
+  border-radius: 24rpx;
+  background: #fafafc;
+  color: #8e8f98;
+  font-size: 25rpx;
+  line-height: 1.8;
+  margin: 28rpx 0;
+}
+.state-box text {
+  display: block;
+}
+.state-box .state-title {
+  color: #08091f;
+  font-size: 31rpx;
+  font-weight: 800;
+  margin-bottom: 14rpx;
+}
+.state-box button {
+  margin-top: 28rpx;
+}
+.notice-banner {
+  padding: 20rpx 24rpx;
+  background: #fff9dc;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
 }

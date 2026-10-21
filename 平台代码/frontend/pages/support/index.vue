@@ -508,7 +508,7 @@ export default {
   color: #777;
 }
 .tabs .active {
-  border-bottom: 5rpx solid #ffe388;
+  border-bottom: 5rpx solid #ffe733;
   color: #08091f;
 }
 .heading {
@@ -530,7 +530,7 @@ export default {
 }
 .card,
 .field {
-  background: #faf7ef;
+  background: #f7f7fa;
   padding: 24rpx;
   border-radius: 18rpx;
   margin: 20rpx 0;
@@ -550,7 +550,7 @@ export default {
   margin: 20rpx 0;
 }
 .page button {
-  background: #ffe388;
+  background: #ffe733;
   border-radius: 28rpx;
   margin: 20rpx 0;
 }

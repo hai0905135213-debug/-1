@@ -67,7 +67,7 @@ export default {
 }
 .page button {
   margin: 24rpx 0;
-  background: #ffe388;
+  background: #ffe733;
   border-radius: 40rpx;
 }
 .page input {

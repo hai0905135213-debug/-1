@@ -64,7 +64,8 @@ export default {
 }
 .card {
   padding: 24rpx;
-  background: #faf7ef;
+  background: #fff;
+  border:1rpx solid #ededf2;
   border-radius: 20rpx;
   margin: 24rpx 0;
 }

@@ -141,7 +141,9 @@ export default {
 }
 .card {
   padding: 24rpx;
-  background: #faf7ef;
+  background: #fff;
+  border:1rpx solid #ededf2;
+  box-shadow:0 7rpx 22rpx rgba(8,9,31,.035);
   border-radius: 20rpx;
   margin: 24rpx 0;
 }

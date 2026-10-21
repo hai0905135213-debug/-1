@@ -141,13 +141,13 @@ export default {
 .page input,
 .field {
   padding: 24rpx;
-  background: #faf7ef;
+  background: #f7f7fa;
   border-radius: 18rpx;
   margin: 20rpx 0;
 }
 .page button {
   margin: 26rpx 0;
-  background: #ffe388;
+  background: #ffe733;
   border-radius: 30rpx;
 }
 .error {

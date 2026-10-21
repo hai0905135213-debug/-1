@@ -1,6 +1,6 @@
 <template>
   <view>
-    <view class="search-row"
+    <view v-if="showSearch" class="search-row"
       ><input
         v-model="keyword"
         placeholder="搜索餐厅、菜系、推荐菜"
@@ -8,18 +8,31 @@
         @confirm="reset"
       /><button size="mini" @tap="clear">清空</button></view
     >
+    <view class="browser-heading"
+      ><view
+        ><text class="browser-title">今天吃什么？</text
+        ><text class="browser-subtitle"
+          >附近好吃的 · 群友推荐 ·
+          {{ sortIndex ? "按直线距离排序" : "按群内热度排序" }}</text
+        ></view
+      ><text class="browser-more" @tap="allRestaurants">全部 ›</text></view
+    >
     <view class="filters">
       <picker :range="campuses" range-key="name" @change="chooseCampus"
-        ><view class="chip">{{ campuses[campusIndex].name }}⌄</view></picker
+        ><view :class="['chip', { chosen: campusIndex === 0 }]"
+          >{{ campuses[campusIndex].name }}⌄</view
+        ></picker
       >
       <view class="chip" @tap="panel = panel === 'cuisine' ? '' : 'cuisine'"
-        >品类⌄</view
+        >{{ cuisines.length ? "品类(" + cuisines.length + ")" : "品类" }}⌄</view
       >
       <picker :range="sorts" range-key="name" @change="chooseSort"
-        ><view class="chip">{{ sorts[sortIndex].name }}⌄</view></picker
+        ><view class="chip"
+          >{{ sortIndex ? "距离最近" : "排序" }}⌄</view
+        ></picker
       >
       <view class="chip" @tap="panel = panel === 'filter' ? '' : 'filter'"
-        >筛选⌄</view
+        >{{ tags.length || maxDistance ? "已筛选" : "筛选" }}⌄</view
       >
     </view>
     <view v-if="panel" class="filter-panel">
@@ -58,7 +71,15 @@
       <button size="mini" @tap="applyFilters">应用</button
       ><button size="mini" @tap="resetFilters">重置筛选</button>
     </view>
-    <text class="muted">{{ total }} 家餐厅 · 距离为直线距离</text>
+    <text class="result-count" v-if="!loading && !error"
+      >{{ total }} 家餐厅 · {{ campuses[campusIndex].name }} ·
+      距离为直线距离</text
+    >
+    <view v-if="loading && !items.length" class="skeleton-list"
+      ><view v-for="n in 3" :key="n" class="skeleton-card"
+        ><view class="skeleton-image" /><view class="skeleton-lines"
+          ><view /><view /><view /></view></view
+    ></view>
     <view
       v-for="item in items"
       :key="item.id"
@@ -74,18 +95,30 @@
         ><text class="muted address">{{
           item.fullAddress || "地址待补充"
         }}</text
-        ><text class="distance">{{ distanceText(item) }}</text
-        ><view class="tags"
-          ><text
-            v-for="tag in (item.tags || []).slice(0, 3)"
-            :key="tag"
-            class="tag"
-            >{{ tag }}</text
-          ></view
+        ><view class="card-footer"
+          ><text class="distance">{{ distanceText(item) }}</text
+          ><text class="cuisine">{{ item.cuisine || "群友推荐" }}</text></view
         ></view
       >
     </view>
-    <view class="footer" @tap="loadMore">{{
+    <view v-if="error && !items.length" class="browser-empty"
+      ><view class="empty-symbol">!</view
+      ><text class="empty-title">餐厅暂时没有加载出来</text
+      ><text class="empty-description"
+        >请确认后端已启动，再检查接口地址和微信工具的本地网络设置。</text
+      ><button class="retry-button" @tap="loadMore(true)">
+        重新加载
+      </button></view
+    >
+    <view v-else-if="!loading && !error && !items.length" class="browser-empty"
+      ><view class="empty-symbol">⌕</view
+      ><text class="empty-title">没找到符合条件的餐厅</text
+      ><text class="empty-description">换个关键词，或放宽距离和品类试试。</text
+      ><button class="retry-button" @tap="clearAll">
+        清空搜索与筛选
+      </button></view
+    >
+    <view v-if="items.length" class="footer" @tap="loadMore(true)">{{
       loading
         ? "加载中…"
         : error
@@ -98,10 +131,14 @@
 </template>
 <script>
 import { request } from "../services/api";
-import LazyRestaurantImage from './LazyRestaurantImage.vue';
+import LazyRestaurantImage from "./LazyRestaurantImage.vue";
 export default {
   components: { LazyRestaurantImage },
-  props: { initialSize: { type: Number, default: 12 } },
+  props: {
+    initialSize: { type: Number, default: 12 },
+    showSearch: { type: Boolean, default: true },
+  },
+  emits: ["campus-change", "keyword-clear"],
   data() {
     return {
       keyword: "",
@@ -119,7 +156,7 @@ export default {
       error: false,
       sequence: 0,
       timer: null,
-      placeholder: "/static/restaurant-placeholder.svg",
+      placeholder: "/static/restaurant-placeholder.png",
       facets: { cuisines: [], tags: { scene: [] } },
       campuses: [
         { name: "全校", code: "" },
@@ -143,6 +180,31 @@ export default {
     this.sequence++;
   },
   methods: {
+    allRestaurants() {
+      uni.navigateTo({ url: "/pages/restaurant-list/index" });
+    },
+    setKeyword(value, immediate = false) {
+      this.keyword = value;
+      if (immediate) this.reset();
+      else this.scheduleSearch();
+    },
+    cycleCampus() {
+      this.campusIndex = (this.campusIndex + 1) % this.campuses.length;
+      this.$emit("campus-change", this.campuses[this.campusIndex].name);
+      this.reset();
+    },
+    setSort(index) {
+      this.sortIndex = index;
+      this.reset();
+    },
+    clearAll() {
+      this.keyword = "";
+      this.cuisines = [];
+      this.tags = [];
+      this.maxDistance = 0;
+      this.$emit("keyword-clear");
+      this.reset();
+    },
     toggle(list, value) {
       const i = list.indexOf(value);
       if (i < 0) list.push(value);
@@ -150,6 +212,7 @@ export default {
     },
     chooseCampus(e) {
       this.campusIndex = Number(e.detail.value);
+      this.$emit("campus-change", this.campuses[this.campusIndex].name);
       this.reset();
     },
     chooseSort(e) {
@@ -180,13 +243,14 @@ export default {
       clearTimeout(this.timer);
       this.sequence++;
       this.loading = false;
+      this.error = false;
       this.items = [];
       this.page = 1;
       this.hasMore = true;
       return this.loadMore();
     },
-    async loadMore() {
-      if (this.loading || !this.hasMore) return;
+    async loadMore(force = false) {
+      if (this.loading || !this.hasMore || (this.error && !force)) return;
       const sequence = this.sequence;
       this.loading = true;
       this.error = false;
@@ -219,7 +283,6 @@ export default {
       } catch (e) {
         if (sequence === this.sequence) {
           this.error = true;
-          uni.showToast({ title: e.message || "加载失败", icon: "none" });
         }
       } finally {
         if (sequence === this.sequence) this.loading = false;
@@ -256,26 +319,31 @@ export default {
   align-items: center;
 }
 .search-row {
-  background: #f5f5f7;
-  padding: 16rpx;
-  border-radius: 24rpx;
+  border: 1rpx solid #ededf2;
+  padding: 18rpx 22rpx;
+  border-radius: 44rpx;
+  margin-bottom: 36rpx;
 }
 .search-row input {
   flex: 1;
   min-width: 0;
 }
 .filters {
-  margin: 28rpx 0;
+  margin: 28rpx 0 20rpx;
+  gap: 18rpx;
 }
 .chip {
   display: inline-block;
-  padding: 12rpx 18rpx;
-  border: 1px solid #ddd;
-  border-radius: 30rpx;
+  padding: 15rpx 24rpx;
+  border: 1rpx solid #e6e7ec;
+  border-radius: 28rpx;
   font-size: 24rpx;
+  font-weight: 700;
 }
 .chosen {
-  background: #ffe78b;
+  background: #fffdf0;
+  border-color: #08091f;
+  box-shadow: inset 0 -5rpx 0 rgba(255, 231, 51, 0.8);
 }
 .filter-panel {
   padding: 24rpx;
@@ -289,10 +357,12 @@ export default {
 }
 .restaurant {
   display: flex;
-  gap: 20rpx;
-  margin: 26rpx 0;
-  padding-bottom: 24rpx;
-  border-bottom: 1px solid #eee;
+  gap: 0;
+  margin: 0 0 20rpx;
+  border: 1rpx solid #f0f0f5;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 7rpx 22rpx rgba(8, 9, 31, 0.04);
 }
 .restaurant image {
   width: 190rpx;
@@ -304,11 +374,18 @@ export default {
 .info {
   min-width: 0;
   flex: 1;
+  padding: 22rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .name {
   display: block;
-  font-size: 30rpx;
-  font-weight: 700;
+  font-size: 28rpx;
+  font-weight: 800;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .muted {
   font-size: 24rpx;
@@ -322,8 +399,9 @@ export default {
   text-overflow: ellipsis;
 }
 .distance {
-  color: #b86c25;
-  font-size: 24rpx;
+  color: #e6782f;
+  font-size: 22rpx;
+  font-weight: 700;
 }
 .tag {
   background: #fff4cf;
@@ -336,5 +414,112 @@ export default {
   padding: 36rpx;
   color: #888;
   font-size: 26rpx;
+}
+.browser-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.browser-title {
+  display: block;
+  font-size: 38rpx;
+  font-weight: 900;
+  line-height: 1.4;
+}
+.browser-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #8e8f98;
+}
+.browser-more {
+  font-size: 24rpx;
+  color: #737581;
+  padding: 12rpx;
+}
+.result-count {
+  display: block;
+  color: #a0a1aa;
+  font-size: 21rpx;
+  margin: 8rpx 0 22rpx;
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 14rpx;
+}
+.cuisine {
+  color: #777984;
+  font-size: 22rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 40%;
+}
+.browser-empty {
+  text-align: center;
+  padding: 50rpx 28rpx 60rpx;
+  background: #fafafc;
+  border-radius: 24rpx;
+  margin: 28rpx 0;
+}
+.empty-symbol {
+  font-size: 36rpx;
+  font-weight: 800;
+  border: 2rpx solid #dcdde4;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 50%;
+  line-height: 68rpx;
+  color: #9a9ca8;
+  margin: 0 auto 22rpx;
+}
+.empty-title {
+  display: block;
+  font-size: 29rpx;
+  font-weight: 700;
+}
+.empty-description {
+  display: block;
+  font-size: 24rpx;
+  color: #8e8f98;
+  line-height: 1.7;
+  margin: 16rpx 0 28rpx;
+}
+.retry-button {
+  font-size: 25rpx;
+  background: #fff;
+  border: 1rpx solid #dedee7;
+  border-radius: 35rpx;
+  padding: 15rpx 30rpx;
+  display: inline-flex;
+}
+.skeleton-card {
+  display: flex;
+  gap: 24rpx;
+  margin: 20rpx 0;
+  height: 180rpx;
+  border: 1rpx solid #f0f0f5;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+.skeleton-image {
+  width: 204rpx;
+  background: #f0f0f4;
+}
+.skeleton-lines {
+  padding: 25rpx 0;
+  flex: 1;
+}
+.skeleton-lines view {
+  height: 20rpx;
+  border-radius: 8rpx;
+  background: #f3f3f6;
+  width: 80%;
+  margin: 0 0 20rpx;
+}
+.skeleton-lines view:last-child {
+  width: 50%;
 }
 </style>

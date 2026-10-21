@@ -9,27 +9,23 @@
         @tap="current = tab.code"
         >{{ tab.name }}</text
       ></view
-    ><view
-      class="card"
+    ><MealCard
       v-for="meal in data[current]"
       :key="meal.id"
-      @tap="open(meal.id)"
-      ><text class="name">{{ meal.title }}</text
-      ><text>{{ meal.place }}</text
-      ><text
-        >{{ meal.currentPeople }}/{{ meal.maxPeople }}人 ·
-        {{ labels[meal.status] }}
-        {{
-          meal.pendingCount ? " · " + meal.pendingCount + "个待审批" : ""
-        }}</text
-      ></view
-    ><text v-if="!data[current]?.length" class="muted">这里还没有饭局</text
+      :meal="meal"
+      @open="open"
+    />
+    <view v-if="!data[current]?.length" class="state-box"
+      ><text class="state-title">这里还没有饭局</text
+      ><text>从“找人”发现同学发起的饭局，或发布自己想吃的那顿饭。</text></view
     ><text class="error">{{ error }}</text></view
   >
 </template>
 <script>
 import { mealApi } from "../../services/api";
+import MealCard from "../../components/MealCard.vue";
 export default {
+  components: { MealCard },
   data() {
     return {
       current: "created",
@@ -81,7 +77,7 @@ export default {
   font-size: 25rpx;
 }
 .active {
-  border-bottom: 6rpx solid #ffe388;
+  border-bottom: 6rpx solid #ffe733;
 }
 .card {
   background: #faf7ef;
