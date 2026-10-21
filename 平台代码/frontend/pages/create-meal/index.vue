@@ -21,9 +21,9 @@
       maxlength="500"
     /><text>就餐时间</text
     ><view class="row"
-      ><picker mode="date" :value="date" @change="date = $event.detail.value"
+      ><picker class="row-item" mode="date" :value="date" @change="date = $event.detail.value"
         ><view class="field">{{ date }}</view></picker
-      ><picker mode="time" :value="time" @change="time = $event.detail.value"
+      ><picker class="row-item" mode="time" :value="time" @change="time = $event.detail.value"
         ><view class="field">{{ time }}</view></picker
       ></view
     ><text>报名截止（默认就餐时）</text
@@ -32,11 +32,13 @@
       @change="earlyDeadline = $event.detail.value"
     /><view v-if="earlyDeadline" class="row"
       ><picker
+        class="row-item"
         mode="date"
         :value="deadlineDate"
         @change="deadlineDate = $event.detail.value"
         ><view class="field">{{ deadlineDate }}</view></picker
       ><picker
+        class="row-item"
         mode="time"
         :value="deadlineTime"
         @change="deadlineTime = $event.detail.value"
@@ -48,9 +50,11 @@
       placeholder="总人数 2–12，包含自己"
     /><view class="row"
       ><input
+        class="row-item"
         v-model="form.budgetMin"
         type="digit"
         placeholder="每人最低预算（元）" /><input
+        class="row-item"
         v-model="form.budgetMax"
         type="digit"
         placeholder="每人最高预算（元）" /></view
@@ -197,7 +201,7 @@ export default {
   display: flex;
   gap: 16rpx;
 }
-.row > * {
+.row-item {
   flex: 1;
   min-width: 0;
 }
