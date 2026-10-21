@@ -11,3 +11,7 @@
 .modal-body { overflow-y: auto; max-height: 55vh; }
 .meal-actions-row { flex-wrap: wrap; }
 .home-restaurant-card img { background: #f5f0e9; }
+.product-badge { position:absolute;top:3px;right:8px;background:#c33;color:white;font-size:10px;line-height:16px;padding:0 4px;border-radius:10px; }
+.tabbar button { position:relative; }
+.form details { margin:16px 0;line-height:1.7; }
+.form select { max-width:100%; }

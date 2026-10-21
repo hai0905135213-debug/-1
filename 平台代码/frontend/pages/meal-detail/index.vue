@@ -2,12 +2,19 @@
   <view v-if="meal" class="page"
     ><text class="heading">{{ meal.title }}</text
     ><text class="badge"
-      >{{ statusName(meal.status) }} · {{ meal.currentPeople }}/{{
-        meal.maxPeople
-      }}人</text
+      >{{
+        meal.status === "open" && meal.recruitmentClosed
+          ? "报名已截止"
+          : statusName(meal.status)
+      }}
+      · {{ meal.currentPeople }}/{{ meal.maxPeople }}人</text
     ><text class="line">{{ meal.place }}</text
     ><text class="line">就餐：{{ timeText(meal.mealTime) }}</text
     ><text class="line">报名截止：{{ timeText(meal.deadline) }}</text
+    ><text class="line muted">{{ recruitmentText }}</text
+    ><text class="muted" v-if="meal.recruitMode === 'limited'"
+      >限时15分钟招募 ·
+      {{ meal.recruitmentClosed ? "报名已截止" : "仍需发起人审批" }}</text
     ><text class="line"
       >预算：每人 {{ meal.budgetMin }}–{{ meal.budgetMax }} 元</text
     ><text class="line">{{ meal.description }}</text
@@ -19,35 +26,56 @@
       >集合说明：{{ meal.meetingNote || "发起人尚未补充" }}</text
     >
     <view class="actions">
+      <button open-type="share" v-if="!meal.moderated">
+        邀请同学查看这个饭局</button
+      ><text v-if="meal.moderated" class="error"
+        >管理员处置：{{ meal.moderationReason }}</text
+      >
       <template v-if="isHost"
         ><button v-if="active" @tap="goApplications">
           管理申请（{{ meal.pendingCount }}）</button
         ><button v-if="active" @tap="confirmAction('cancel', '确定取消饭局？')">
           取消饭局</button
         ><button
-          v-if="active && Date.now() >= Date.parse(meal.mealTime)"
+          v-if="
+            active &&
+            Date.now() >= Date.parse(meal.mealTime) &&
+            meal.currentPeople >= 2
+          "
           @tap="confirmAction('finish', '确认已完成就餐？')"
         >
           标记完成
         </button></template
       >
       <template v-else
+        ><view v-if="canApply && meal.applicationStatus !== 'pending'">
+          <textarea
+            v-model="applicationNote"
+            maxlength="200"
+            placeholder="报名说明（选填）：介绍口味、希望的聊天氛围，勿填私人联系方式"
+          />
+          <text class="muted"
+            >{{ applicationNote.length }}/200 · 发起人审批后才成为正式成员</text
+          > </view
         ><button
           v-if="meal.applicationStatus === 'pending'"
           @tap="act('withdraw')"
+          :disabled="acting"
         >
           撤回申请</button
         ><button
-          v-else-if="meal.joined && active"
+          v-else-if="
+            meal.joined && active && Date.now() < Date.parse(meal.mealTime)
+          "
           @tap="confirmAction('leave', '确定退出饭局？')"
+          :disabled="acting"
         >
           退出饭局</button
         ><button
-          v-else-if="
-            meal.status === 'open' && meal.applicationStatus !== 'rejected'
-          "
+          v-else-if="canApply"
           class="primary"
           @tap="apply"
+          :disabled="acting"
         >
           申请加入</button
         ><text v-if="meal.applicationStatus === 'rejected'"
@@ -59,6 +87,10 @@
       ><button v-if="!isHost" @tap="report">举报问题</button>
     </view>
     <view v-if="meal.joined" class="message-area"
+      ><button v-if="meal.status !== 'cancelled'" @tap="checkIn">
+        本人自报到场</button
+      ><text class="muted"
+        >仅就餐前30分钟至开始后4小时；非GPS核验，不影响信用分。</text
       ><text class="section">队内留言</text
       ><view v-for="message in messages" :key="message.id" class="message"
         ><text class="muted"
@@ -104,6 +136,7 @@
 import { mealApi, request } from "../../services/api";
 import { teamApi } from "../../services/team";
 import { localTime } from "../../services/time";
+import { recruitmentHint } from "../../services/meal-state.mjs";
 export default {
   data() {
     return {
@@ -116,6 +149,9 @@ export default {
       moreMessages: false,
       messageText: "",
       sending: false,
+      acting: false,
+      applicationNote: "",
+      clock: Date.now(),
       poll: null,
       reviewIndex: 0,
       rating: 5,
@@ -123,6 +159,18 @@ export default {
     };
   },
   computed: {
+    recruitmentText() {
+      return recruitmentHint(this.meal, this.clock);
+    },
+    canApply() {
+      return (
+        this.meal?.status === "open" &&
+        !this.meal.recruitmentClosed &&
+        this.clock < Date.parse(this.meal.deadline) &&
+        !this.meal.joined &&
+        this.meal.applicationStatus !== "rejected"
+      );
+    },
     isHost() {
       return this.meal?.creatorId === this.currentUser?.id;
     },
@@ -141,7 +189,12 @@ export default {
   onShow() {
     this.currentUser = uni.getStorageSync("currentUser") || null;
     this.load();
-    this.poll = setInterval(() => this.refreshMessages(), 5000);
+    clearInterval(this.poll);
+    this.clock = Date.now();
+    this.poll = setInterval(() => {
+      this.clock = Date.now();
+      this.refreshMessages();
+    }, 5000);
   },
   onHide() {
     clearInterval(this.poll);
@@ -149,7 +202,26 @@ export default {
   onUnload() {
     clearInterval(this.poll);
   },
+  onShareAppMessage() {
+    return {
+      title:
+        this.meal && !this.meal.moderated
+          ? this.meal.title
+          : "饭饭之交·一起吃饭",
+      path: "/pages/meal-detail/index?id=" + encodeURIComponent(this.id),
+    };
+  },
   methods: {
+    async checkIn() {
+      try {
+        const result = await request(`/meals/${this.id}/check-in`, {
+          method: "POST",
+        });
+        uni.showToast({ title: result.label, icon: "none" });
+      } catch (e) {
+        this.error = e.message;
+      }
+    },
     statusName(s) {
       return (
         {
@@ -171,12 +243,17 @@ export default {
       }
     },
     async apply() {
+      if (this.acting) return;
+      this.acting = true;
       try {
-        await teamApi.apply(this.id);
+        await teamApi.apply(this.id, this.applicationNote.trim());
+        this.applicationNote = "";
         uni.showToast({ title: "已申请，等待审批", icon: "none" });
         await this.load();
       } catch (e) {
         this.error = e.message;
+      } finally {
+        this.acting = false;
       }
     },
     async publishPost() {
@@ -194,11 +271,15 @@ export default {
       }
     },
     async act(action) {
+      if (this.acting) return;
+      this.acting = true;
       try {
         await teamApi.action(this.id, action);
         await this.load();
       } catch (e) {
         this.error = e.message;
+      } finally {
+        this.acting = false;
       }
     },
     confirmAction(action, content) {

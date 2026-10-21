@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/teams.js",
-    "test": "node --test test/teams.test.mjs test/http.test.mjs"
+    "check": "node --check src/server.js && node --check src/teams.js && node --check src/discovery.js && node --check src/recommendation-rules.js && node --check src/product.js",
+    "test": "node --test test/teams.test.mjs test/http.test.mjs test/discovery.test.mjs test/product.test.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",

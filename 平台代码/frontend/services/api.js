@@ -1,3 +1,4 @@
+import {rememberReturn,currentPageUrl} from './session';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3001/api'
 
 function getToken() {
@@ -40,11 +41,13 @@ export function request(path, options = {}) {
           return
         }
 
-        if (res.statusCode === 401) {
+        if (res.statusCode === 401 && getToken()===token) {
+          rememberReturn();
           clearAuthSession()
           // 微信登录本身失败时留在登录页，其余受保护操作引导重新登录。
-          if (!path.startsWith('/auth/')) uni.navigateTo({ url: '/pages/login/index' })
+          if (!path.startsWith('/auth/')&&!options.silentAuth&&!currentPageUrl().startsWith('/pages/login/')) uni.navigateTo({ url: '/pages/login/index' })
         }
+        if(res.data?.error?.code==='ONBOARDING_REQUIRED'&&!currentPageUrl().startsWith('/pages/onboarding/')){rememberReturn();uni.navigateTo({url:'/pages/onboarding/index'})}
         reject(res.data?.error || { message: '请求失败' })
       },
       fail: reject
@@ -66,7 +69,8 @@ export const authApi = {
   },
   me: () => request('/auth/me'),
   logout: async () => { try { await request('/auth/logout', { method: 'POST' }) } finally { clearAuthSession() } },
-  token: getToken
+  token: getToken,
+  clear: clearAuthSession
 }
 
 export const mealApi = {

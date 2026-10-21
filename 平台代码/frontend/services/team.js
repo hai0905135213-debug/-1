@@ -1,6 +1,7 @@
 import { request } from "./api";
 export const teamApi = {
-  apply: (id) => request(`/meals/${id}/apply`, { method: "POST" }),
+  apply: (id, note = "") =>
+    request(`/meals/${id}/apply`, { method: "POST", data: { note } }),
   withdraw: (id) => request(`/meals/${id}/withdraw`, { method: "POST" }),
   applications: (id) => request(`/meals/${id}/applications`),
   decide: (id, applicationId, decision) =>

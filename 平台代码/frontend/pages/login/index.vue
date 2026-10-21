@@ -2,6 +2,7 @@
   <view class="page"
     ><text class="heading">一起好好吃饭</text
     ><text class="muted">登录后可以收藏餐厅；组队需管理员通过体验资格。</text
+    ><text class="muted" @tap="policy">登录前可先阅读服务与隐私说明 ›</text
     ><button @tap="wechat" :disabled="busy">微信登录</button
     ><view v-if="devLogin"
       ><input v-model="nickname" placeholder="本地测试昵称" /><button
@@ -15,6 +16,7 @@
 </template>
 <script>
 import { authApi } from "../../services/api";
+import {returnAfterLogin} from '../../services/session';
 export default {
   data() {
     return {
@@ -26,12 +28,13 @@ export default {
     };
   },
   methods: {
+    policy(){uni.navigateTo({url:'/pages/support/index?tab=policy'})},
     async run(login) {
       this.busy = true;
       this.error = "";
       try {
-        await login();
-        uni.switchTab({ url: "/pages/profile/index" });
+        const result=await login();
+        returnAfterLogin(result.user);
       } catch (e) {
         this.error = e.message || e.errMsg || "登录失败";
       } finally {

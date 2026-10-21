@@ -22,9 +22,9 @@
       {{ distance("cufe_nanlu") }}</text
     ><text class="line"
       >推荐菜：{{ restaurant.recommendedDishes || "待补充" }}</text
-    ><text class="line">人数建议：{{ restaurant.partySize || "待补充" }}</text
+    ><text v-if="restaurant.correctionNote" class="line">已核验信息：{{restaurant.correctionNote}}（地址修正后距离待重新补全）</text><text class="line">人数建议：{{ restaurant.partySize || "待补充" }}</text
     ><text class="line">预约提示：{{ restaurant.bookingNote || "待补充" }}</text
-    ><button @tap="map">查看地图</button
+    ><button @tap="correction">餐厅信息有误？反馈纠错</button><button @tap="map">查看地图</button
     ><button @tap="wishlist">想去 / 取消想去</button
     ><button @tap="visited">记录去过</button
     ><button class="primary" @tap="create">在此店发起饭局</button
@@ -59,6 +59,7 @@ export default {
     this.load();
   },
   methods: {
+    correction(){uni.navigateTo({url:'/pages/support/index?tab=feedback&restaurantId='+encodeURIComponent(this.id)})},
     async load() {
       try {
         const data = await request(

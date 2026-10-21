@@ -12,6 +12,9 @@
         "navigationBarTitleText": "登录"
       }
     },
+    {"path":"pages/discovery/index","style":{"navigationBarTitleText":"推荐与履约"}},
+    {"path":"pages/onboarding/index","style":{"navigationBarTitleText":"完善资料与说明"}},
+    {"path":"pages/support/index","style":{"navigationBarTitleText":"服务与反馈"}},
     { "path": "pages/restaurant-detail/index", "style": { "navigationBarTitleText": "餐厅详情" } },
     { "path": "pages/team-applications/index", "style": { "navigationBarTitleText": "报名审批" } },
     { "path": "pages/notifications/index", "style": { "navigationBarTitleText": "消息" } },

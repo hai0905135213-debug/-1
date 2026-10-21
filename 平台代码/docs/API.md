@@ -1,5 +1,23 @@
 # 饭饭之交后端接口文档
 
+## 2026-10-21 试运行产品收尾（优先于历史描述）
+
+- `GET /api/policies`：公开服务/隐私说明、版本、运营名称及支持联系方式。
+- `POST /api/account/onboarding`：昵称、校区、可选 `tasteTags/budgetPreference`，必须 `accepted:true` 和当前 `policyVersion`。未完成返回 `ONBOARDING_REQUIRED`，与组队白名单独立。
+- `GET /api/account/data`：本人资料、当前课程、数据统计及删除说明。
+- `DELETE /api/account/timetable`：清空本人课程和时间设置。
+- `DELETE /api/account`：`confirmation:"注销账号"`。未结束饭局未处理或最后一名管理员返回409；成功撤销全部会话，删除当前个人数据并匿名化保留历史关联，不即时物理抹除备份。
+- `GET /api/notifications/unread`：本人未读数量。
+- `GET/POST /api/feedback`：本人游标分页20条；提交 `category:issue|restaurant|appeal`、`content`（1–1000字）、可选 `restaurantId`。其他用户不可读取。
+- `GET /api/my-reports`：本人举报及处理说明。
+- `GET /api/admin/feedback`、`POST /api/admin/feedback/:id`：管理员查看及回复，提交 `status:processing|resolved|rejected` 和非空 `reply`，发送通知。
+- `POST /api/admin/reports/:id`：必须提交 `status:resolved|dismissed` 及非空 `reason`，留痕、通知举报者，不自动扣分。
+- `GET /api/admin/content?type=meal|post|message&id=`：管理员核验预览；`POST /api/admin/moderation` 提交相同 `type`、数字 `id`、布尔 `hidden` 及非空 `reason`。隐藏招募饭局会关闭申请并取消；恢复展示不会自动重新招募。
+- `PUT /api/admin/catalog/:restaurantId`：提交具体 `poiId`、核实 `address`、HTTPS `sourceUrl`、公开 `note`、`confirmed:true`；地址纠错停用旧坐标距离，不改已发布饭局快照。
+- 管理员停用用户时撤销该用户所有会话，不能停用最后一名有效管理员。所有管理员接口服务端鉴权，客户端按钮不代替权限检查。
+
+运行与外部待配置项见 `试运行产品收尾与验收.md`。迁移版本5，自动迁移前备份。
+
 ## 2026-10-20 审批组队版本更新
 
 本节优先于后文历史MVP描述。接口错误为 `{ error: { code, message } }`。登录后使用 `Authorization: Bearer <token>`，不再接受 `dev-token-*` 或 `X-User-Id` 冒充登录。会话7天到期，可通过退出撤销。

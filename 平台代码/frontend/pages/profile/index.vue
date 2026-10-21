@@ -8,12 +8,22 @@
           ? "体验资格已停用"
           : "等待管理员批准体验资格"
     }}</text
+    ><text class="muted" @tap="go('/pages/support/index?tab=policy')">服务与隐私说明 ›</text
     ><button v-if="!user" @tap="go('/pages/login/index')">微信登录</button
     ><template v-else
       ><view class="menu"
+        ><text v-if="user.onboardingRequired" @tap="go('/pages/onboarding/index')">先核对资料与服务说明 ›</text
         ><text @tap="go('/pages/edit-profile/index')">编辑个人资料 ›</text
         ><text @tap="go('/pages/my-meals/index')">我的饭局与报名 ›</text
-        ><text @tap="go('/pages/notifications/index')">消息与审批结果 ›</text
+        ><text @tap="go('/pages/notifications/index')">消息与审批结果{{unread?'（'+unread+'条未读）':''}} ›</text
+        ><text @tap="go('/pages/support/index?tab=feedback')">反馈、纠错与申诉 ›</text
+        ><text @tap="go('/pages/support/index?tab=data')">我的数据 / 清空课表 / 注销 ›</text
+        ><text v-if="user.isAdmin" @tap="go('/pages/support/index?tab=admin')">反馈与内容处置 ›</text
+        ><text v-if="user.isAdmin" @tap="go('/pages/support/index?tab=correction')">餐厅核验纠错 ›</text
+        ><text @tap="go('/pages/discovery/index?tab=recommend')">规则匹配推荐 ›</text
+        ><text @tap="go('/pages/discovery/index?tab=schedule')">课表与空闲推荐 ›</text
+        ><text @tap="go('/pages/discovery/index?tab=fulfillment')">我的履约记录 ›</text
+        ><text v-if="user.isAdmin" @tap="go('/pages/discovery/index?tab=offerAdmin')">商家优惠管理 ›</text
         ><text v-if="user.isAdmin" @tap="go('/pages/admin/index')"
           >体验资格和举报管理 ›</text
         ></view
@@ -46,10 +56,13 @@
 </template>
 <script>
 import { authApi, request } from "../../services/api";
+import {refreshUnread} from '../../services/notification-badge';
+import {rememberReturn} from '../../services/session';
 export default {
   data() {
     return {
       user: null,
+      unread:0,
       error: "",
       records: [],
       current: "wishlist",
@@ -67,6 +80,7 @@ export default {
         return;
       }
       this.user = (await authApi.me()).user;
+      this.unread=await refreshUnread();
       uni.setStorageSync("currentUser", this.user);
       await this.loadRecords();
     } catch (e) {
@@ -75,6 +89,7 @@ export default {
   },
   methods: {
     go(url) {
+      if(url==='/pages/login/index')rememberReturn('/pages/profile/index');
       uni.navigateTo({ url });
     },
     async loadRecords() {

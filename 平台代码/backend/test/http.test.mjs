@@ -72,6 +72,8 @@ test("真实HTTP路由与重启持久化", async () => {
       await api("/auth/login", "POST", null, { nickname: "HTTP队员" })
     ).data;
     assert.ok(host.token);
+    const policies=(await api('/policies')).data;
+    for(const session of [host,guest])await api('/account/onboarding','POST',session.token,{nickname:session.user.nickname,campus:'cufe_shahe',tasteTags:[],policyVersion:policies.version,accepted:true});
     assert.equal((await api("/meals", "POST", guest.token, {})).status, 403);
     await api(`/admin/users/${guest.user.id}/access`, "POST", host.token, {
       status: "approved",

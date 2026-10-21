@@ -2,7 +2,7 @@
   <view class="page"
     ><text class="heading">发起预约饭局</text
     ><text class="muted">报名需你审批，人数包含自己。</text
-    ><text v-if="venue" class="venue">已选：{{ venue.name }}</text
+    ><picker :range="['预约招募','限时15分钟招募（仍需审批）']" :value="recruitIndex" @change="recruitIndex=Number($event.detail.value)"><view class="field">{{recruitIndex?'限时15分钟招募（仍需审批）':'预约招募'}}</view></picker><text v-if="recruitIndex" class="muted">服务器自动限制报名截止为发布后15分钟或就餐时间，不是自动派单。</text><text v-if="venue" class="venue">已选：{{ venue.name }}</text
     ><button v-if="venue" size="mini" @tap="venue = null">改为手填地点</button
     ><input
       v-model="form.title"
@@ -80,6 +80,7 @@ export default {
   data() {
     return {
       venue: null,
+      recruitIndex: 0,
       campuses: [
         { name: "沙河校区", code: "cufe_shahe" },
         { name: "学院南路校区", code: "cufe_nanlu" },
@@ -133,6 +134,7 @@ export default {
           : mealTime;
         const data = await mealApi.create({
           ...this.form,
+          recruitMode: this.recruitIndex ? 'limited' : 'appointment',
           maxPeople: Number(this.form.maxPeople),
           budgetMin: Number(this.form.budgetMin),
           budgetMax: Number(this.form.budgetMax),

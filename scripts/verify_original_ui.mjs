@@ -1,71 +1,667 @@
-import {chromium} from 'playwright';
-import {createServer} from 'node:http';
-import {readFile,mkdir} from 'node:fs/promises';
-import {mkdtempSync} from 'node:fs';
-import {tmpdir} from 'node:os';
-import {join,extname,resolve} from 'node:path';
-import {spawn} from 'node:child_process';
-import assert from 'node:assert/strict';
-import {createRequire} from 'node:module';
+import { chromium } from "playwright";
+import { createServer } from "node:http";
+import { readFile, mkdir } from "node:fs/promises";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, extname, resolve } from "node:path";
+import { spawn } from "node:child_process";
+import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 
 // 所有写入只发生在临时业务库；原餐厅仓只读，不向日常数据库添加测试用户。
-const root=resolve('平台代码/frontend/preview-static');
-const dataDir=mkdtempSync(join(tmpdir(),'fanfan-original-db-'));
-const screenshots=join(tmpdir(),'fanfan-original-ui');await mkdir(screenshots,{recursive:true});
-const backend=spawn(process.execPath,['平台代码/backend/src/server.js'],{env:{...process.env,DATA_DIR:dataDir,PORT:'0',ENABLE_DEV_LOGIN:'true',ADMIN_USER_IDS:'1',SEED_DEMO:'false'}});
-let server,browser;
-const checks=[];
-checks.push=function(...items){console.log(items.join('；'));return Array.prototype.push.apply(this,items)};
-try{
-  const base=await new Promise((resolve,reject)=>{let output='';const timer=setTimeout(()=>reject(new Error(output||'后端启动超时')),15000);backend.stdout.on('data',s=>{output+=s;const m=output.match(/http:\/\/127\.0\.0\.1:\d+/);if(m){clearTimeout(timer);resolve(m[0]+'/api')}});backend.stderr.on('data',s=>output+=s);backend.once('error',reject)});
-  const api=async(path,method='GET',token,data)=>{const res=await fetch(base+path,{method,signal:AbortSignal.timeout(10000),headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:data===undefined?undefined:JSON.stringify(data)});const result=await res.json();assert.ok(res.ok,JSON.stringify(result));return result};
-  const host=await api('/auth/login','POST',null,{nickname:'原版验收发起人'});
-  const member=await api('/auth/login','POST',null,{nickname:'原版验收队员'});
-  server=createServer(async(req,res)=>{try{const pathname=new URL(req.url,'http://local').pathname;const file=resolve(root,'.'+(pathname==='/'?'/index.html':pathname));assert.ok(file.startsWith(root+'/'));res.setHeader('Content-Type',({'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml'})[extname(file)]||'application/octet-stream');res.end(await readFile(file))}catch{res.writeHead(404);res.end('Not found')}});
-  await new Promise(r=>server.listen(0,'127.0.0.1',r));const web=`http://127.0.0.1:${server.address().port}`;
-  browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_EXECUTABLE||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
-  console.log('临时数据库及隔离浏览器已启动');
-  const errors=[];
-  async function makePage(){
-    const context=await browser.newContext({viewport:{width:430,height:900}});
-    await context.route('**/*',async route=>{const url=route.request().url();if(url.startsWith('http://127.0.0.1:3001/api/'))return route.fulfill({response:await context.request.fetch(url.replace('http://127.0.0.1:3001/api',base),{method:route.request().method(),headers:route.request().headers(),data:route.request().postData()||undefined})});if(!url.startsWith(web)&&route.request().resourceType()==='image')return route.abort();return route.continue()});
-    const page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message));page.on('dialog',dialog=>dialog.accept(dialog.type()==='prompt'?'一起吃饭，请审批':undefined));await page.goto(web);return page;
+const root = resolve("平台代码/frontend/preview-static");
+const dataDir = mkdtempSync(join(tmpdir(), "fanfan-original-db-"));
+const screenshots = join(tmpdir(), "fanfan-original-ui");
+await mkdir(screenshots, { recursive: true });
+const backend = spawn(process.execPath, ["平台代码/backend/src/server.js"], {
+  env: {
+    ...process.env,
+    DATA_DIR: dataDir,
+    PORT: "0",
+    ENABLE_DEV_LOGIN: "true",
+    ADMIN_USER_IDS: "1",
+    SEED_DEMO: "false",
+  },
+});
+let server, browser;
+const checks = [];
+checks.push = function (...items) {
+  console.log(items.join("；"));
+  return Array.prototype.push.apply(this, items);
+};
+// 最小可提取文字PDF，只用于测试上传解析，不依赖系统字体或额外PDF库。
+function timetablePdf() {
+  const text = "BT /F1 12 Tf 50 700 Td (Math Monday [1-2] RoomA101) Tj ET";
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    `<< /Length ${text.length} >>\nstream\n${text}\nendstream`,
+  ];
+  let output = "%PDF-1.4\n",
+    offsets = [0];
+  objects.forEach((o, i) => {
+    offsets.push(Buffer.byteLength(output));
+    output += `${i + 1} 0 obj\n${o}\nendobj\n`;
+  });
+  const xref = Buffer.byteLength(output);
+  output +=
+    `xref\n0 6\n0000000000 65535 f \n` +
+    offsets
+      .slice(1)
+      .map((n) => String(n).padStart(10, "0") + " 00000 n \n")
+      .join("") +
+    `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return Buffer.from(output);
+}
+try {
+  const base = await new Promise((resolve, reject) => {
+    let output = "";
+    const timer = setTimeout(
+      () => reject(new Error(output || "后端启动超时")),
+      15000,
+    );
+    backend.stdout.on("data", (s) => {
+      output += s;
+      const m = output.match(/http:\/\/127\.0\.0\.1:\d+/);
+      if (m) {
+        clearTimeout(timer);
+        resolve(m[0] + "/api");
+      }
+    });
+    backend.stderr.on("data", (s) => (output += s));
+    backend.once("error", reject);
+  });
+  const api = async (path, method = "GET", token, data) => {
+    const res = await fetch(base + path, {
+      method,
+      signal: AbortSignal.timeout(10000),
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { authorization: "Bearer " + token } : {}),
+      },
+      body: data === undefined ? undefined : JSON.stringify(data),
+    });
+    const result = await res.json();
+    assert.ok(res.ok, JSON.stringify(result));
+    return result;
+  };
+  const host = await api("/auth/login", "POST", null, {
+    nickname: "原版验收发起人",
+  });
+  const member = await api("/auth/login", "POST", null, {
+    nickname: "原版验收队员",
+  });
+  server = createServer(async (req, res) => {
+    try {
+      const pathname = new URL(req.url, "http://local").pathname;
+      const file = resolve(
+        root,
+        "." + (pathname === "/" ? "/index.html" : pathname),
+      );
+      assert.ok(file.startsWith(root + "/"));
+      res.setHeader(
+        "Content-Type",
+        {
+          ".html": "text/html",
+          ".js": "application/javascript",
+          ".css": "text/css",
+          ".svg": "image/svg+xml",
+        }[extname(file)] || "application/octet-stream",
+      );
+      res.end(await readFile(file));
+    } catch {
+      res.writeHead(404);
+      res.end("Not found");
+    }
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const web = `http://127.0.0.1:${server.address().port}`;
+  browser = await chromium.launch({
+    headless: true,
+    executablePath:
+      process.env.CHROME_EXECUTABLE ||
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  });
+  console.log("临时数据库及隔离浏览器已启动");
+  const errors = [];
+  async function makePage() {
+    const context = await browser.newContext({
+      viewport: { width: 430, height: 900 },
+    });
+    await context.route("**/*", async (route) => {
+      const url = route.request().url();
+      if (url.startsWith("http://127.0.0.1:3001/api/"))
+        return route.fulfill({
+          response: await context.request.fetch(
+            url.replace("http://127.0.0.1:3001/api", base),
+            {
+              method: route.request().method(),
+              headers: route.request().headers(),
+              data: route.request().postData() || undefined,
+            },
+          ),
+        });
+      if (!url.startsWith(web) && route.request().resourceType() === "image")
+        return route.abort();
+      return route.continue();
+    });
+    const page = await context.newPage();
+    page.setDefaultTimeout(12000);
+    page.on("pageerror", (e) => errors.push(e.message));
+    page.on("dialog", (dialog) =>
+      dialog.accept(
+        dialog.type() === "prompt" ? "一起吃饭，请审批" : undefined,
+      ),
+    );
+    await page.goto(web);
+    return page;
   }
-  async function login(page,nickname){await page.locator('.tabbar [data-page=profile]').click();await page.locator('[data-go-login]').first().click();await page.locator('#login-nickname').fill(nickname);await page.locator('[data-login]').click();await page.locator('#access-panel').waitFor()}
-  const page=await makePage();
-  await page.locator('.home-restaurant-card').first().waitFor();assert.equal(await page.locator('.home-restaurant-card').count(),6);checks.push('原版布局首屏6家');
-  await page.waitForFunction(()=>{const img=document.querySelector('.home-restaurant-card img');return img?.complete&&img.naturalWidth>0&&img.src.includes('placeholder.svg')});checks.push('远程图片失败时本地占位');
-  await page.screenshot({path:join(screenshots,'home.png')});
+  async function login(page, nickname) {
+    await page.locator(".tabbar [data-page=profile]").click();
+    await page.locator("[data-go-login]").first().click();
+    await page.locator("#login-nickname").fill(nickname);
+    await page.locator("[data-login]").click();
+    await page
+      .locator("[data-save-onboarding],#access-panel")
+      .first()
+      .waitFor();
+    if (await page.locator("[data-save-onboarding]").count()) {
+      await page.locator("#onboard-name").waitFor();
+      await page.screenshot({ path: join(screenshots, "onboarding.png") });
+      await page.locator("#onboard-name").fill(nickname);
+      await page.locator("#onboard-accepted").check();
+      await page.locator("[data-save-onboarding]").click();
+      checks.push("首次用户资料与明确同意");
+    }
+    await page.locator("#access-panel").waitFor();
+  }
+  const page = await makePage();
+  await page.locator(".home-restaurant-card").first().waitFor();
+  assert.equal(await page.locator(".home-restaurant-card").count(), 6);
+  checks.push("原版布局首屏6家");
+  await page.waitForFunction(() => {
+    const img = document.querySelector(".home-restaurant-card img");
+    return (
+      img?.complete &&
+      img.naturalWidth > 0 &&
+      img.src.includes("placeholder.svg")
+    );
+  });
+  checks.push("远程图片失败时本地占位");
+  await page.screenshot({ path: join(screenshots, "home.png") });
   // 输入与切换条件使用真实事件，等待请求而不是固定延时。
-  await page.locator('#home-search-input').fill('潇湘阁');await page.waitForFunction(()=>{const cards=[...document.querySelectorAll('.home-restaurant-card')];return cards.length>0&&cards.every(x=>x.textContent.includes('潇湘阁'))});checks.push('搜索防抖');
-  await page.locator('.pills[data-choice-group] .pill').nth(3).click();await page.locator('[data-apply-filters]').waitFor();await page.locator('[data-reset-filters]').click();checks.push('数据库筛选面板');
-  await login(page,'原版验收发起人');await page.locator('[data-go-admin]').click();await page.locator(`[data-access-user="${member.user.id}"][data-status=approved]`).click();
-  await page.waitForFunction(id=>[...document.querySelectorAll('.quote')].some(x=>x.textContent.includes('原版验收队员')&&x.textContent.includes('已通过')),member.user.id);checks.push('管理员白名单审批');
-  await page.locator('.tabbar [data-page=home]').click();await page.locator('.home-restaurant-card').first().waitFor();await page.locator('.home-restaurant-card').first().click();
-  await page.locator('[data-start-catalog]').waitFor();const branches=await page.locator('#restaurant-branch option').count();let expectedPoi=await page.locator('#restaurant-branch').inputValue();if(branches>1){expectedPoi=await page.locator('#restaurant-branch option').nth(1).getAttribute('value');await page.locator('#restaurant-branch').selectOption({index:1});await page.waitForFunction(poi=>document.querySelector('#restaurant-detail-content')?.dataset.poi===poi&&!document.querySelector('[data-start-catalog]')?.disabled,expectedPoi)}
-  await page.locator('[data-catalog-wish]').click();await page.locator('[data-catalog-visited]').click();checks.push('餐厅想去与去过写入');
-  await page.locator('[data-start-catalog]').click();await page.locator('#meal-title').fill('原版界面审批测试');await page.locator('#meal-people').fill('2');await page.locator('#meal-budget').fill('20-40');await page.locator('#meal-meeting').fill('靠窗集合，仅正式队员可见');await page.locator('[data-create-meal]').click();await page.locator('[data-manage-applications]').waitFor();
-  const meal=(await api('/meals','GET',host.token)).items.find(x=>x.title==='原版界面审批测试');assert.ok(meal);assert.equal(meal.budgetMin,20);assert.ok(meal.restaurantId);assert.ok(meal.venue.address);assert.equal(meal.poiId,expectedPoi||null);checks.push('分店快照发布及预算单位');
-  const wishes=await api('/profile/wishlist','GET',host.token);assert.equal(wishes.items[0].restaurantId,meal.restaurantId);await page.locator('[data-save-meal]').click();await page.getByText('★ 已收藏',{exact:true}).waitFor();assert.equal((await api('/profile/saved','GET',host.token)).items[0].mealId,meal.id);checks.push('餐厅字符串ID及饭局收藏');
-  await page.locator('#team-message-input').fill('发起人第一条留言');await page.locator('[data-send-message]').click();await page.getByText('发起人第一条留言',{exact:true}).waitFor();checks.push('发起人队内留言');
-  await page.locator('[data-share-post]').click();await page.locator('.tabbar [data-page=find]').click();await page.locator('[data-open-post-meal]').first().waitFor();checks.push('真实找人帖子关联饭局');
-  const memberPage=await makePage();await login(memberPage,'原版验收队员');await memberPage.locator('.tabbar [data-page=find]').click();await memberPage.locator(`[data-meal-detail="${meal.id}"]`).click();await memberPage.locator('[data-join]').click();await memberPage.getByText('我的申请：待审批',{exact:true}).waitFor();assert.equal(await memberPage.locator('#team-messages').count(),0);checks.push('申请不占位且不可读留言');
+  await page.locator("#home-search-input").fill("潇湘阁");
+  await page.waitForFunction(() => {
+    const cards = [...document.querySelectorAll(".home-restaurant-card")];
+    return (
+      cards.length > 0 && cards.every((x) => x.textContent.includes("潇湘阁"))
+    );
+  });
+  checks.push("搜索防抖");
+  await page.locator("#home-search-input").fill("不会存在的餐厅验收词");
+  await page.locator("[data-clear-discovery]").waitFor();
+  await page.locator("[data-clear-discovery]").click();
+  await page.waitForFunction(
+    () => document.querySelectorAll(".home-restaurant-card").length === 6,
+  );
+  checks.push("搜索无结果一键恢复");
+  let failAppend = true;
+  const appendFailure = async (route) => {
+    if (
+      failAppend &&
+      new URL(route.request().url()).searchParams.get("page") === "2"
+    ) {
+      failAppend = false;
+      await route.abort();
+    } else await route.fallback();
+  };
+  await page.context().route("**/api/restaurants?**", appendFailure);
+  await page.evaluate(() => loadPreviewMeals({ append: true }));
+  await page.locator("[data-retry-discovery]").waitFor();
+  assert.equal(await page.locator(".home-restaurant-card").count(), 6);
+  await page.locator("[data-retry-discovery]").click();
+  await page.waitForFunction(
+    () => document.querySelectorAll(".home-restaurant-card").length === 12,
+  );
+  await page.context().unroute("**/api/restaurants?**", appendFailure);
+  checks.push("后续页失败保留列表并可重试");
+  await page.locator(".pills[data-choice-group] .pill").nth(3).click();
+  await page.locator("[data-apply-filters]").waitFor();
+  await page.locator("[data-reset-filters]").click();
+  checks.push("数据库筛选面板");
+  await login(page, "原版验收发起人");
+  await page.locator("[data-go-admin]").click();
+  await page
+    .locator(`[data-access-user="${member.user.id}"][data-status=approved]`)
+    .click();
+  await page.waitForFunction(
+    (id) =>
+      [...document.querySelectorAll(".quote")].some(
+        (x) =>
+          x.textContent.includes("原版验收队员") &&
+          x.textContent.includes("已通过"),
+      ),
+    member.user.id,
+  );
+  checks.push("管理员白名单审批");
+  await page.locator(".tabbar [data-page=home]").click();
+  await page.locator(".home-restaurant-card").first().waitFor();
+  await page.locator(".home-restaurant-card").first().click();
+  await page.locator("[data-start-catalog]").waitFor();
+  const branches = await page.locator("#restaurant-branch option").count();
+  let expectedPoi = await page.locator("#restaurant-branch").inputValue();
+  if (branches > 1) {
+    expectedPoi = await page
+      .locator("#restaurant-branch option")
+      .nth(1)
+      .getAttribute("value");
+    await page.locator("#restaurant-branch").selectOption({ index: 1 });
+    await page.waitForFunction(
+      (poi) =>
+        document.querySelector("#restaurant-detail-content")?.dataset.poi ===
+          poi && !document.querySelector("[data-start-catalog]")?.disabled,
+      expectedPoi,
+    );
+  }
+  await page.locator("[data-catalog-wish]").click();
+  await page.locator("[data-catalog-visited]").click();
+  checks.push("餐厅想去与去过写入");
+  await page.locator("[data-start-catalog]").click();
+  await page.locator("#meal-title").fill("原版界面审批测试");
+  await page.locator("#meal-people").fill("2");
+  await page.locator("#meal-budget").fill("20-40");
+  await page.locator("#meal-meeting").fill("靠窗集合，仅正式队员可见");
+  await page.locator("[data-create-meal]").click();
+  await page.locator("[data-manage-applications]").waitFor();
+  await page.locator("[data-recruitment-hint]").waitFor();
+  const meal = (await api("/meals", "GET", host.token)).items.find(
+    (x) => x.title === "原版界面审批测试",
+  );
+  assert.ok(meal);
+  assert.equal(meal.budgetMin, 20);
+  assert.ok(meal.restaurantId);
+  assert.ok(meal.venue.address);
+  assert.equal(meal.poiId, expectedPoi || null);
+  checks.push("分店快照发布及预算单位");
+  const wishes = await api("/profile/wishlist", "GET", host.token);
+  assert.equal(wishes.items[0].restaurantId, meal.restaurantId);
+  await page.locator("[data-save-meal]").click();
+  await page.getByText("★ 已收藏", { exact: true }).waitFor();
+  assert.equal(
+    (await api("/profile/saved", "GET", host.token)).items[0].mealId,
+    meal.id,
+  );
+  checks.push("餐厅字符串ID及饭局收藏");
+  await page.locator("#team-message-input").fill("发起人第一条留言");
+  await page.locator("[data-send-message]").click();
+  await page.getByText("发起人第一条留言", { exact: true }).waitFor();
+  checks.push("发起人队内留言");
+  await page.locator("[data-share-post]").click();
+  await page.locator(".tabbar [data-page=find]").click();
+  await page.locator("[data-open-post-meal]").first().waitFor();
+  checks.push("真实找人帖子关联饭局");
+  const memberPage = await makePage();
+  await login(memberPage, "原版验收队员");
+  await memberPage.locator(".tabbar [data-page=find]").click();
+  await memberPage.locator(`[data-meal-detail="${meal.id}"]`).click();
+  await memberPage.locator("[data-join]").click();
+  await memberPage.getByText("我的申请：待审批", { exact: true }).waitFor();
+  assert.equal(await memberPage.locator("#team-messages").count(), 0);
+  checks.push("申请不占位且不可读留言");
   // 待审批入口及撤回后重新申请。
-  await memberPage.locator('.tabbar [data-page=profile]').click();await memberPage.locator('[data-go-my-meals]').click();await memberPage.locator('[data-my-meal-tab=pending]').click();await memberPage.locator(`[data-meal-detail="${meal.id}"]`).click();await memberPage.locator('[data-join]').click();await memberPage.getByText('我的申请：已撤回',{exact:true}).waitFor();await memberPage.locator('[data-join]').click();await memberPage.getByText('我的申请：待审批',{exact:true}).waitFor();checks.push('待审批列表与撤回重报');
-  await page.locator(`[data-meal-detail="${meal.id}"]`).click();await page.locator('[data-manage-applications]').click();await page.locator('[data-decision=approve]').click();await page.getByText(/原版验收队员/).filter({hasText:'已通过'}).first().waitFor().catch(()=>page.waitForFunction(()=>document.querySelector('#applications-content')?.textContent.includes('已通过')));
-  assert.equal((await api(`/meals/${meal.id}`,'GET',host.token)).meal.status,'matched');checks.push('实际审批按钮与满员成局');
-  await page.screenshot({path:join(screenshots,'applications.png')});
-  await memberPage.locator('.tabbar [data-page=profile]').click();await memberPage.locator('[data-go-notifications]').click();await memberPage.getByText(/通过/).first().waitFor();await memberPage.locator('[data-read-notifications]').click();await memberPage.getByText('未读 0 条',{exact:true}).waitFor();await memberPage.locator(`[data-notification-meal="${meal.id}"]`).first().click();await memberPage.getByText('靠窗集合，仅正式队员可见',{exact:true}).waitFor();checks.push('审批通知与成员集合说明');
-  await memberPage.locator('#team-message-input').fill('队员留言');await memberPage.locator('[data-send-message]').click();await memberPage.getByText('队员留言',{exact:true}).waitFor();await memberPage.locator('[data-join]').click();await memberPage.getByText('我的申请：已撤回',{exact:true}).waitFor();assert.equal(await memberPage.locator('#team-messages').count(),0);assert.equal((await api(`/meals/${meal.id}`,'GET',host.token)).meal.status,'open');checks.push('退出撤销访问与重新招募');
-  await memberPage.locator('[data-join]').click();await memberPage.getByText('我的申请：待审批',{exact:true}).waitFor();
-  await page.locator('.tabbar [data-page=profile]').click();await page.locator('[data-go-my-meals]').click();await page.locator(`[data-meal-detail="${meal.id}"]`).click();await page.locator('[data-manage-applications]').click();await page.locator('[data-decision=reject]').click();await page.waitForFunction(()=>document.querySelector('#applications-content')?.textContent.includes('已拒绝'));checks.push('发起人拒绝');
+  await memberPage.locator(".tabbar [data-page=profile]").click();
+  await memberPage.locator("[data-go-my-meals]").click();
+  await memberPage.locator("[data-my-meal-tab=pending]").click();
+  await memberPage.locator(`[data-meal-detail="${meal.id}"]`).click();
+  await memberPage.locator("[data-join]").click();
+  await memberPage.getByText("我的申请：已撤回", { exact: true }).waitFor();
+  await memberPage.locator("[data-join]").click();
+  await memberPage.getByText("我的申请：待审批", { exact: true }).waitFor();
+  checks.push("待审批列表与撤回重报");
+  await page.locator(`[data-meal-detail="${meal.id}"]`).click();
+  await page.locator("[data-manage-applications]").click();
+  await page.locator("[data-decision=approve]").click();
+  await page
+    .getByText(/原版验收队员/)
+    .filter({ hasText: "已通过" })
+    .first()
+    .waitFor()
+    .catch(() =>
+      page.waitForFunction(() =>
+        document
+          .querySelector("#applications-content")
+          ?.textContent.includes("已通过"),
+      ),
+    );
+  assert.equal(
+    (await api(`/meals/${meal.id}`, "GET", host.token)).meal.status,
+    "matched",
+  );
+  checks.push("实际审批按钮与满员成局");
+  await page.screenshot({ path: join(screenshots, "applications.png") });
+  await memberPage.locator(".tabbar [data-page=profile]").click();
+  await memberPage.locator("[data-go-notifications]").click();
+  await memberPage.getByText(/通过/).first().waitFor();
+  await memberPage.locator("[data-read-notifications]").click();
+  await memberPage.getByText("未读 0 条", { exact: true }).waitFor();
+  await memberPage
+    .locator(`[data-notification-meal="${meal.id}"]`)
+    .first()
+    .click();
+  await memberPage
+    .getByText("靠窗集合，仅正式队员可见", { exact: true })
+    .waitFor();
+  checks.push("审批通知与成员集合说明");
+  await memberPage.locator("#team-message-input").fill("队员留言");
+  await memberPage.locator("[data-send-message]").click();
+  await memberPage.getByText("队员留言", { exact: true }).waitFor();
+  await memberPage.locator("[data-join]").click();
+  await memberPage.getByText("我的申请：已撤回", { exact: true }).waitFor();
+  assert.equal(await memberPage.locator("#team-messages").count(), 0);
+  assert.equal(
+    (await api(`/meals/${meal.id}`, "GET", host.token)).meal.status,
+    "open",
+  );
+  checks.push("退出撤销访问与重新招募");
+  await memberPage.locator("[data-join]").click();
+  await memberPage.getByText("我的申请：待审批", { exact: true }).waitFor();
+  await page.locator(".tabbar [data-page=profile]").click();
+  await page.locator("[data-go-my-meals]").click();
+  await page.locator(`[data-meal-detail="${meal.id}"]`).click();
+  await page.locator("[data-manage-applications]").click();
+  await page.locator("[data-decision=reject]").click();
+  await page.waitForFunction(() =>
+    document
+      .querySelector("#applications-content")
+      ?.textContent.includes("已拒绝"),
+  );
+  checks.push("发起人拒绝");
   // 另建独立完成场景：只调整测试库时间，不能改真实业务库。
-  const done=(await api('/meals','POST',host.token,{title:'完成及互评验收',place:'测试集合处',campus:'cufe_shahe',maxPeople:2,mealTime:new Date(Date.now()+86400000).toISOString()})).meal;
-  await api(`/meals/${done.id}/apply`,'POST',member.token,{});const apps=await api(`/meals/${done.id}/applications`,'GET',host.token);await api(`/meals/${done.id}/applications/${apps.items[0].id}/approve`,'POST',host.token,{});
-  const require=createRequire(resolve('平台代码/backend/package.json'));const Database=require('better-sqlite3');const fixtureDb=new Database(join(dataDir,'fanfan.db'));fixtureDb.prepare('UPDATE meals SET meal_time=?,deadline=? WHERE id=?').run(new Date(Date.now()-60000).toISOString(),new Date(Date.now()-120000).toISOString(),done.id);fixtureDb.close();
-  await page.locator('.tabbar [data-page=profile]').click();await page.locator('[data-go-my-meals]').click();await page.locator(`[data-meal-detail="${done.id}"]`).click();await page.locator('[data-finish-meal]').click();await page.locator('[data-go-review]').click();await page.locator('#review-target').selectOption(String(member.user.id));await page.locator('#review-content').fill('准时，交流愉快');await page.locator('[data-submit-review]').click();await page.getByText('已完成',{exact:true}).waitFor();checks.push('完成与真实队友评价');
-  await page.screenshot({path:join(screenshots,'finished.png')});
-  await page.locator('.tabbar [data-page=profile]').click();await page.locator('[data-go-my-meals]').click();await page.locator(`[data-meal-detail="${meal.id}"]`).click();await page.locator('[data-cancel-meal]').click();await page.getByText('已取消',{exact:true}).waitFor();assert.equal(await page.locator('[data-send-message]').count(),0);checks.push('取消关闭发言');
-  await page.locator('.tabbar [data-page=profile]').click();await page.locator('[data-logout]').click();await page.locator('[data-login]').waitFor();checks.push('会话退出');
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({ok:true,checks,screenshots},null,2));
-}finally{if(browser)await browser.close();if(server)await new Promise(r=>server.close(r));backend.kill()}
+  const done = (
+    await api("/meals", "POST", host.token, {
+      title: "完成及互评验收",
+      place: "测试集合处",
+      campus: "cufe_shahe",
+      maxPeople: 2,
+      mealTime: new Date(Date.now() + 86400000).toISOString(),
+    })
+  ).meal;
+  await api(`/meals/${done.id}/apply`, "POST", member.token, {});
+  const apps = await api(`/meals/${done.id}/applications`, "GET", host.token);
+  await api(
+    `/meals/${done.id}/applications/${apps.items[0].id}/approve`,
+    "POST",
+    host.token,
+    {},
+  );
+  const require = createRequire(resolve("平台代码/backend/package.json"));
+  const Database = require("better-sqlite3");
+  const fixtureDb = new Database(join(dataDir, "fanfan.db"));
+  fixtureDb
+    .prepare("UPDATE meals SET meal_time=?,deadline=? WHERE id=?")
+    .run(
+      new Date(Date.now() - 60000).toISOString(),
+      new Date(Date.now() - 120000).toISOString(),
+      done.id,
+    );
+  fixtureDb.close();
+  await page.locator(".tabbar [data-page=profile]").click();
+  await page.locator("[data-go-my-meals]").click();
+  await page.locator(`[data-meal-detail="${done.id}"]`).click();
+  await page.locator("[data-finish-meal]").click();
+  await page.locator("[data-go-review]").click();
+  await page.locator("#review-target").selectOption(String(member.user.id));
+  await page.locator("#review-content").fill("准时，交流愉快");
+  await page.locator("[data-submit-review]").click();
+  await page.getByText("已完成", { exact: true }).waitFor();
+  checks.push("完成与真实队友评价");
+  await page.screenshot({ path: join(screenshots, "finished.png") });
+  await page.locator(".tabbar [data-page=profile]").click();
+  await page.locator("[data-go-my-meals]").click();
+  await page.locator(`[data-meal-detail="${meal.id}"]`).click();
+  await page.locator("[data-cancel-meal]").click();
+  await page.getByText("已取消", { exact: true }).waitFor();
+  assert.equal(await page.locator("[data-send-message]").count(), 0);
+  checks.push("取消关闭发言");
+  await page.locator(".tabbar [data-page=profile]").click();
+  await page.locator("[data-discovery-go=schedule]").click();
+  await page.locator("#schedule-pdf").setInputFiles({
+    name: "fixture-timetable.pdf",
+    mimeType: "application/pdf",
+    buffer: timetablePdf(),
+  });
+  const pdfResponse = page.waitForResponse((r) =>
+    r.url().includes("/timetable/pdf-import"),
+  );
+  await page.locator("[data-import-schedule]").click();
+  const pdfResult = await pdfResponse;
+  assert.ok(pdfResult.ok(), JSON.stringify(await pdfResult.json()));
+  await page.locator("[data-course-row]").first().waitFor();
+  assert.ok(
+    (await page.locator("[data-course-name]").first().inputValue()).includes(
+      "Math",
+    ),
+  );
+  checks.push("真实PDF上传识别与课程核对表单");
+  const chinaNow = new Date(Date.now() + 8 * 3600000),
+    day = chinaNow.getUTCDay() || 7,
+    monday = new Date(chinaNow.getTime() - (day - 1) * 86400000)
+      .toISOString()
+      .slice(0, 10);
+  await page.locator("#schedule-term").fill(monday);
+  await page.locator("#schedule-confirmed").check();
+  const settingsResponse = page.waitForResponse(
+    (r) =>
+      r.url().includes("/schedule/settings") && r.request().method() === "PUT",
+  );
+  await page.locator("[data-save-schedule]").click();
+  const savedSettings = await settingsResponse;
+  assert.ok(savedSettings.ok(), JSON.stringify(await savedSettings.json()));
+  checks.push("课表时间核对与启用");
+  await api("/profile", "PUT", host.token, {
+    campus: "cufe_shahe",
+    tasteTags: ["川菜"],
+    budgetPreference: "20-40",
+  });
+  const recommended = (
+    await api("/meals", "POST", member.token, {
+      title: "川菜电影推荐测试",
+      place: "校园门口",
+      campus: "cufe_shahe",
+      maxPeople: 3,
+      mealTime: new Date(Date.now() + 2 * 86400000).toISOString(),
+      budgetMin: 20,
+      budgetMax: 40,
+      topicTags: ["电影"],
+      chatMode: "quiet",
+    })
+  ).meal;
+  await page.locator(".tabbar [data-page=home]").click();
+  await page.locator("[data-discovery-go=discovery]").click();
+  await page.locator("#recommend-results .section-title").first().waitFor();
+  await page.locator("#recommend-minutes").fill("240");
+  await page.locator("#recommend-topics").fill("电影");
+  await page.locator("#recommend-chat").selectOption("quiet");
+  const recResponse = page.waitForResponse(
+    (r) =>
+      r.url().includes("/discovery/recommendations?") &&
+      r.url().includes("freeMinutes=240"),
+  );
+  await page.locator("[data-recommend-refresh]").click();
+  const recData = await (await recResponse).json();
+  assert.equal(recData.availability.source, "manual");
+  assert.ok(
+    recData.meals
+      .find((m) => m.id === recommended.id)
+      .reasons.some((r) => r.includes("共同话题")),
+  );
+  await page.waitForFunction(() =>
+    document
+      .querySelector("#recommend-results")
+      ?.textContent.includes("共同话题"),
+  );
+  await page
+    .locator(`[data-match-meal="${recommended.id}"]`)
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({ path: join(screenshots, "recommendations.png") });
+  checks.push("规则匹配及推荐理由页面");
+  await page.locator(".tabbar [data-page=publish]").click();
+  await page.locator("#meal-recruit").selectOption("limited");
+  await page.locator("#meal-title").fill("限时招募页面测试");
+  await page.locator("#meal-place").fill("校门口");
+  await page.locator("[data-create-meal]").click();
+  await page.getByText(/限时15分钟招募 ·/).waitFor();
+  const limited = (await api("/meals", "GET", host.token)).items.find(
+    (x) => x.title === "限时招募页面测试",
+  );
+  assert.ok(Date.parse(limited.deadline) <= Date.now() + 15 * 60000);
+  checks.push("限时招募真实发布");
+  await page.locator(".tabbar [data-page=profile]").click();
+  await page.locator("[data-discovery-go=fulfillment]").click();
+  await page.getByText(/完成组队 1 场/).waitFor();
+  checks.push("个人履约记录展示");
+  await page.locator(".tabbar [data-page=profile]").click();
+  await page.locator("[data-discovery-go=offerAdmin]").click();
+  await page.locator("#offer-title").waitFor();
+  await page.locator("select#offer-restaurant").selectOption(meal.restaurantId);
+  await page.locator("#offer-title").fill("测试用优惠，仅临时库");
+  await page.locator("#offer-description").fill("隔离验收数据，不是真实促销");
+  await page.locator("#offer-source").fill("https://example.com/offer");
+  await page.locator("#offer-verification").fill("测试来源核验");
+  const clock = (ms) => {
+    const d = new Date(ms);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  };
+  await page.locator("#offer-from").fill(clock(Date.now() - 3600000));
+  await page.locator("#offer-until").fill(clock(Date.now() + 86400000));
+  await page.locator("#offer-confirmed").check();
+  await page.locator("[data-offer-create=published]").click();
+  await page.locator("[data-offer-archive]").waitFor();
+  await page.locator(".tabbar [data-page=home]").click();
+  await page.locator("[data-discovery-go=offers]").click();
+  await page.getByText("测试用优惠，仅临时库", { exact: true }).waitFor();
+  checks.push("管理员核实发布与公开优惠展示");
+  await page.locator(".tabbar [data-page=profile]").click();
+  await page.locator("[data-logout]").click();
+  await page.locator("[data-login]").waitFor();
+  checks.push("会话退出");
+  // 新同学从邀请链接首次进入，完成引导后返回原饭局，不丢掉邀请上下文。
+  const invited = await makePage();
+  await invited.goto(web + "/?meal=" + recommended.id);
+  await invited.locator("[data-join]").waitFor();
+  await invited.locator("[data-join]").click();
+  await invited.locator("#login-nickname").fill("受邀产品验收同学");
+  await invited.locator("[data-login]").click();
+  await invited.locator("#onboard-name").waitFor();
+  await invited.locator("#onboard-accepted").check();
+  await invited.locator("[data-save-onboarding]").click();
+  await invited.getByText("川菜电影推荐测试", { exact: true }).waitFor();
+  checks.push("邀请进入、首次确认与登录返回原饭局");
+  const invitedUser = (await api("/admin/users", "GET", host.token)).items.find(
+    (u) => u.nickname === "受邀产品验收同学",
+  );
+  await api("/admin/users/" + invitedUser.id + "/access", "POST", host.token, {
+    status: "approved",
+  });
+  await invited.locator("[data-join]").click();
+  await invited.getByText("我的申请：待审批", { exact: true }).waitFor();
+  await invited.locator(".tabbar [data-page=profile]").click();
+  await invited.locator("[data-product-go=feedback]").click();
+  await invited.locator("#feedback-content").fill("页面验收：反馈处理与通知");
+  const feedbackResponse = invited.waitForResponse(
+    (r) => r.url().endsWith("/api/feedback") && r.request().method() === "POST",
+  );
+  await invited.locator("[data-feedback-submit]").click();
+  const feedbackId = (await (await feedbackResponse).json()).id;
+  await invited
+    .getByText("页面验收：反馈处理与通知", { exact: true })
+    .waitFor();
+  checks.push("普通用户反馈提交与私有记录");
+  await login(page, "原版验收发起人");
+  await page.locator("[data-product-go=operations]").click();
+  await page
+    .locator("#reply-feedback-" + feedbackId)
+    .fill("已核验，测试问题已修正");
+  await page
+    .locator(`[data-reply-feedback="${feedbackId}"][data-status=resolved]`)
+    .click();
+  await page
+    .getByText("已核验，测试问题已修正", { exact: false })
+    .first()
+    .waitFor();
+  await invited.locator(".tabbar [data-page=profile]").click();
+  await invited.locator("[data-product-go=feedback]").click();
+  await invited
+    .getByText("管理员回复：已核验，测试问题已修正", { exact: true })
+    .waitFor();
+  await invited.waitForFunction(
+    () => Number(document.querySelector(".product-badge")?.textContent) > 0,
+  );
+  checks.push("管理员回复、用户进展与未读提醒");
+  await invited.screenshot({ path: join(screenshots, "feedback.png") });
+  await page.locator("#moderation-id").fill(String(recommended.id));
+  await page.locator("[data-load-content]").click();
+  await page
+    .locator("#moderation-reason-" + recommended.id)
+    .fill("测试核验后关闭，非真实用户内容");
+  await page.locator(`[data-moderate="${recommended.id}"]`).click();
+  await page
+    .getByText(new RegExp("#" + recommended.id + " · 已隐藏"))
+    .waitFor();
+  await invited.goto(web + "/?meal=" + recommended.id);
+  await invited.getByText("饭局因违规处理已关闭", { exact: true }).waitFor();
+  assert.equal(await invited.locator("[data-join]").count(), 0);
+  checks.push("管理员内容处置、关闭报名与用户端反馈");
+  const invitedToken = await invited.evaluate(
+    () => JSON.parse(localStorage.getItem("fanfanPreviewAuth")).token,
+  );
+  await api("/timetable/import", "POST", invitedToken, {
+    courses: [
+      {
+        courseName: "待清空测试课",
+        dayOfWeek: 1,
+        startPeriod: 1,
+        endPeriod: 2,
+      },
+    ],
+  });
+  await invited.locator(".tabbar [data-page=profile]").click();
+  await invited.locator("[data-product-go=accountData]").click();
+  const clearing = invited.waitForResponse(
+    (r) =>
+      r.url().endsWith("/api/account/timetable") &&
+      r.request().method() === "DELETE",
+  );
+  await invited.locator("[data-clear-timetable]").click();
+  await clearing;
+  assert.equal(
+    (await api("/timetable/mine", "GET", invitedToken)).courses.length,
+    0,
+  );
+  checks.push("用户主动清空课表");
+  await invited.locator("#account-delete-confirmation").fill("注销账号");
+  await invited.locator("[data-delete-account]").click();
+  await invited.locator(".home-restaurant-card").first().waitFor();
+  assert.equal(
+    await invited.evaluate(() => localStorage.getItem("fanfanPreviewAuth")),
+    null,
+  );
+  assert.equal(
+    (
+      await fetch(base + "/auth/me", {
+        headers: { authorization: "Bearer " + invitedToken },
+      })
+    ).status,
+    401,
+  );
+  checks.push("真实注销、会话撤销与返回游客浏览");
+  assert.deepEqual(errors, []);
+  console.log(JSON.stringify({ ok: true, checks, screenshots }, null, 2));
+} finally {
+  if (browser) await browser.close();
+  if (server) await new Promise((r) => server.close(r));
+  backend.kill();
+}

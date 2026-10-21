@@ -5,7 +5,7 @@
       ><text @tap="notifications">消息 ›</text></view
     ><view class="section-row"><text class="subtitle">今天吃什么？</text><text class="more" @tap="allRestaurants">查看全部 ›</text></view
     ><text class="description">从群友推荐里，找一顿值得一起吃的饭</text
-    ><RestaurantBrowser ref="browser" :initial-size="6"
+    ><view class="section-row"><text class="more" @tap="discovery('recommend')">为我推荐 ›</text><text class="more" @tap="discovery('offers')">商家优惠 ›</text></view><RestaurantBrowser ref="browser" :initial-size="6"
   /></view>
 </template>
 <script>
@@ -16,6 +16,7 @@ export default {
     this.$refs.browser?.loadMore();
   },
   methods: {
+    discovery(tab) { uni.navigateTo({url:'/pages/discovery/index?tab='+tab}) },
     allRestaurants(){uni.navigateTo({url:'/pages/restaurant-list/index'})},
     notifications() {
       uni.navigateTo({ url: "/pages/notifications/index" });

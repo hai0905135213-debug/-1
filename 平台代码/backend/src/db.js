@@ -863,24 +863,29 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
   }
 
   const candidatesByRestaurantId = new Map();
+  const hasAdjustments=db.prepare("SELECT name FROM sqlite_master WHERE name='restaurant_adjustments'").get();
+  const adjustments=new Map((hasAdjustments?db.prepare('SELECT * FROM restaurant_adjustments').all():[]).map(x=>[`${x.restaurant_id}:${x.poi_id}`,x]));
   for (const row of candidateRows) {
     if (!candidatesByRestaurantId.has(row.restaurant_id)) candidatesByRestaurantId.set(row.restaurant_id, []);
     let raw = {};
     try { raw = JSON.parse(row.raw_json || "{}"); } catch { raw = {}; }
     const firstPhoto = Array.isArray(raw.photos) ? raw.photos[0] : null;
+    const correction=adjustments.get(`${row.restaurant_id}:${row.poi_id}`);
     candidatesByRestaurantId.get(row.restaurant_id).push({
       id: row.id,
       rank: row.rank,
       score: row.score,
       poiId: row.poi_id,
       name: row.name,
-      address: row.address,
+      address: correction?.address || row.address,
       district: row.district,
-      location: row.location,
+      location: correction ? null : row.location,
       category: row.category,
       telephone: row.telephone,
       photoUrl: firstPhoto?.url || firstPhoto?.photo_url || null,
-      distanceKm: distanceByCandidateId.get(row.id) || {}
+      distanceKm: correction ? {} : distanceByCandidateId.get(row.id) || {},
+      correctionNote: correction?.note || '',
+      correctionSource: correction?.source_url || null
     });
   }
 
@@ -897,11 +902,12 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
     });
     const selected = poiId ? candidates.find(candidate => candidate.poiId === poiId) || null : orderedCandidates[0] || null;
     const tags = buildRestaurantTags(row, selected);
+    const correction=adjustments.get(`${row.id}:`);
     return {
       id: row.id,
       name: row.name,
       cuisine: row.cuisine,
-      fullAddress: selected?.address || row.full_address || row.location_hint || "",
+      fullAddress: selected?.address || correction?.address || row.full_address || row.location_hint || "",
       district: selected?.district || row.district || "",
       recommendedDishes: row.recommended_dishes,
       optionalDishes: row.optional_dishes,
@@ -915,6 +921,8 @@ export function listRestaurantCatalog({ campus, foodType, keyword, page = 1, pag
       poiStatus: row.poi_status,
       candidateCount: candidates.length,
       selectedCandidate: selected,
+      correctionNote: selected?.correctionNote || correction?.note || '',
+      correctionSource: selected?.correctionSource || correction?.source_url || null,
       candidates,
       _searchText: [
         row.name,

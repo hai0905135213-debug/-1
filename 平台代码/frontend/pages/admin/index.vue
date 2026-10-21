@@ -47,12 +47,7 @@ export default {
       }
     },
     async resolve(report, status) {
-      try {
-        await teamApi.reportStatus(report.id, status);
-        this.load();
-      } catch (e) {
-        this.error = e.message;
-      }
+      uni.navigateTo({url:'/pages/support/index?tab=admin'});
     },
   },
 };

@@ -9,6 +9,16 @@
   const back = '<button class="back-link" data-back>‹ 返回</button>'
   const empty = text => `<div class="empty"><p>${escape(text)}</p></div>`
   const fail = error => toast(error.message || '请求失败，请重试')
+  const recruitmentHint = meal => {
+    if(meal.status==='cancelled')return '饭局已取消，不再接收报名'
+    if(meal.status==='finished')return '饭局已完成，正式成员可评价队友'
+    if(meal.status==='matched')return '已经满员，暂不接收新申请'
+    const left=Date.parse(meal.deadline)-Date.now(),minutes=Math.ceil(left/60000)
+    if(meal.recruitmentClosed||left<=0)return '报名已截止，不能新增申请或审批'
+    if(!Number.isFinite(left))return '截止时间待刷新，请以服务端状态为准'
+    const duration=minutes>=1440?`${Math.floor(minutes/1440)}天${Math.floor(minutes%1440/60)}小时`:minutes>=60?`${Math.floor(minutes/60)}小时${minutes%60}分钟`:`${minutes}分钟`
+    return `距报名截止约${duration} · 剩余${Math.max(0,meal.maxPeople-meal.currentPeople)}个正式名额，申请不占位`
+  }
   const select = (id, values) => `<select id="${id}">${values.map(([v,label])=>`<option value="${escape(v)}">${escape(label)}</option>`).join('')}</select>`
   const bind = (selector, handler) => screen.querySelectorAll(selector).forEach(old => {
     const node = old.cloneNode(true); old.replaceWith(node)
@@ -36,13 +46,14 @@
 
   // 旧 dev-token 无法访问新接口，过期后清理，避免界面显示假登录。
   apiRequest = async (path, options={}) => {
+    const requestToken=authSession?.token;
     const response=await fetch(API_BASE_URL+path,{method:options.method||'GET',signal:AbortSignal.timeout(15000),
       headers:{'Content-Type':'application/json',...(authSession?.token?{Authorization:`Bearer ${authSession.token}`}:{})},
       body:options.data===undefined?undefined:JSON.stringify(options.data)})
     const data=await response.json()
     if(!response.ok){
-      if(response.status===401){authSession=null;localStorage.removeItem('fanfanPreviewAuth')}
-      throw new Error(data.error?.message||'请求失败')
+      if(response.status===401&&authSession?.token===requestToken){authSession=null;localStorage.removeItem('fanfanPreviewAuth')}
+      const error=new Error(data.error?.message||'请求失败');Object.assign(error,{code:data.error?.code,status:response.status});throw error
     }
     return data
   }
@@ -54,6 +65,7 @@
     <button class="primary full-width" data-login>开发登录</button><p class="muted">首次登录后需管理员批准体验资格才能发布和报名；浏览餐厅无需登录。</p></div>`
   pages.publish=`<div class="page form">${back}<div class="title">发布饭局</div><p class="muted">预约组队，报名需发起人审批；发布后关键条件不可修改。</p>
     <label>饭局标题</label><input id="meal-title" maxlength="100" placeholder="今晚一起吃点什么？">
+    <label>招募模式</label>${select('meal-recruit',[['appointment','预约招募'],['limited','限时15分钟招募（仍需审批）']])}<p class="muted">限时模式截止时间由服务器限制为发布后15分钟或就餐时间，以较早者为准。</p>
     <label>就餐校区</label>${select('meal-campus',Object.entries(campusNames))}
     <label>就餐时间</label><input id="meal-time" type="datetime-local">
     <label>报名截止（留空默认就餐时间）</label><input id="meal-deadline" type="datetime-local">
@@ -116,7 +128,7 @@
     const budget=val('meal-budget').match(/\d+(?:\.\d+)?/g)||[]
     const data=await apiRequest('/meals',{method:'POST',data:{title:val('meal-title'),campus:val('meal-campus'),mealTime:time.toISOString(),deadline:deadline.toISOString(),
       place:val('meal-place'),maxPeople:Number(val('meal-people')),budgetMin:Number(budget[0]||0),budgetMax:Number(budget[1]||budget[0]||0),
-      description:val('meal-note'),meetingNote:val('meal-meeting'),chatMode:val('meal-chat'),topicTags:splitTags(val('meal-topics')),
+      description:val('meal-note'),meetingNote:val('meal-meeting'),chatMode:val('meal-chat'),topicTags:splitTags(val('meal-topics')),recruitMode:val('meal-recruit'),
       ...(venue?{restaurantId:venue.id,poiId:venue.poiId}:{})}})
     venue=null;activeRestaurantName='';toast('饭局已发布');openMeal(data.meal.id)
   }
@@ -127,6 +139,8 @@
     const name=meal.joined?'leave':meal.applicationStatus==='pending'?'withdraw':'apply'
     const note=name==='apply'?(prompt('报名说明（可留空，最多200字）')??null):''
     if(note===null)return
+    if(note.length>200)throw new Error('报名说明最多200字，请精简后提交')
+    if(name!=='apply'&&!confirm(name==='withdraw'?'撤回后可以再次报名，确定撤回申请？':'退出后将失去队内留言访问权限，再加入需要重新审批。确定退出？'))return
     await action(name,{note});toast(name==='apply'?'申请已提交，等待发起人审批':name==='withdraw'?'已撤回申请':'已退出饭局')
   }
 
@@ -152,7 +166,9 @@
     return `<div style="position:relative"><img class="hero" src="${escape(getMealImage(meal.foodType))}"><button class="icon-btn dark" data-back style="position:absolute;left:16px;top:18px">‹</button></div>
       <div class="detail-panel"><div class="detail-title">${escape(meal.title)}</div><span class="tag">${escape(statusNames[meal.status])}</span>
       <p>${escape(meal.place)}</p><p>${escape(campusNames[meal.campus]||meal.campus)} · ${escape(formatMealTime(meal.mealTime))} · ${escape(formatBudget(meal))}</p>
-      <p class="muted">报名截止 ${escape(formatMealTime(meal.deadline))} · ${meal.currentPeople}/${meal.maxPeople}人（含发起人）</p>
+      <p class="muted">${meal.recruitMode==='limited'?'限时15分钟招募 · ':''}${meal.recruitmentClosed?'报名已截止 · ':''}报名截止 ${escape(formatMealTime(meal.deadline))} · ${meal.currentPeople}/${meal.maxPeople}人（含发起人）</p>
+      <p class="quote" data-recruitment-hint>${escape(recruitmentHint(meal))}</p>
+      ${meal.applicationStatus==='pending'?'<p class="muted">等待发起人审批，通过后才能查看集合说明和队内留言。申请尚未占用名额。</p>':meal.applicationStatus==='rejected'?'<p class="muted">本场申请未通过，不能再次申请，可以寻找其他饭局。</p>':meal.applicationStatus==='closed'?'<p class="muted">该申请已关闭，不会自动恢复。若饭局重新开放，请主动重新报名。</p>':''}
       <p>${escape(meal.description)}</p><p>${(meal.topicTags||[]).map(t=>`<span class="tag">${escape(t)}</span>`).join('')}</p>
       <div class="section-title">正式队员</div><p>${meal.participants.map(p=>escape(p.nickname)).join('、')}</p>
       ${meal.applicationStatus?`<p>我的申请：${escape(statusNames[meal.applicationStatus])}</p>`:''}
@@ -183,11 +199,13 @@
   }
   async function loadApplications(){
     const target=screen.querySelector('#applications-content'),id=activeMealId
-    const {items}=await apiRequest(`/meals/${id}/applications`);if(!target?.isConnected)return
-    target.innerHTML=items.length?items.map(a=>`<div class="quote"><strong>${escape(a.nickname)}</strong> · ${escape(statusNames[a.status])}
-      <p>${escape(a.profile?.campus||'未填校区')} · ${escape((a.profile?.tasteTags||[]).join('、'))}</p><p>${escape((a.profile?.personalityTags||[]).join('、'))}</p><p>${escape(a.note||'无报名说明')}</p>
-      ${a.status==='pending'?`<button class="primary" data-approval="${a.id}" data-decision="approve">通过</button><button class="secondary" data-approval="${a.id}" data-decision="reject">拒绝</button>`:''}</div>`).join(''):empty('暂无申请')
-    bind('[data-approval]',async n=>{await apiRequest(`/meals/${id}/applications/${n.dataset.approval}/${n.dataset.decision}`,{method:'POST'});await loadApplications()})
+    const [result,{meal}]=await Promise.all([apiRequest(`/meals/${id}/applications`),apiRequest(`/meals/${id}`)]);if(!target?.isConnected)return
+    const canDecide=meal.status==='open'&&!meal.recruitmentClosed&&Date.now()<Date.parse(meal.deadline),items=result.items
+    target.innerHTML=`<p class="quote">${escape(statusNames[meal.status])} · 正式成员${meal.currentPeople}/${meal.maxPeople} · 剩余${Math.max(0,meal.maxPeople-meal.currentPeople)}个名额<br>报名截止 ${escape(formatMealTime(meal.deadline))}<br>${canDecide?'申请不占名额；通过审批后占位。拒绝后本场不可重报。':'当前不能审批，可查看历史申请。'}</p><button class="secondary" data-refresh-applications>刷新申请与名额</button>`+(items.length?items.map(a=>`<div class="quote"><strong>${escape(a.nickname)}</strong> · ${escape(statusNames[a.status])}
+      <p>${escape(a.profile?.campus||'未填校区')} · ${escape((a.profile?.tasteTags||[]).join('、')||'未填口味')}</p><p>${escape((a.profile?.personalityTags||[]).join('、')||'未填就餐偏好')} · 预算${escape(a.profile?.budgetPreference||'未填')}</p><p>${escape(a.note||'无报名说明')}</p>
+      ${a.status==='pending'&&canDecide?`<button class="primary" data-approval="${a.id}" data-decision="approve">通过</button><button class="secondary" data-approval="${a.id}" data-decision="reject">拒绝</button>`:''}</div>`).join(''):empty('暂无申请，邀请同学查看饭局即可报名'))
+    bind('[data-refresh-applications]',loadApplications)
+    bind('[data-approval]',async n=>{if(n.dataset.decision==='reject'&&!confirm('拒绝后，对方本场不能重新报名。确定拒绝？'))return;try{await apiRequest(`/meals/${id}/applications/${n.dataset.approval}/${n.dataset.decision}`,{method:'POST'});await loadApplications()}catch(e){await loadApplications();throw e}})
   }
   async function loadNotifications(){
     const target=screen.querySelector('#notifications-content');if(!target)return
@@ -312,6 +330,7 @@
 
   // 查询序号保证快速切校区/搜索时旧响应不能覆盖新列表。
   resetPreviewHomeRestaurants = () => {queryVersion++;homeRestaurantLoading=false;homeRestaurantPage=1;homeRestaurantHasMore=true;loadPreviewMeals()}
+  const clearDiscoveryFilters = () => {clearTimeout(homeRestaurantSearchTimer);homeRestaurantKeyword='';filters={cuisines:[],tags:[],maxDistance:''};const input=screen.querySelector('#home-search-input');if(input)input.value='';resetPreviewHomeRestaurants()}
   sortFilterOptions=['群内热度','距离最近']
   loadPreviewMeals = async ({append=false}={}) => {
     const target=screen.querySelector('#home-restaurant-list');if(!target||homeRestaurantLoading||!homeRestaurantHasMore)return
@@ -327,10 +346,11 @@
       homeRestaurantHasMore=data.hasMore;homeRestaurantPage++
       target.querySelectorAll('.home-load-state').forEach(x=>x.remove())
       const html=data.items.map(r=>renderHomeRestaurantCard(r,campus)).join('')
-      if(append)target.insertAdjacentHTML('beforeend',html);else target.innerHTML=html||empty('没有符合条件的餐厅')
+      if(append)target.insertAdjacentHTML('beforeend',html);else target.innerHTML=html||empty('没有符合条件的餐厅。试试缩短店名或放宽筛选，校区选择会保留。')+'<button class="secondary" data-clear-discovery>清空搜索与筛选</button>'
       if(data.items.length||append)target.insertAdjacentHTML('beforeend',`<div class="home-load-state muted">${homeRestaurantHasMore?'继续下滑加载 6 家':'已经到底啦'}</div>`)
       updateHomeFilterPills();bindPageActions()
-    }catch(e){if(version===queryVersion&&target.isConnected)target.innerHTML=empty(e.message)}finally{if(version===queryVersion)homeRestaurantLoading=false}
+      bind('[data-clear-discovery]',clearDiscoveryFilters)
+    }catch(e){if(version===queryVersion&&target.isConnected){homeRestaurantHasMore=false;target.querySelectorAll('.home-load-state').forEach(x=>x.remove());const message=`<div class="home-load-state">${empty(append?'后续餐厅加载失败，已加载内容仍保留':e.message)}<button class="secondary" data-retry-discovery>重新加载</button></div>`;if(append)target.insertAdjacentHTML('beforeend',message);else target.innerHTML=message;bind('[data-retry-discovery]',()=>{homeRestaurantHasMore=true;return loadPreviewMeals({append})})}}finally{if(version===queryVersion)homeRestaurantLoading=false}
   }
   updateHomeFilterPills = () => {
     const pills=screen.querySelectorAll('.pills[data-choice-group] .pill');if(currentPage!=='home'||pills.length<4)return
@@ -369,6 +389,7 @@
       target.dataset.poi=r.selectedCandidate?.poiId||''
       const d=c=>Number.isFinite(r.distanceKm?.[c])?r.distanceKm[c].toFixed(1)+' km':'待补充'
       target.innerHTML=`<div class="restaurant-detail-view"><div style="position:relative"><img class="hero" src="${escape(getRestaurantImage(r))}" onerror="this.onerror=null;this.src='./placeholder.svg'"><button class="icon-btn dark" data-back style="position:absolute;left:16px;top:18px">‹</button></div><div class="detail-info"><h2>${escape(r.name)}</h2><label>具体分店</label>${select('restaurant-branch',(r.candidates||[]).map(x=>[x.poiId,x.name]))}<p>${escape(r.fullAddress||r.location||'地址待补充')}</p><p class="muted">沙河直线 ${d('cufe_shahe')} · 学院南路直线 ${d('cufe_nanlu')}</p><p>推荐菜：${escape(r.recommendedDishes||'待补充')}</p><p>人数建议：${escape(r.partySize||'待补充')}</p><p>预约提示：${escape(r.bookingNote||'待补充')}</p><p>${escape(r.cuisine||'')}</p><div class="meal-actions-row"><button class="secondary" data-map>查看地图</button><button class="secondary" data-catalog-wish>想去 / 取消想去</button><button class="secondary" data-catalog-visited>记录去过</button></div><button class="primary full-width" data-start-catalog>在此店发起约饭</button><div class="section-title">在此店组队</div><div id="catalog-meals"></div></div></div>`
+      if(r.correctionNote)target.querySelector('.detail-info h2').insertAdjacentHTML('afterend',`<p class="quote">地址已核验：${escape(r.correctionNote)}。旧坐标与距离暂停展示，等待重新补全。</p>`)
       const branch=screen.querySelector('#restaurant-branch');branch.value=r.selectedCandidate?.poiId||'';branch.onchange=()=>{branch.disabled=true;screen.querySelector('[data-start-catalog]').disabled=true;loadPreviewRestaurantDetail(r.id,branch.value)}
       bindPageActions()
       bind('[data-start-catalog]',()=>{if(!logged())return;venue={id:String(r.id),poiId:r.selectedCandidate?.poiId||null,campus:campus||'cufe_shahe',label:`${r.selectedCandidate?.name||r.name} ${r.fullAddress||''}`};navigate('publish')})
@@ -379,7 +400,12 @@
     }catch(e){if(target.isConnected)target.innerHTML=empty(e.message)}
   }
   // 页面切后台暂停轮询，离开页面时 render 会销毁定时器。
-  window.addEventListener('pagehide',()=>clearInterval(poll))
+  const deadlineTimer=setInterval(()=>{
+    if(document.hidden||currentPage!=='detail'||!detailMeal)return
+    const hint=screen.querySelector('[data-recruitment-hint]');if(hint)hint.textContent=recruitmentHint(detailMeal)
+    if(detailMeal.status==='open'&&!detailMeal.recruitmentClosed&&Date.now()>=Date.parse(detailMeal.deadline))loadPreviewMealDetail(activeMealId)
+  },15000)
+  window.addEventListener('pagehide',()=>{clearInterval(poll);clearInterval(deadlineTimer)})
   document.addEventListener('error',event=>{const target=event.target;if(target instanceof HTMLImageElement&&!target.src.endsWith('/placeholder.svg'))target.src='./placeholder.svg'},true)
   render('home')
 })()

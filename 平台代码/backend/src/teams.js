@@ -37,7 +37,9 @@ if (
   if (filename && filename !== ":memory:" && existsSync(filename)) {
     mkdirSync(join(dirname(filename), "backups"), { recursive: true });
     // SQLite在线备份同时覆盖WAL中的已提交数据，避免只复制主文件漏掉最近记录。
-    await db.backup(join(dirname(filename), "backups", `before-teams-${Date.now()}.db`));
+    await db.backup(
+      join(dirname(filename), "backups", `before-teams-${Date.now()}.db`),
+    );
   }
 }
 db.exec(
@@ -103,13 +105,24 @@ if (!db.prepare("SELECT version FROM app_migrations WHERE version=3").get()) {
         "ALTER TABLE meals ADD COLUMN budget_unit TEXT NOT NULL DEFAULT 'cent'",
       );
     // 旧版记录只有名称时，仅精确匹配补回ID，避免把相似店名合并成一家。
-    const first=listRestaurantCatalog({pageSize:30}),catalog=[...first.items];
-    for(let page=2;page<=Math.ceil(first.total/30);page++)catalog.push(...listRestaurantCatalog({page,pageSize:30}).items);
-    const idsByName=new Map(catalog.map(item=>[item.name,String(item.id)]));
-    for(const table of ['visited_restaurants','wishlist_restaurants']){
-      for(const record of db.prepare(`SELECT id,restaurant_name FROM ${table} WHERE catalog_restaurant_id IS NULL AND restaurant_id IS NULL`).all()){
-        const catalogId=idsByName.get(record.restaurant_name);
-        if(catalogId)db.prepare(`UPDATE ${table} SET catalog_restaurant_id=? WHERE id=?`).run(catalogId,record.id);
+    const first = listRestaurantCatalog({ pageSize: 30 }),
+      catalog = [...first.items];
+    for (let page = 2; page <= Math.ceil(first.total / 30); page++)
+      catalog.push(...listRestaurantCatalog({ page, pageSize: 30 }).items);
+    const idsByName = new Map(
+      catalog.map((item) => [item.name, String(item.id)]),
+    );
+    for (const table of ["visited_restaurants", "wishlist_restaurants"]) {
+      for (const record of db
+        .prepare(
+          `SELECT id,restaurant_name FROM ${table} WHERE catalog_restaurant_id IS NULL AND restaurant_id IS NULL`,
+        )
+        .all()) {
+        const catalogId = idsByName.get(record.restaurant_name);
+        if (catalogId)
+          db.prepare(
+            `UPDATE ${table} SET catalog_restaurant_id=? WHERE id=?`,
+          ).run(catalogId, record.id);
       }
     }
     db.prepare("INSERT INTO app_migrations VALUES(3,?)").run(stamp());
@@ -120,13 +133,13 @@ const hash = (token) => crypto.createHash("sha256").update(token).digest("hex");
 export function sessionUser(req) {
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, "") || "";
   if (!token) return null;
-  return (
+  const user =
     db
       .prepare(
         `SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?`,
       )
-      .get(hash(token), stamp()) || null
-  );
+      .get(hash(token), stamp()) || null;
+  return user?.deleted_at ? null : user;
 }
 function requireSession(req, team = false, admin = false) {
   const user = sessionUser(req);
@@ -138,8 +151,20 @@ function requireSession(req, team = false, admin = false) {
       "请等待管理员通过体验资格",
       403,
     );
+  if (team && user.onboarding_completed !== undefined)
+    requireValue(
+      user.onboarding_completed === 1,
+      "ONBOARDING_REQUIRED",
+      "请先完善资料并确认服务与隐私说明",
+      409,
+    );
   if (admin)
-    requireValue(user.is_admin === 1, "FORBIDDEN", "仅管理员可操作", 403);
+    requireValue(
+      user.is_admin === 1 && user.access_status !== "blocked",
+      "FORBIDDEN",
+      "仅管理员可操作",
+      403,
+    );
   return user;
 }
 function publicUser(user) {
@@ -149,14 +174,21 @@ function publicUser(user) {
     school: user.school,
     profile: publicProfile(user.id),
     accessStatus: user.access_status,
-    isAdmin: Boolean(user.is_admin),
+    isAdmin: Boolean(user.is_admin) && user.access_status !== "blocked",
+    onboardingRequired: user.onboarding_completed === 0,
+    consentVersion: user.consent_version || null,
   };
 }
 function publicProfile(id) {
-  const profile=getProfile(id);
-  if(!profile)return null;
-  const campuses={cufe_shahe:'沙河校区',cufe_nanlu:'学院南路校区','沙河校区':'沙河校区','学院南路校区':'学院南路校区'};
-  return {...profile,campus:campuses[profile.campus]||''};
+  const profile = getProfile(id);
+  if (!profile) return null;
+  const campuses = {
+    cufe_shahe: "沙河校区",
+    cufe_nanlu: "学院南路校区",
+    沙河校区: "沙河校区",
+    学院南路校区: "学院南路校区",
+  };
+  return { ...profile, campus: campuses[profile.campus] || "" };
 }
 function loginResult(user) {
   const token = crypto.randomBytes(32).toString("hex");
@@ -244,11 +276,11 @@ function serializeMeal(row, viewer) {
     : null;
   return {
     id: row.id,
-    title: row.title,
-    foodType: row.food_type,
+    title: row.hidden_at ? "饭局因违规处理已关闭" : row.title,
+    foodType: row.hidden_at ? "" : row.food_type,
     mealTime: row.meal_time,
     deadline: row.deadline || row.meal_time,
-    place: row.place,
+    place: row.hidden_at ? "原地点已隐藏" : row.place,
     campus: row.campus,
     maxPeople: row.max_people,
     currentPeople: members.length,
@@ -257,9 +289,9 @@ function serializeMeal(row, viewer) {
       row.budget_unit === "yuan" ? row.budget_min : row.budget_min / 100,
     budgetMax:
       row.budget_unit === "yuan" ? row.budget_max : row.budget_max / 100,
-    description: row.description,
+    description: row.hidden_at ? "" : row.description,
     chatMode: row.chat_mode,
-    topicTags: JSON.parse(row.topic_tags || "[]"),
+    topicTags: row.hidden_at ? [] : JSON.parse(row.topic_tags || "[]"),
     status: row.status,
     creatorId: row.creator_id,
     creator: {
@@ -270,12 +302,12 @@ function serializeMeal(row, viewer) {
       row.catalog_restaurant_id ||
       (row.restaurant_id == null ? null : String(row.restaurant_id)),
     poiId: row.poi_id,
-    venue: JSON.parse(row.venue_snapshot || "{}"),
+    venue: row.hidden_at ? {} : JSON.parse(row.venue_snapshot || "{}"),
     participants: members,
     joined: isMember,
     applicationStatus: application?.status || null,
     applicationId: application?.id || null,
-    meetingNote: isMember ? row.meeting_note : null,
+    meetingNote: isMember && !row.hidden_at ? row.meeting_note : null,
     pendingCount:
       viewer?.id === row.creator_id
         ? db
@@ -284,15 +316,33 @@ function serializeMeal(row, viewer) {
             )
             .get(row.id).n
         : 0,
+    recruitMode: row.recruit_mode || "appointment",
+    recruitmentClosed: Date.parse(row.deadline || row.meal_time) <= Date.now(),
+    moderated: Boolean(row.hidden_at),
+    moderationReason: row.moderation_reason || "",
   };
 }
 const transaction = (fn) => db.transaction(fn).immediate();
 
 export async function handleTeams(req, url, readBody) {
   // 报名截止后按请求触发收尾：不依赖单机定时器，重启也不会丢失截止状态。
-  transaction(()=>{
-    const expired=db.prepare("SELECT a.* FROM applications a JOIN meals m ON m.id=a.meal_id WHERE a.status='pending' AND julianday(COALESCE(m.deadline,m.meal_time))<=julianday('now')").all();
-    for(const entry of expired){db.prepare("UPDATE applications SET status='closed',updated_at=? WHERE id=?").run(stamp(),entry.id);notify(entry.user_id,entry.meal_id,'closed','报名已截止，本次申请已关闭');}
+  transaction(() => {
+    const expired = db
+      .prepare(
+        "SELECT a.* FROM applications a JOIN meals m ON m.id=a.meal_id WHERE a.status='pending' AND julianday(COALESCE(m.deadline,m.meal_time))<=julianday('now')",
+      )
+      .all();
+    for (const entry of expired) {
+      db.prepare(
+        "UPDATE applications SET status='closed',updated_at=? WHERE id=?",
+      ).run(stamp(), entry.id);
+      notify(
+        entry.user_id,
+        entry.meal_id,
+        "closed",
+        "报名已截止，本次申请已关闭",
+      );
+    }
   });
   const path = url.pathname,
     method = req.method;
@@ -373,7 +423,9 @@ export async function handleTeams(req, url, readBody) {
     );
     const data = await body();
     requireValue(
-      typeof data.code === "string" && data.code.length > 0 && data.code.length < 512,
+      typeof data.code === "string" &&
+        data.code.length > 0 &&
+        data.code.length < 512,
       "INVALID_CODE",
       "缺少微信登录凭证",
     );
@@ -521,7 +573,11 @@ export async function handleTeams(req, url, readBody) {
     db.prepare("DELETE FROM sessions WHERE token_hash=?").run(hash(token));
     return { ok: true };
   }
-  if (path.startsWith("/api/admin/")) {
+  // 优惠管理由discovery路由独立鉴权，不能被旧管理路由提前返回404。
+  if (
+    path.startsWith("/api/admin/") &&
+    !/^\/api\/admin\/offers(?:\/|$)/.test(path)
+  ) {
     requireSession(req, false, true);
     if (path === "/api/admin/users" && method === "GET")
       return {
@@ -545,10 +601,27 @@ export async function handleTeams(req, url, readBody) {
         "用户不存在",
         404,
       );
+      const targetUser = db.prepare('SELECT is_admin FROM users WHERE id=?').get(Number(userMatch[1]));
+      if (data.status === "blocked" && targetUser.is_admin === 1) {
+        requireValue(
+          db
+            .prepare(
+              "SELECT COUNT(*) AS n FROM users WHERE is_admin=1 AND access_status!='blocked'",
+            )
+            .get().n > 1,
+          "LAST_ADMIN",
+          "请先指定其他管理员，不能停用最后一名管理员",
+          409,
+        );
+      }
       db.prepare("UPDATE users SET access_status=? WHERE id=?").run(
         data.status,
         userMatch[1],
       );
+      // 停用立即撤销所有设备的会话，不只在前端隐藏操作按钮。
+      if (data.status === "blocked") {
+        db.prepare("DELETE FROM sessions WHERE user_id=?").run(userMatch[1]);
+      }
       notify(
         Number(userMatch[1]),
         null,
@@ -601,7 +674,10 @@ export async function handleTeams(req, url, readBody) {
   // 找人帖负责展示，报名始终落在关联饭局上，不能再独立累加另一套人数。
   if (path === "/api/posts" && method === "GET") {
     const viewer = sessionUser(req);
-    const rows = db.prepare("SELECT * FROM posts ORDER BY id DESC").all();
+    const rows = db
+      .prepare("SELECT * FROM posts ORDER BY id DESC")
+      .all()
+      .filter((row) => !row.hidden_at);
     return {
       items: rows.map((row) => ({
         id: row.id,
@@ -689,7 +765,10 @@ export async function handleTeams(req, url, readBody) {
     };
   }
   if (path === "/api/meals" && method === "GET") {
-    let rows = db.prepare("SELECT * FROM meals ORDER BY meal_time DESC").all();
+    let rows = db
+      .prepare("SELECT * FROM meals ORDER BY meal_time DESC")
+      .all()
+      .filter((row) => !row.hidden_at);
     const user = sessionUser(req),
       campus = url.searchParams.get("campus"),
       restaurantId = url.searchParams.get("restaurantId");
@@ -713,8 +792,18 @@ export async function handleTeams(req, url, readBody) {
   if (path === "/api/meals" && method === "POST") {
     const user = requireSession(req, true),
       data = await body();
+    const recruitMode = data.recruitMode || "appointment";
+    requireValue(
+      ["appointment", "limited"].includes(recruitMode),
+      "INVALID_RECRUIT_MODE",
+      "招募模式无效",
+    );
     const mealTime = new Date(data.mealTime),
-      deadline = new Date(data.deadline || data.mealTime);
+      // 限时仅限制报名响应窗口，仍须发起人审批，不是自动派单。
+      deadline =
+        recruitMode === "limited"
+          ? new Date(Math.min(Date.now() + 15 * 60000, mealTime.getTime()))
+          : new Date(data.deadline || data.mealTime);
     requireValue(
       Number.isFinite(mealTime.getTime()) &&
         mealTime.getTime() > Date.now() &&
@@ -830,6 +919,10 @@ export async function handleTeams(req, url, readBody) {
         );
       const id = Number(result.lastInsertRowid);
       db.prepare("UPDATE meals SET budget_unit='yuan' WHERE id=?").run(id);
+      if (recruitMode === "limited")
+        db.prepare("UPDATE meals SET recruit_mode='limited' WHERE id=?").run(
+          id,
+        );
       db.prepare(
         "INSERT INTO meal_participants(meal_id,user_id,role,status,joined_at) VALUES(?,?,'host','joined',?)",
       ).run(id, user.id, now);
@@ -1045,9 +1138,12 @@ export async function handleTeams(req, url, readBody) {
     );
     if (method === "GET") {
       const after = Number(url.searchParams.get("after")) || 0;
+      const visibility = columns("team_messages").includes("hidden_at")
+        ? " AND m.hidden_at IS NULL"
+        : "";
       const items = db
         .prepare(
-          "SELECT m.*,u.nickname FROM team_messages m JOIN users u ON u.id=m.user_id WHERE m.meal_id=? AND m.id>? ORDER BY m.id LIMIT 30",
+          `SELECT m.*,u.nickname FROM team_messages m JOIN users u ON u.id=m.user_id WHERE m.meal_id=? AND m.id>?${visibility} ORDER BY m.id LIMIT 30`,
         )
         .all(id, after);
       return {

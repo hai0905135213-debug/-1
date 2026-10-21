@@ -13,22 +13,26 @@
 <script>
 import { request } from "../../services/api";
 import { teamApi } from "../../services/team";
+import {refreshUnread} from '../../services/notification-badge';
 export default {
   data() {
-    return { items: [], nextCursor: null, error: "" };
+    return { items: [], nextCursor: null, error: "",timer:null,loading:false };
   },
   onShow() {
     this.load();
+    clearInterval(this.timer);this.timer=setInterval(()=>this.load(),15000);
   },
+  onHide(){clearInterval(this.timer)},onUnload(){clearInterval(this.timer)},
   methods: {
     async load() {
+      if(this.loading)return;this.loading=true;
       try {
         const data = await teamApi.notifications();
         this.items = data.items;
         this.nextCursor = data.nextCursor;
       } catch (e) {
         this.error = e.message;
-      }
+      }finally{this.loading=false}
     },
     async more() {
       try {
@@ -40,12 +44,12 @@ export default {
       }
     },
     async read() {
-      await teamApi.readNotifications();
-      this.load();
+      try{await teamApi.readNotifications();await refreshUnread();await this.load()}catch(e){this.error=e.message}
     },
     open(item) {
       if (item.meal_id)
         uni.navigateTo({ url: "/pages/meal-detail/index?id=" + item.meal_id });
+      else uni.navigateTo({url:'/pages/support/index?tab=feedback'});
     },
   },
 };

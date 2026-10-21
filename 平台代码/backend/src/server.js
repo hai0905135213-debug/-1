@@ -3,6 +3,9 @@ import { URL } from "node:url";
 import crypto from "node:crypto";
 import * as cheerio from "cheerio";
 import { handleTeams, sessionUser } from './teams.js';
+import { handleDiscovery, invalidateSchedule } from './discovery.js';
+import { validCourses } from './recommendation-rules.js';
+import { handleProduct } from './product.js';
 import { PDFParse } from "pdf-parse";
 import {
   getUser,
@@ -72,17 +75,21 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    const productResponse=await handleProduct(req,requestUrl,readBody);
+    if(productResponse!==undefined)return sendJson(res,200,productResponse);
     if ((path === '/api/timetable/captcha' || path === '/api/timetable/proxy-login') && process.env.ENABLE_TIMETABLE_PROXY !== 'true') {
       return sendError(res, 503, 'FEATURE_DISABLED', '教务代理暂未开放');
     }
     const teamResponse = await handleTeams(req, requestUrl, readBody);
     if (teamResponse !== undefined) return sendJson(res, 200, teamResponse);
+    const discoveryResponse = await handleDiscovery(req, requestUrl, readBody);
+    if (discoveryResponse !== undefined) return sendJson(res, 200, discoveryResponse);
     if (method === "GET" && path === "/api/health") {
       return sendJson(res, 200, {
         ok: true,
         service: "fanfan-backend",
-        version: "0.3.0",
-        features: ['approval-teams', 'session-auth', 'restaurant-catalog'],
+        version: "0.4.0",
+        features: ['approval-teams', 'session-auth', 'restaurant-catalog', 'rule-matching', 'schedule-recommendations', 'limited-recruitment', 'fulfillment-records', 'merchant-offers'],
         storage: "sqlite",
         timestamp: new Date().toISOString()
       });
@@ -283,9 +290,11 @@ async function handleImportTimetable(req, res) {
   if (!user) return;
 
   const body = await readBody(req);
-  const courses = Array.isArray(body.courses) ? body.courses : [];
+  const courses = body.courses;
+  if (!validCourses(courses)) return sendError(res,400,'INVALID_COURSES','课程需为最多200条的数组，包含有效名称、星期、节次和可选周次');
 
   const result = saveUserTimetable(user.id, courses);
+  invalidateSchedule(user.id);
   return sendJson(res, 200, result);
 }
 
@@ -300,6 +309,7 @@ async function handleImportTimetablePdf(req, res) {
   if (!pdfBase64) {
     return sendError(res, 400, "PDF_REQUIRED", "请上传课表 PDF 文件");
   }
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(pdfBase64) || pdfBase64.length%4!==0 || !Buffer.from(pdfBase64,'base64').subarray(0,5).equals(Buffer.from('%PDF-'))) return sendError(res,400,'INVALID_PDF','文件不是有效的PDF编码');
 
   const fileSize = Buffer.byteLength(pdfBase64, "base64");
   if (fileSize > 8 * 1024 * 1024) {
@@ -331,6 +341,7 @@ async function handleImportTimetablePdf(req, res) {
   }
 
   const result = saveUserTimetable(user.id, courses);
+  invalidateSchedule(user.id);
   return sendJson(res, 200, {
     ok: true,
     message: `成功从 PDF 导入 ${courses.length} 门课程`,
@@ -385,7 +396,7 @@ function parseDayOfWeek(text) {
   const match = compact.match(/(?:周|星期|礼拜)([一二三四五六日天1-7])/);
   if (match) return dayTokenToNumber(match[1]);
 
-  const englishMatch = compact.match(/\b(mon|monday|tue|tuesday|wed|wednesday|thu|thursday|fri|friday|sat|saturday|sun|sunday)\b/i);
+  const englishMatch = text.match(/\b(mon|monday|tue|tuesday|wed|wednesday|thu|thursday|fri|friday|sat|saturday|sun|sunday)\b/i);
   if (!englishMatch) return null;
   return {
     mon: 1,
@@ -1325,7 +1336,8 @@ async function readBody(req) {
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 1024 * 1024) { const error = new Error('请求内容过大'); Object.assign(error,{status:413,code:'BODY_TOO_LARGE'}); throw error; }
+    const limit=req.url?.split('?')[0]==='/api/timetable/pdf-import'?12*1024*1024:1024*1024;
+    if (size > limit) { const error = new Error('请求内容过大'); Object.assign(error,{status:413,code:'BODY_TOO_LARGE'}); throw error; }
     chunks.push(chunk);
   }
   const raw = Buffer.concat(chunks).toString("utf8");
